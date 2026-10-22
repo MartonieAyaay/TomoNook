@@ -5,8 +5,15 @@ export type DayKey = string;
 
 export interface TodoCategory {
   id: string;
+  /** Max CATEGORY_NAME_MAX characters. */
   name: string;
+  /** Hex color for the card's border, title and tasks. */
+  color: string;
 }
+
+export const MAX_CATEGORIES = 10;
+export const CATEGORY_NAME_MAX = 25;
+export const DEFAULT_CATEGORY_COLOR = "#e66b33";
 
 export interface Todo {
   id: string;

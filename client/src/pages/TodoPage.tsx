@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { today, type DayKey, type TodoCategory } from '@tomonook/shared'
 import Calendar from '../components/calendar/Calendar.tsx'
+import CategoryManager from '../components/CategoryManager.tsx'
 import { useTodoStore } from '../store/todoStore.ts'
 import grayTomato from '../assets/tomato/gray-tomato.png'
 import redTomato from '../assets/tomato/tomato-no-face.png'
@@ -8,15 +9,9 @@ import './TodoPage.css'
 
 export default function TodoPage() {
   const [selected, setSelected] = useState<DayKey>(today)
-  const [editingCategory, setEditingCategory] = useState<string | null>(null)
+  const [managing, setManaging] = useState(false)
   const categories = useTodoStore((s) => s.categories)
   const todos = useTodoStore((s) => s.todos)
-  const addCategory = useTodoStore((s) => s.addCategory)
-
-  const handleAddCategory = () => {
-    addCategory(`Category ${categories.length + 1}`)
-    setEditingCategory(useTodoStore.getState().categories.at(-1)!.id)
-  }
 
   const renderTomato = (day: DayKey) => {
     const dayTodos = todos.filter((t) => t.day === day)
@@ -28,7 +23,7 @@ export default function TodoPage() {
     <div className="split-page">
       <header className="split-header">
         <h1 className="page-title">To-Do List !!</h1>
-        <button type="button" className="add-button" onClick={handleAddCategory}>
+        <button type="button" className="add-button" onClick={() => setManaging(true)}>
           Add +
         </button>
       </header>
@@ -37,60 +32,34 @@ export default function TodoPage() {
 
       <div className="todo-categories">
         {categories.map((c) => (
-          <CategoryCard
-            key={c.id}
-            category={c}
-            day={selected}
-            editing={editingCategory === c.id}
-            onEditDone={() => setEditingCategory(null)}
-            onEditStart={() => setEditingCategory(c.id)}
-          />
+          <CategoryCard key={c.id} category={c} day={selected} />
         ))}
+        {categories.length === 0 && (
+          <button type="button" className="todo-empty" onClick={() => setManaging(true)}>
+            Add a category to start your list
+          </button>
+        )}
       </div>
+
+      <CategoryManager open={managing} onClose={() => setManaging(false)} />
     </div>
   )
 }
 
-interface CategoryCardProps {
-  category: TodoCategory
-  day: DayKey
-  editing: boolean
-  onEditStart: () => void
-  onEditDone: () => void
-}
-
-function CategoryCard({ category, day, editing, onEditStart, onEditDone }: CategoryCardProps) {
+function CategoryCard({ category, day }: { category: TodoCategory; day: DayKey }) {
   const [adding, setAdding] = useState(false)
   const allTodos = useTodoStore((s) => s.todos)
   const todos = allTodos.filter((t) => t.categoryId === category.id && t.day === day)
-  const { addTodo, toggleTodo, deleteTodo, renameCategory } = useTodoStore.getState()
+  const { addTodo, toggleTodo, deleteTodo } = useTodoStore.getState()
 
   return (
-    <section className="todo-card" aria-label={category.name}>
+    <section
+      className="todo-card"
+      aria-label={category.name}
+      style={{ '--cat-color': category.color } as CSSProperties}
+    >
       <div className="todo-card-header">
-        {editing ? (
-          <input
-            className="todo-card-title todo-card-title-input"
-            defaultValue={category.name}
-            aria-label="Category name"
-            autoFocus
-            onFocus={(e) => e.currentTarget.select()}
-            onBlur={(e) => {
-              const name = e.currentTarget.value.trim()
-              if (name) renameCategory(category.id, name)
-              onEditDone()
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === 'Escape') e.currentTarget.blur()
-            }}
-          />
-        ) : (
-          <h2 className="todo-card-title">
-            <button type="button" onClick={onEditStart} title="Rename category">
-              {category.name}
-            </button>
-          </h2>
-        )}
+        <h2 className="todo-card-title">{category.name}</h2>
         <button
           type="button"
           className="todo-card-add"
