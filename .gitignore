@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+
+# runtime data (keep the folders, not the contents)
+server/uploads/*
+!server/uploads/.gitkeep
+server/data/*
+!server/data/.gitkeep
+
+.DS_Store
+Thumbs.db

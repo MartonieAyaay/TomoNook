@@ -1,0 +1,54 @@
+/* Design tokens: replace these with the values from your Figma file. */
+:root {
+  --tomato: #e5483b;
+  --tomato-dark: #b8322a;
+  --leaf: #4f9a4a;
+  --bg: #fff8f2;
+  --surface: #ffffff;
+  --text: #2b1d1a;
+  --muted: #8a7a76;
+  --radius: 12px;
+
+  font-family: system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid #f0e2da;
+}
+
+.tab {
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.tab.active {
+  background: var(--tomato);
+  color: #fff;
+}
+
+.page {
+  flex: 1;
+  padding: 16px;
+}
