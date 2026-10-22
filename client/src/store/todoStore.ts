@@ -16,6 +16,12 @@ interface TodoState {
   updateCategory: (id: string, patch: Partial<Omit<TodoCategory, 'id'>>) => void
   deleteCategory: (id: string) => void
   addTodo: (categoryId: string, day: DayKey, title: string) => void
+  updateTodoTitle: (id: string, title: string) => void
+  /**
+   * Move a task into a category, placed just before `beforeId`
+   * (or after everything else when null). Also used for reordering.
+   */
+  moveTodo: (id: string, categoryId: string, beforeId: string | null) => void
   toggleTodo: (id: string) => void
   deleteTodo: (id: string) => void
 }
@@ -62,6 +68,23 @@ export const useTodoStore = create<TodoState>((set) => ({
     set((s) => ({
       todos: [...s.todos, { id: crypto.randomUUID(), categoryId, day, title, done: false }],
     })),
+
+  updateTodoTitle: (id, title) =>
+    set((s) => ({
+      todos: s.todos.map((t) => (t.id === id && title.trim() ? { ...t, title: title.trim() } : t)),
+    })),
+
+  moveTodo: (id, categoryId, beforeId) =>
+    set((s) => {
+      const todo = s.todos.find((t) => t.id === id)
+      if (!todo || id === beforeId) return s
+      const rest = s.todos.filter((t) => t.id !== id)
+      const index = beforeId ? rest.findIndex((t) => t.id === beforeId) : -1
+      const moved = { ...todo, categoryId }
+      if (index === -1) rest.push(moved)
+      else rest.splice(index, 0, moved)
+      return { todos: rest }
+    }),
 
   toggleTodo: (id) =>
     set((s) => ({

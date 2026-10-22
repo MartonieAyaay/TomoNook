@@ -1,23 +1,119 @@
 import { useState, type CSSProperties } from 'react'
-import { today, type DayKey, type TodoCategory } from '@tomonook/shared'
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  pointerWithin,
+  useSensor,
+  useSensors,
+  type CollisionDetection,
+  type DragEndEvent,
+  type DragOverEvent,
+  type UniqueIdentifier,
+} from '@dnd-kit/core'
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { today, type DayKey, type Todo } from '@tomonook/shared'
 import Calendar from '../components/calendar/Calendar.tsx'
 import CategoryManager from '../components/CategoryManager.tsx'
+import ConfirmDialog from '../components/ConfirmDialog.tsx'
+import TomatoFill from '../components/TomatoFill.tsx'
+import CategoryCard, { cardDropId } from '../components/todo/CategoryCard.tsx'
+import { TaskRowPreview } from '../components/todo/TaskRow.tsx'
 import { useTodoStore } from '../store/todoStore.ts'
-import grayTomato from '../assets/tomato/gray-tomato.png'
-import redTomato from '../assets/tomato/tomato-no-face.png'
 import './TodoPage.css'
+
+const keyboardActivator = KeyboardSensor.activators[0]
+
+/** Only start a keyboard drag from the row itself, not from the buttons inside it. */
+class RowKeyboardSensor extends KeyboardSensor {
+  static activators: typeof KeyboardSensor.activators = [
+    {
+      eventName: 'onKeyDown',
+      handler: (event, options, context) =>
+        event.target === event.currentTarget && keyboardActivator.handler(event, options, context),
+    },
+  ]
+}
+
+// Prefer whatever is under the pointer; fall back to nearest for keyboard drags.
+const collisionDetection: CollisionDetection = (args) => {
+  const hits = pointerWithin(args)
+  return hits.length > 0 ? hits : closestCenter(args)
+}
+
+interface PendingMove {
+  todo: Todo
+  toCategoryId: string
+  beforeId: string | null
+}
 
 export default function TodoPage() {
   const [selected, setSelected] = useState<DayKey>(today)
   const [managing, setManaging] = useState(false)
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
+  const [overCategoryId, setOverCategoryId] = useState<string | null>(null)
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null)
   const categories = useTodoStore((s) => s.categories)
   const todos = useTodoStore((s) => s.todos)
+  const moveTodo = useTodoStore((s) => s.moveTodo)
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    // Long-press to drag on touch screens, so normal swipes still scroll.
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+    useSensor(RowKeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  const dayTodos = todos.filter((t) => t.day === selected)
+  const tasksIn = (categoryId: string) => dayTodos.filter((t) => t.categoryId === categoryId)
+  const activeTodo = dayTodos.find((t) => t.id === activeId) ?? null
+
+  /** Which category (and which task in it, if any) a droppable id points at. */
+  const resolveTarget = (id: UniqueIdentifier | undefined) => {
+    if (id === undefined) return null
+    const key = String(id)
+    const card = categories.find((c) => cardDropId(c.id) === key)
+    if (card) return { categoryId: card.id, overTodoId: null }
+    const todo = dayTodos.find((t) => t.id === key)
+    return todo ? { categoryId: todo.categoryId, overTodoId: todo.id } : null
+  }
+
+  const handleDragOver = ({ active, over }: DragOverEvent) => {
+    const from = dayTodos.find((t) => t.id === active.id)
+    const target = resolveTarget(over?.id)
+    setOverCategoryId(target && from && target.categoryId !== from.categoryId ? target.categoryId : null)
+  }
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    setActiveId(null)
+    setOverCategoryId(null)
+    const todo = dayTodos.find((t) => t.id === active.id)
+    const target = resolveTarget(over?.id)
+    if (!todo || !target) return
+
+    if (target.categoryId === todo.categoryId) {
+      if (!target.overTodoId || target.overTodoId === todo.id) return
+      const ids = tasksIn(todo.categoryId).map((t) => t.id)
+      const newIndex = ids.indexOf(target.overTodoId)
+      const reordered = arrayMove(ids, ids.indexOf(todo.id), newIndex)
+      moveTodo(todo.id, todo.categoryId, reordered[newIndex + 1] ?? null)
+    } else {
+      // Moving to another category needs a yes first.
+      setPendingMove({ todo, toCategoryId: target.categoryId, beforeId: target.overTodoId })
+    }
+  }
 
   const renderTomato = (day: DayKey) => {
-    const dayTodos = todos.filter((t) => t.day === day)
-    const allDone = dayTodos.length > 0 && dayTodos.every((t) => t.done)
-    return <img src={allDone ? redTomato : grayTomato} alt="" />
+    const list = todos.filter((t) => t.day === day)
+    const done = list.filter((t) => t.done).length
+    return <TomatoFill fraction={list.length ? done / list.length : 0} />
   }
+
+  const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? ''
+  const activeColor = categories.find((c) => c.id === activeTodo?.categoryId)?.color
 
   return (
     <div className="split-page">
@@ -30,91 +126,62 @@ export default function TodoPage() {
 
       <Calendar selected={selected} onSelect={setSelected} renderTomato={renderTomato} />
 
-      <div className="todo-categories">
-        {categories.map((c) => (
-          <CategoryCard key={c.id} category={c} day={selected} />
-        ))}
-        {categories.length === 0 && (
-          <button type="button" className="todo-empty" onClick={() => setManaging(true)}>
-            Add a category to start your list
-          </button>
-        )}
-      </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={collisionDetection}
+        onDragStart={({ active }) => setActiveId(active.id)}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => {
+          setActiveId(null)
+          setOverCategoryId(null)
+        }}
+      >
+        <div className="todo-categories">
+          {categories.map((c) => (
+            <CategoryCard
+              key={c.id}
+              category={c}
+              day={selected}
+              todos={tasksIn(c.id)}
+              isDropTarget={overCategoryId === c.id}
+            />
+          ))}
+          {categories.length === 0 && (
+            <button type="button" className="todo-empty" onClick={() => setManaging(true)}>
+              Add a category to start your list
+            </button>
+          )}
+        </div>
+
+        <DragOverlay>
+          {activeTodo && (
+            <ul className="todo-list" style={{ '--cat-color': activeColor } as CSSProperties}>
+              <TaskRowPreview todo={activeTodo} />
+            </ul>
+          )}
+        </DragOverlay>
+      </DndContext>
 
       <CategoryManager open={managing} onClose={() => setManaging(false)} />
-    </div>
-  )
-}
 
-function CategoryCard({ category, day }: { category: TodoCategory; day: DayKey }) {
-  const [adding, setAdding] = useState(false)
-  const allTodos = useTodoStore((s) => s.todos)
-  const todos = allTodos.filter((t) => t.categoryId === category.id && t.day === day)
-  const { addTodo, toggleTodo, deleteTodo } = useTodoStore.getState()
-
-  return (
-    <section
-      className="todo-card"
-      aria-label={category.name}
-      style={{ '--cat-color': category.color } as CSSProperties}
-    >
-      <div className="todo-card-header">
-        <h2 className="todo-card-title">{category.name}</h2>
-        <button
-          type="button"
-          className="todo-card-add"
-          onClick={() => setAdding(true)}
-          aria-label={`Add task to ${category.name}`}
-        >
-          +
-        </button>
-      </div>
-
-      <ul className="todo-list">
-        {todos.map((t) => (
-          <li key={t.id} className={`todo-item${t.done ? ' is-done' : ''}`}>
-            <button
-              type="button"
-              className="todo-check"
-              onClick={() => toggleTodo(t.id)}
-              aria-pressed={t.done}
-              aria-label={t.done ? `Mark "${t.title}" not done` : `Mark "${t.title}" done`}
-            >
-              <img src={t.done ? redTomato : grayTomato} alt="" />
-            </button>
-            <span className="todo-title">{t.title}</span>
-            <button
-              type="button"
-              className="todo-delete"
-              onClick={() => deleteTodo(t.id)}
-              aria-label={`Delete "${t.title}"`}
-            >
-              ×
-            </button>
-          </li>
-        ))}
-        {adding && (
-          <li className="todo-item">
-            <img className="todo-check-img" src={grayTomato} alt="" />
-            <input
-              className="todo-title todo-new-input"
-              placeholder="New task"
-              aria-label="New task"
-              autoFocus
-              onBlur={() => setAdding(false)}
-              onKeyDown={(e) => {
-                const title = e.currentTarget.value.trim()
-                if (e.key === 'Enter' && title) {
-                  addTodo(category.id, day, title)
-                  e.currentTarget.value = ''
-                } else if (e.key === 'Escape') {
-                  setAdding(false)
-                }
-              }}
-            />
-          </li>
+      <ConfirmDialog
+        open={pendingMove !== null}
+        title="Move task?"
+        confirmLabel="Move task"
+        onCancel={() => setPendingMove(null)}
+        onConfirm={() => {
+          if (pendingMove) moveTodo(pendingMove.todo.id, pendingMove.toCategoryId, pendingMove.beforeId)
+          setPendingMove(null)
+        }}
+      >
+        {pendingMove && (
+          <>
+            Move “{pendingMove.todo.title}” from {categoryName(pendingMove.todo.categoryId)} to{' '}
+            {categoryName(pendingMove.toCategoryId)}?
+          </>
         )}
-      </ul>
-    </section>
+      </ConfirmDialog>
+    </div>
   )
 }
