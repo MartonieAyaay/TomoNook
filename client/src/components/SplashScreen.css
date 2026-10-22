@@ -1,0 +1,118 @@
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8.9rem;
+  padding-bottom: 4.9rem;
+  background-color: var(--cream);
+  background-image: linear-gradient(rgb(242 232 205 / 80%), rgb(242 232 205 / 80%)),
+    url('../assets/grid.png');
+  background-size: auto, 6rem 6rem;
+}
+
+.splash.is-leaving {
+  animation: splash-out 300ms ease-in forwards;
+}
+
+@keyframes splash-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* ---------- Logo ---------- */
+
+.splash-logo {
+  position: relative;
+  width: 70rem;
+  height: 23.8rem;
+  display: grid;
+  place-items: center;
+  background: var(--forest);
+  border-radius: 5.2rem;
+}
+
+.splash-logo-inner {
+  display: grid;
+  place-items: center;
+  width: 63.6rem;
+  height: 17.5rem;
+  background: var(--tomato);
+  border-radius: 4.1rem;
+}
+
+.splash-title {
+  font-family: var(--font-hand);
+  font-size: 9.6rem;
+  color: var(--cream);
+  text-shadow: 0.8rem 0.8rem 0 rgb(0 0 0 / 25%);
+}
+
+.splash-tomato {
+  position: absolute;
+}
+
+/* Top-right pair */
+.splash-tomato-1 {
+  left: 57.57rem;
+  top: -8.6rem;
+  width: 18.1rem;
+  rotate: 11.43deg;
+}
+
+.splash-tomato-2 {
+  left: 52.3rem;
+  top: -4.78rem;
+  width: 12.7rem;
+  rotate: 11.43deg;
+}
+
+/* Bottom-left pair, mirrored */
+.splash-tomato-3 {
+  left: -6.67rem;
+  top: 9.13rem;
+  width: 18.1rem;
+  transform: scaleX(-1);
+}
+
+.splash-tomato-4 {
+  left: 3.64rem;
+  top: 14.5rem;
+  width: 12.7rem;
+  transform: scaleX(-1);
+}
+
+/* ---------- Loading bar ---------- */
+
+.splash-bar {
+  position: relative;
+  width: min(112.9rem, calc(100vw - 48px));
+  height: 2.9rem;
+  padding: 0.65rem;
+  background: var(--orange);
+  border-radius: 6rem;
+}
+
+.splash-bar-fill {
+  height: 100%;
+  background: var(--butter-bright);
+  border-radius: 6rem;
+}
+
+.splash-bar-tomato {
+  position: absolute;
+  top: 50%;
+  width: 9.5rem;
+  translate: -30% -50%;
+}
+
+@media (max-width: 520px) {
+  .splash-logo {
+    scale: 0.75;
+  }
+}

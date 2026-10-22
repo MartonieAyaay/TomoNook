@@ -3,8 +3,14 @@ export type DayKey = string;
 
 // ---------- To-do ----------
 
+export interface TodoCategory {
+  id: string;
+  name: string;
+}
+
 export interface Todo {
   id: string;
+  categoryId: string;
   day: DayKey;
   title: string;
   /** "HH:mm" local time. A todo with a time is a deadline. */

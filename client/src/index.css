@@ -1,17 +1,47 @@
-/* Design tokens: replace these with the values from your Figma file. */
-:root {
-  --tomato: #e5483b;
-  --tomato-dark: #b8322a;
-  --leaf: #4f9a4a;
-  --bg: #fff8f2;
-  --surface: #ffffff;
-  --text: #2b1d1a;
-  --muted: #8a7a76;
-  --radius: 12px;
+/*
+  Peanut Crystal isn't on Google Fonts. Drop the font file at
+  client/public/fonts/PeanutCrystal.woff2 (or .ttf, and update the url) and it
+  will be used automatically; until then Patrick Hand stands in.
+*/
+@font-face {
+  font-family: 'Peanut Crystal';
+  src:
+    local('Peanut Crystal'),
+    url('/fonts/PeanutCrystal.woff2') format('woff2');
+  font-display: swap;
+}
 
-  font-family: system-ui, sans-serif;
-  color: var(--text);
-  background: var(--bg);
+/* Design tokens, from the Figma color palette. */
+:root {
+  --cream: #f2e8cd;
+  --cream-light: #fff6de;
+  --cream-text: #fff4d5;
+  --butter: #fae8b7;
+  --butter-bright: #ffe9aa;
+  --mustard: #f5c851;
+  --forest: #29512f;
+  --forest-dark: #1d4122;
+  --orange: #e66b33;
+  --tomato: #c13828;
+  --tomato-dark: #871d10;
+  --brown: #6e3f39;
+  --leaf: #a0bb3b;
+  --gray: #a9a9a9;
+
+  --font-display: 'Poetsen One', system-ui, sans-serif;
+  --font-hand: 'Peanut Crystal', 'Patrick Hand', cursive;
+  --font-heading: 'Lalezar', system-ui, sans-serif;
+
+  --card-shadow: 2rem 2.4rem 3.72rem -2.8rem var(--forest-dark);
+
+  /*
+    The Figma frames are 1980px wide. 1rem = 10 design px at that width,
+    so a 95px heading in Figma is 9.5rem here and the layout scales with
+    the window.
+  */
+  font-size: clamp(6px, calc(100vw / 198), 10px);
+  color: var(--brown);
+  background: var(--cream);
 }
 
 * {
@@ -20,35 +50,51 @@
 
 body {
   margin: 0;
+  font-size: 1.8rem;
+  background-color: var(--cream);
 }
 
-.app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
 }
 
-.tabs {
-  display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid #f0e2da;
+:focus-visible {
+  outline: 3px solid var(--orange);
+  outline-offset: 3px;
 }
 
-.tab {
-  padding: 8px 14px;
-  border-radius: var(--radius);
-  color: var(--muted);
-  text-decoration: none;
+.page-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 9.56rem;
+  line-height: 1.2;
+  color: var(--forest);
+  text-shadow: 0.537rem 0.537rem 0 rgb(160 187 59 / 41%);
 }
 
-.tab.active {
-  background: var(--tomato);
-  color: #fff;
+.panel {
+  background: var(--cream-light);
+  border-radius: 2.26rem;
+  box-shadow: var(--card-shadow);
 }
 
-.page {
-  flex: 1;
-  padding: 16px;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
