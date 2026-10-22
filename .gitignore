@@ -12,3 +12,6 @@ server/data/*
 
 .DS_Store
 Thumbs.db
+
+# raw asset drops (sorted into client/src/assets by hand)
+*.zip
