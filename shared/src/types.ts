@@ -65,7 +65,7 @@ export interface MoodPost {
   createdAt: string;
 }
 
-export const POST_MAX_CHARS = 1000;
+export const POST_MAX_CHARS = 500;
 export const POSTS_PER_DAY_NO_STREAK = 2;
 export const POSTS_PER_DAY_STREAK = 10;
 
