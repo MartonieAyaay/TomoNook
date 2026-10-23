@@ -211,6 +211,89 @@
   background: color-mix(in srgb, var(--cat-color) 14%, transparent);
 }
 
+/* ---------- Priority ---------- */
+
+/* A dropdown dressed as a colored tag; the color comes from the level. */
+.priority-pill {
+  flex: none;
+  max-width: 16rem;
+  height: 4rem;
+  min-height: 28px;
+  padding: 0.3rem 3rem 0 1.4rem;
+  border: 0;
+  border-radius: 99rem;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23000' stroke-opacity='.45' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E")
+      right 1.1rem center / 1.2rem no-repeat,
+    var(--priority-color, var(--leaf));
+  box-shadow: 0 0.2rem 0.2rem rgb(0 0 0 / 18%);
+  appearance: none;
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+  line-height: 1;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+/* The drag preview's tag is plain text, so no arrow. */
+span.priority-pill {
+  display: inline-flex;
+  align-items: center;
+  padding-right: 1.4rem;
+  background-image: none;
+}
+
+.priority-pill option {
+  background: var(--cream-light);
+  color: var(--brown);
+}
+
+.todo-item.is-done .priority-pill {
+  opacity: 0.55;
+}
+
+.split-header-actions {
+  display: flex;
+  gap: 1.6rem;
+}
+
+/* Cream twin of Add +, for the Priorities button. */
+.add-button-alt {
+  border: 0.35rem solid var(--forest);
+  background: var(--cream-light);
+  color: var(--forest);
+  text-shadow: 0.2rem 0.2rem 0 rgb(160 187 59 / 41%);
+}
+
+.priority-intro {
+  margin: 1.6rem 0 0;
+  font-family: var(--font-hand);
+  font-size: 2.8rem;
+  line-height: 1.35;
+}
+
+.priority-preview {
+  flex: none;
+  min-width: 12rem;
+  max-width: 18rem;
+  padding: 0.6rem 1.6rem 0.2rem;
+  overflow: hidden;
+  border-radius: 99rem;
+  font-family: var(--font-heading);
+  font-size: 2.6rem;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.priority-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.4rem;
+  padding-top: 1.6rem;
+  border-top: 0.2rem solid var(--orange);
+}
+
 /* ---------- Dragging ---------- */
 
 .todo-item-draggable {
@@ -319,5 +402,30 @@
     width: 44px;
     height: 44px;
     font-size: 24px;
+  }
+
+  .split-header-actions {
+    gap: 8px;
+  }
+
+  .priority-pill {
+    max-width: 92px;
+    height: 30px;
+    padding: 2px 22px 0 10px;
+    background-position: right 8px center, 0 0;
+    background-size: 9px, auto;
+    font-size: 14px;
+  }
+
+  span.priority-pill {
+    padding-right: 10px;
+  }
+
+  .priority-intro {
+    font-size: 17px;
+  }
+
+  .priority-preview {
+    display: none;
   }
 }
