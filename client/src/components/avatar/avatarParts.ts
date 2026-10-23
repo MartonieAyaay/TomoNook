@@ -60,7 +60,10 @@ export function partLayer(part: AvatarPart, a: AvatarConfig): Layer | null {
   }
 }
 
-export const OPTION_COUNT = { eyes: 6, brows: 8, nose: 4, mouth: 9, hair: 9 } as const
+/** Tint drawn under the mouth (multiplied, so it suits every skin tone). */
+export const lipstickLayer = (): Layer => layer('lipstick', 'mouth/lipstick')
+
+export const OPTION_COUNT = { eyes: 6, brows: 8, nose: 4, mouth: 10, hair: 9 } as const
 
 /** Sampled from the skin art, light to dark. */
 export const SKIN_TONES = ['#f1ded1', '#f9cfb3', '#d7ad91', '#ae7b5a', '#865b3e', '#522f19']
