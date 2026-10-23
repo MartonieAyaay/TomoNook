@@ -1,6 +1,5 @@
 import type { CSSProperties, Ref } from 'react'
-import { DEFAULT_PRIORITY, type PriorityLevel } from '@tomonook/shared'
-import { useTodoStore } from '../../store/todoStore.ts'
+import { priorityOf, useTodoStore } from '../../store/todoStore.ts'
 
 /** Dark text on light colors (like yellow), cream text on dark ones. */
 export function textOn(hex: string) {
@@ -10,16 +9,17 @@ export function textOn(hex: string) {
 }
 
 interface PrioritySelectProps {
-  value: PriorityLevel | undefined
-  onChange: (level: PriorityLevel) => void
+  /** A level id; missing or unknown shows the lowest level. */
+  value: string | undefined
+  onChange: (id: string) => void
   label: string
   selectRef?: Ref<HTMLSelectElement>
 }
 
 /** A pill in the level's color that opens the list of levels. */
-export default function PrioritySelect({ value = DEFAULT_PRIORITY, onChange, label, selectRef }: PrioritySelectProps) {
+export default function PrioritySelect({ value, onChange, label, selectRef }: PrioritySelectProps) {
   const priorities = useTodoStore((s) => s.priorities)
-  const current = priorities.find((p) => p.level === value) ?? priorities[priorities.length - 1]
+  const current = priorityOf(priorities, value)
 
   return (
     <select
@@ -27,15 +27,15 @@ export default function PrioritySelect({ value = DEFAULT_PRIORITY, onChange, lab
       className="priority-pill"
       aria-label={label}
       title={label}
-      value={value}
-      onChange={(e) => onChange(e.target.value as PriorityLevel)}
+      value={current.id}
+      onChange={(e) => onChange(e.target.value)}
       // Don't start a drag when opening the list.
       onPointerDown={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
       style={{ '--priority-color': current.color, color: textOn(current.color) } as CSSProperties}
     >
       {priorities.map((p) => (
-        <option key={p.level} value={p.level}>
+        <option key={p.id} value={p.id}>
           {p.name}
         </option>
       ))}

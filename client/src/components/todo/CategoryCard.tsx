@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { DEFAULT_PRIORITY, type DayKey, type PriorityLevel, type Todo, type TodoCategory } from '@tomonook/shared'
+import type { DayKey, Todo, TodoCategory } from '@tomonook/shared'
 import { useTodoStore } from '../../store/todoStore.ts'
 import PrioritySelect from './PrioritySelect.tsx'
 import TaskRow from './TaskRow.tsx'
@@ -30,7 +30,8 @@ export default function CategoryCard({
   openAddSignal,
 }: CategoryCardProps) {
   const [adding, setAdding] = useState(false)
-  const [priority, setPriority] = useState<PriorityLevel>(DEFAULT_PRIORITY)
+  /** Undefined means the default (lowest) level. */
+  const [priority, setPriority] = useState<string | undefined>()
   const inputRef = useRef<HTMLInputElement>(null)
   const addTodo = useTodoStore((s) => s.addTodo)
   const prioritiesSetUp = useTodoStore((s) => s.prioritiesSetUp)
@@ -71,7 +72,7 @@ export default function CategoryCard({
               onBlur={(e) => {
                 if (!e.currentTarget.contains(e.relatedTarget)) {
                   setAdding(false)
-                  setPriority(DEFAULT_PRIORITY)
+                  setPriority(undefined)
                 }
               }}
             >
@@ -90,7 +91,7 @@ export default function CategoryCard({
                     addTodo(category.id, day, title, priority)
                     e.currentTarget.value = ''
                     // Each new task starts at the default level again.
-                    setPriority(DEFAULT_PRIORITY)
+                    setPriority(undefined)
                   } else if (e.key === 'Escape') {
                     setAdding(false)
                   }
@@ -98,8 +99,8 @@ export default function CategoryCard({
               />
               <PrioritySelect
                 value={priority}
-                onChange={(level) => {
-                  setPriority(level)
+                onChange={(id) => {
+                  setPriority(id)
                   inputRef.current?.focus()
                 }}
                 label="Priority for the new task"
