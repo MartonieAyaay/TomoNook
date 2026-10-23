@@ -34,11 +34,12 @@ export type AvatarPart = 'body' | 'hair' | 'eyes' | 'brows' | 'nose' | 'mouth'
 export const PART_ORDER: AvatarPart[] = ['body', 'hair', 'eyes', 'brows', 'nose', 'mouth']
 
 /**
-  Just under the chin, as a fraction of the canvas height. Hair below this
-  line is drawn behind the body, so long hair falls behind the shoulders of
-  either body shape instead of being drawn over them.
+  Where the neck meets the jaw, as a fraction of the canvas height. Hair below
+  this line is drawn behind the body, so long hair falls behind the neck and
+  shoulders of either body shape instead of being drawn over them. (The hair
+  art is cut to fit the slim neck; the plus neck is wider from here down.)
 */
-export const CHIN_LINE = 0.665
+export const CHIN_LINE = 0.621
 
 /** Option 0 means "none": every part but the body can be left off. */
 export function partLayer(part: AvatarPart, a: AvatarConfig): Layer | null {
