@@ -95,8 +95,44 @@ export interface TimerConfig {
 
 // ---------- Avatar & profile ----------
 
-/** Selected layer ids, keyed by layer slot (e.g. "body", "eyes", "hat"). */
-export type AvatarLayers = Record<string, string>;
+export type BodyShape = "skinny" | "plus";
+
+/** Option numbers match the art files (e.g. hair 3 = hair-3.png). */
+export interface AvatarConfig {
+  body: BodyShape;
+  /** 1–6, light to dark. */
+  skin: number;
+  shirtColor: string;
+  /** 1–6 */
+  eyes: number;
+  lashes: boolean;
+  eyeColor: string;
+  /** 1–8 */
+  brows: number;
+  /** 1–4 */
+  nose: number;
+  /** 1–9 */
+  mouth: number;
+  /** 1–9 */
+  hair: number;
+  hairColor: string;
+}
+
+export const DEFAULT_AVATAR: AvatarConfig = {
+  body: "skinny",
+  skin: 1,
+  shirtColor: "#c13828",
+  eyes: 1,
+  lashes: true,
+  eyeColor: "#5a3825",
+  brows: 1,
+  nose: 1,
+  mouth: 1,
+  hair: 1,
+  hairColor: "#5a3825",
+};
+
+export const PROFILE_NAME_MAX = 20;
 
 export interface Food {
   id: string;

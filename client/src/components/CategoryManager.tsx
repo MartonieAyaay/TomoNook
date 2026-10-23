@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CATEGORY_NAME_MAX, MAX_CATEGORIES, type TodoCategory } from '@tomonook/shared'
 import { useTodoStore } from '../store/todoStore.ts'
 import pencilIcon from '../assets/icons/pencil.png'
 import trashIcon from '../assets/icons/trash.png'
+import ColorPicker from './ColorPicker.tsx'
 import './CategoryManager.css'
 
 /** Swatches offered for categories, from the design palette. */
@@ -72,7 +73,12 @@ export default function CategoryManager({ open, onClose }: CategoryManagerProps)
             submitNew()
           }}
         >
-          <ColorPicker value={newColor} onChange={setNewColor} label="New category color" />
+          <ColorPicker
+            swatches={SWATCHES}
+            value={newColor}
+            onChange={setNewColor}
+            label="New category color"
+          />
           <label className="cat-new-field">
             <span className="visually-hidden">New category name</span>
             <input
@@ -136,6 +142,7 @@ function CategoryRow({ category }: { category: TodoCategory }) {
   return (
     <li className="cat-row">
       <ColorPicker
+        swatches={SWATCHES}
         value={category.color}
         onChange={(color) => updateCategory(category.id, { color })}
         label={`Color for ${category.name}`}
@@ -191,82 +198,5 @@ function CategoryRow({ category }: { category: TodoCategory }) {
         <img src={trashIcon} alt="" />
       </button>
     </li>
-  )
-}
-
-interface ColorPickerProps {
-  value: string
-  onChange: (color: string) => void
-  label: string
-}
-
-const POPOVER_HEIGHT = 130
-
-function ColorPicker({ value, onChange, label }: ColorPickerProps) {
-  const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
-  const ref = useRef<HTMLDivElement>(null)
-
-  // Fixed positioning so the popup's scroll area can't clip it; flip above when
-  // there isn't room below.
-  const toggle = (e: MouseEvent<HTMLButtonElement>) => {
-    const r = e.currentTarget.getBoundingClientRect()
-    const below = r.bottom + 8 + POPOVER_HEIGHT <= window.innerHeight
-    setPos({ top: below ? r.bottom + 8 : r.top - 8 - POPOVER_HEIGHT, left: r.left })
-    setOpen((o) => !o)
-  }
-
-  useEffect(() => {
-    if (!open) return
-    const close = (e: globalThis.MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [open])
-
-  return (
-    <div
-      className="color-picker"
-      ref={ref}
-      onKeyDown={(e) => {
-        // Escape closes just the picker, not the whole popup.
-        if (e.key === 'Escape' && open) {
-          e.preventDefault()
-          e.stopPropagation()
-          setOpen(false)
-        }
-      }}
-    >
-      <button
-        type="button"
-        className="color-swatch color-picker-toggle"
-        style={{ background: value }}
-        onClick={toggle}
-        aria-label={label}
-        aria-expanded={open}
-      />
-      {open && (
-        <div className="color-popover" style={pos}>
-          {SWATCHES.map((s) => (
-            <button
-              key={s}
-              type="button"
-              className={`color-swatch${s === value ? ' is-active' : ''}`}
-              style={{ background: s }}
-              onClick={() => {
-                onChange(s)
-                setOpen(false)
-              }}
-              aria-label={`Use color ${s}`}
-            />
-          ))}
-          <label className="color-custom" title="Custom color">
-            <span className="visually-hidden">Custom color</span>
-            <input type="color" value={value} onChange={(e) => onChange(e.target.value)} />
-          </label>
-        </div>
-      )}
-    </div>
   )
 }
