@@ -59,6 +59,7 @@ export default function MoodPage() {
         open={deleting !== null}
         title="Delete post?"
         confirmLabel="Delete post"
+        danger
         onCancel={() => setDeleting(null)}
         onConfirm={() => {
           if (deleting) deletePost(deleting.id)

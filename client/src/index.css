@@ -24,6 +24,8 @@
   --orange: #e66b33;
   --tomato: #c13828;
   --tomato-dark: #871d10;
+  /* The dark red outline drawn around the red artwork. */
+  --tomato-outline: #8c0800;
   --brown: #6e3f39;
   --leaf: #a0bb3b;
   --gray: #a9a9a9;
