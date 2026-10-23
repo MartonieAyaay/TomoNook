@@ -5,6 +5,7 @@ import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import DiaryComposer from '../components/diary/DiaryComposer.tsx'
 import DiaryPost from '../components/diary/DiaryPost.tsx'
 import { useMoodStore } from '../store/moodStore.ts'
+import smilingTomato from '../assets/tomato/tomato-face.png'
 import './TodoPage.css'
 import './MoodPage.css'
 
@@ -50,7 +51,10 @@ export default function MoodPage() {
             />
           ))}
           {posts.length === 0 && (
-            <p className="diary-note">{isToday ? 'Nothing written yet today.' : 'No entries this day.'}</p>
+            <div className="diary-empty">
+              <img src={smilingTomato} alt="" />
+              <p>{isToday ? 'Tell me what you’re feeling...' : 'No entries this day.'}</p>
+            </div>
           )}
         </div>
       </section>
