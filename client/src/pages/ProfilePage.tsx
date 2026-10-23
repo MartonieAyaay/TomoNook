@@ -123,8 +123,26 @@ export default function ProfilePage() {
             </>
           )}
 
-          {(tab === 'Brows' || tab === 'Nose' || tab === 'Mouth') && (
-            <PartGrid part={TAB_PART[tab] as 'brows' | 'nose' | 'mouth'} avatar={avatar} update={updateAvatar} />
+          {(tab === 'Brows' || tab === 'Nose') && (
+            <PartGrid part={TAB_PART[tab] as 'brows' | 'nose'} avatar={avatar} update={updateAvatar} />
+          )}
+
+          {tab === 'Mouth' && (
+            <>
+              <PartGrid part="mouth" avatar={avatar} update={updateAvatar} />
+              <div className="avatar-panel-footer">
+                <div className="avatar-panel-links">
+                  <button
+                    type="button"
+                    className={`avatar-link${avatar.lipstick ? '' : ' is-off'}`}
+                    aria-pressed={avatar.lipstick}
+                    onClick={() => updateAvatar({ lipstick: !avatar.lipstick })}
+                  >
+                    Lipstick
+                  </button>
+                </div>
+              </div>
+            </>
           )}
 
           {tab === 'Hair' && (
