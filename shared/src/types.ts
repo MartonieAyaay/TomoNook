@@ -97,6 +97,15 @@ export interface TimerConfig {
 
 export type BodyShape = "skinny" | "plus";
 
+export type AdjustablePart = "eyes" | "brows" | "nose" | "mouth" | "hair";
+
+/** Nudge for one part: x/y in % of the avatar canvas, scale 1 = as drawn. */
+export interface PartAdjust {
+  x: number;
+  y: number;
+  scale: number;
+}
+
 /** Option numbers match the art files (e.g. hair 3 = hair-3.png). */
 export interface AvatarConfig {
   body: BodyShape;
@@ -116,6 +125,8 @@ export interface AvatarConfig {
   /** 1–9 */
   hair: number;
   hairColor: string;
+  /** Parts the user has moved or resized; missing = default spot. */
+  adjust: Partial<Record<AdjustablePart, PartAdjust>>;
 }
 
 export const DEFAULT_AVATAR: AvatarConfig = {
@@ -130,6 +141,7 @@ export const DEFAULT_AVATAR: AvatarConfig = {
   mouth: 1,
   hair: 1,
   hairColor: "#5a3825",
+  adjust: {},
 };
 
 export const PROFILE_NAME_MAX = 20;

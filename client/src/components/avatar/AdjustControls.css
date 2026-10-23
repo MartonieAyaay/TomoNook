@@ -1,0 +1,47 @@
+.adjust-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.adjust-btn {
+  display: grid;
+  place-items: center;
+  width: 5.6rem;
+  height: 5.6rem;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 0.5rem solid var(--forest);
+  border-radius: 1.6rem;
+  background: #c6d97e;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--forest);
+  touch-action: manipulation;
+  user-select: none;
+  transition: transform 100ms ease-out;
+}
+
+.adjust-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.adjust-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  background: var(--forest);
+  color: var(--cream-light);
+}
+
+.adjust-reset {
+  margin-left: 0.8rem;
+  border-color: var(--tomato-dark);
+  background: var(--cream-light);
+  color: var(--tomato-dark);
+}
+
+.adjust-reset:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
