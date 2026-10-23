@@ -21,6 +21,7 @@ import CategoryManager from '../components/CategoryManager.tsx'
 import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import TomatoFill from '../components/TomatoFill.tsx'
 import CategoryCard, { cardDropId } from '../components/todo/CategoryCard.tsx'
+import PriorityDialog from '../components/todo/PriorityDialog.tsx'
 import { TaskRowPreview } from '../components/todo/TaskRow.tsx'
 import { useTodoStore } from '../store/todoStore.ts'
 import './TodoPage.css'
@@ -56,6 +57,10 @@ export default function TodoPage() {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [overCategoryId, setOverCategoryId] = useState<string | null>(null)
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null)
+  const [editingPriorities, setEditingPriorities] = useState(false)
+  /** The card whose + was pressed before priorities were set up. */
+  const [setupFor, setSetupFor] = useState<string | null>(null)
+  const [openAdd, setOpenAdd] = useState<{ categoryId: string; n: number } | null>(null)
   const categories = useTodoStore((s) => s.categories)
   const todos = useTodoStore((s) => s.todos)
   const moveTodo = useTodoStore((s) => s.moveTodo)
@@ -119,9 +124,14 @@ export default function TodoPage() {
     <div className="split-page">
       <header className="split-header">
         <h1 className="page-title">To-Do List !!</h1>
-        <button type="button" className="add-button" onClick={() => setManaging(true)}>
-          Add +
-        </button>
+        <div className="split-header-actions">
+          <button type="button" className="add-button add-button-alt" onClick={() => setEditingPriorities(true)}>
+            Priorities
+          </button>
+          <button type="button" className="add-button" onClick={() => setManaging(true)}>
+            Add +
+          </button>
+        </div>
       </header>
 
       <Calendar selected={selected} onSelect={setSelected} renderTomato={renderTomato} />
@@ -145,6 +155,8 @@ export default function TodoPage() {
               day={selected}
               todos={tasksIn(c.id)}
               isDropTarget={overCategoryId === c.id}
+              onNeedSetup={() => setSetupFor(c.id)}
+              openAddSignal={openAdd?.categoryId === c.id ? openAdd.n : undefined}
             />
           ))}
           {categories.length === 0 && (
@@ -164,6 +176,17 @@ export default function TodoPage() {
       </DndContext>
 
       <CategoryManager open={managing} onClose={() => setManaging(false)} />
+
+      {/* Opened from the Priorities button, or before the first task is added. */}
+      <PriorityDialog
+        open={editingPriorities || setupFor !== null}
+        firstTime={setupFor !== null}
+        onClose={() => {
+          setEditingPriorities(false)
+          setSetupFor(null)
+        }}
+        onSaved={() => setupFor && setOpenAdd((o) => ({ categoryId: setupFor, n: (o?.n ?? 0) + 1 }))}
+      />
 
       <ConfirmDialog
         open={pendingMove !== null}

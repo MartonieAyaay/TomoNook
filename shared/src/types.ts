@@ -15,6 +15,25 @@ export const MAX_CATEGORIES = 10;
 export const CATEGORY_NAME_MAX = 25;
 export const DEFAULT_CATEGORY_COLOR = "#e66b33";
 
+export type PriorityLevel = "high" | "medium" | "low";
+
+/** How a priority level is shown; the user can rename and recolor each one. */
+export interface PriorityStyle {
+  level: PriorityLevel;
+  name: string;
+  color: string;
+}
+
+export const PRIORITY_NAME_MAX = 12;
+export const DEFAULT_PRIORITY: PriorityLevel = "low";
+
+/** Highest first. */
+export const DEFAULT_PRIORITIES: PriorityStyle[] = [
+  { level: "high", name: "High", color: "#c13828" },
+  { level: "medium", name: "Medium", color: "#f5c851" },
+  { level: "low", name: "Low", color: "#a0bb3b" },
+];
+
 export interface Todo {
   id: string;
   categoryId: string;
@@ -22,6 +41,8 @@ export interface Todo {
   title: string;
   /** "HH:mm" local time. A todo with a time is a deadline. */
   time?: string;
+  /** Missing means low. */
+  priority?: PriorityLevel;
   done: boolean;
   /** ISO timestamp of when it was checked off. */
   completedAt?: string;

@@ -2,8 +2,13 @@ import { create } from 'zustand'
 import {
   CATEGORY_NAME_MAX,
   DEFAULT_CATEGORY_COLOR,
+  DEFAULT_PRIORITIES,
+  DEFAULT_PRIORITY,
   MAX_CATEGORIES,
+  PRIORITY_NAME_MAX,
   type DayKey,
+  type PriorityLevel,
+  type PriorityStyle,
   type Todo,
   type TodoCategory,
 } from '@tomonook/shared'
@@ -12,11 +17,18 @@ import { load, save } from '../lib/storage.ts'
 interface TodoState {
   categories: TodoCategory[]
   todos: Todo[]
+  /** Name and color of each priority level, highest first. */
+  priorities: PriorityStyle[]
+  /** Whether the user has been through priority setup (shown before their first task). */
+  prioritiesSetUp: boolean
   addCategory: (name: string, color: string) => void
   updateCategory: (id: string, patch: Partial<Omit<TodoCategory, 'id'>>) => void
   deleteCategory: (id: string) => void
-  addTodo: (categoryId: string, day: DayKey, title: string) => void
+  addTodo: (categoryId: string, day: DayKey, title: string, priority?: PriorityLevel) => void
   updateTodoTitle: (id: string, title: string) => void
+  setTodoPriority: (id: string, priority: PriorityLevel) => void
+  /** Saves new names/colors for the priority levels and marks setup as done. */
+  savePriorities: (styles: PriorityStyle[]) => void
   /**
    * Move a task into a category, placed just before `beforeId`
    * (or after everything else when null). Also used for reordering.
@@ -41,6 +53,8 @@ const storedCategories = load('categories', DEFAULT_CATEGORIES).map((c) => ({
 export const useTodoStore = create<TodoState>((set) => ({
   categories: storedCategories,
   todos: load('todos', [] as Todo[]),
+  priorities: load('priorities', DEFAULT_PRIORITIES),
+  prioritiesSetUp: load('prioritiesSetUp', false),
 
   addCategory: (name, color) =>
     set((s) =>
@@ -64,9 +78,22 @@ export const useTodoStore = create<TodoState>((set) => ({
       todos: s.todos.filter((t) => t.categoryId !== id),
     })),
 
-  addTodo: (categoryId, day, title) =>
+  addTodo: (categoryId, day, title, priority = DEFAULT_PRIORITY) =>
     set((s) => ({
-      todos: [...s.todos, { id: crypto.randomUUID(), categoryId, day, title, done: false }],
+      todos: [...s.todos, { id: crypto.randomUUID(), categoryId, day, title, priority, done: false }],
+    })),
+
+  setTodoPriority: (id, priority) =>
+    set((s) => ({ todos: s.todos.map((t) => (t.id === id ? { ...t, priority } : t)) })),
+
+  savePriorities: (styles) =>
+    set((s) => ({
+      prioritiesSetUp: true,
+      priorities: s.priorities.map((p) => {
+        const next = styles.find((x) => x.level === p.level)
+        const name = next?.name.trim().slice(0, PRIORITY_NAME_MAX)
+        return next ? { ...p, name: name || p.name, color: next.color } : p
+      }),
     })),
 
   updateTodoTitle: (id, title) =>
@@ -101,4 +128,6 @@ export const useTodoStore = create<TodoState>((set) => ({
 useTodoStore.subscribe((s) => {
   save('categories', s.categories)
   save('todos', s.todos)
+  save('priorities', s.priorities)
+  save('prioritiesSetUp', s.prioritiesSetUp)
 })

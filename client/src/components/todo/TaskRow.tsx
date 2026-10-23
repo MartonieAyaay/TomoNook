@@ -3,12 +3,13 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { Todo } from '@tomonook/shared'
 import { useTodoStore } from '../../store/todoStore.ts'
+import PrioritySelect, { textOn } from './PrioritySelect.tsx'
 import grayTomato from '../../assets/tomato/gray-tomato.png'
 import redTomato from '../../assets/tomato/tomato-no-face.png'
 
 export default function TaskRow({ todo }: { todo: Todo }) {
   const [editing, setEditing] = useState(false)
-  const { toggleTodo, deleteTodo, updateTodoTitle } = useTodoStore.getState()
+  const { toggleTodo, deleteTodo, updateTodoTitle, setTodoPriority } = useTodoStore.getState()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: todo.id,
     disabled: editing,
@@ -59,6 +60,12 @@ export default function TaskRow({ todo }: { todo: Todo }) {
         </span>
       )}
 
+      <PrioritySelect
+        value={todo.priority}
+        onChange={(level) => setTodoPriority(todo.id, level)}
+        label={`Priority of "${todo.title}"`}
+      />
+
       <button
         type="button"
         className="todo-delete"
@@ -74,12 +81,18 @@ export default function TaskRow({ todo }: { todo: Todo }) {
 
 /** Static copy of a row that follows the pointer while dragging. */
 export function TaskRowPreview({ todo }: { todo: Todo }) {
+  const priority = useTodoStore((s) => s.priorities.find((p) => p.level === (todo.priority ?? 'low')))
   return (
     <li className={`todo-item todo-item-preview${todo.done ? ' is-done' : ''}`}>
       <span className="todo-check">
         <img src={todo.done ? redTomato : grayTomato} alt="" />
       </span>
       <span className="todo-title">{todo.title}</span>
+      {priority && (
+        <span className="priority-pill" style={{ background: priority.color, color: textOn(priority.color) }}>
+          {priority.name}
+        </span>
+      )}
     </li>
   )
 }
