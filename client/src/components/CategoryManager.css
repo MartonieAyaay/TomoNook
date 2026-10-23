@@ -150,14 +150,9 @@
 }
 
 .cat-icon-btn img {
-  width: 60%;
-  height: 60%;
-}
-
-.cat-delete {
-  font-size: 4rem;
-  line-height: 1;
-  color: var(--tomato);
+  width: 75%;
+  height: 75%;
+  object-fit: contain;
 }
 
 .cat-row-confirm {

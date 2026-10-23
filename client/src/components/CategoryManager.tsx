@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { CATEGORY_NAME_MAX, MAX_CATEGORIES, type TodoCategory } from '@tomonook/shared'
 import { useTodoStore } from '../store/todoStore.ts'
-import pencilIcon from '../assets/icons/pencil.svg'
+import pencilIcon from '../assets/icons/pencil.png'
+import trashIcon from '../assets/icons/trash.png'
 import './CategoryManager.css'
 
 /** Swatches offered for categories, from the design palette. */
@@ -187,7 +188,7 @@ function CategoryRow({ category }: { category: TodoCategory }) {
         aria-label={`Delete ${category.name}`}
         title="Delete"
       >
-        ×
+        <img src={trashIcon} alt="" />
       </button>
     </li>
   )
