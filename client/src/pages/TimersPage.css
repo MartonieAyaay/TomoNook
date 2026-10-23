@@ -1,0 +1,341 @@
+/* Clock on the left, the open mode's controls on the right (Figma 10:584). */
+.clock-page {
+  display: grid;
+  grid-template-columns: 56.6rem minmax(0, 89.8rem);
+  column-gap: 18rem;
+  align-items: start;
+}
+
+.clock-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* ---------- Timer / Stopwatch switch ---------- */
+
+.clock-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 44rem;
+  height: 6.8rem;
+  margin: 0.4rem 0 0 7.7rem;
+  padding: 0.8rem;
+  border-radius: 2.19rem;
+  background: var(--forest);
+  box-shadow: 0 0.49rem 0.24rem rgb(0 0 0 / 30%);
+}
+
+.clock-tab {
+  min-height: 0;
+  padding: 0.4rem 0 0;
+  border: 0;
+  border-radius: 1.6rem;
+  background: none;
+  font-family: var(--font-display);
+  font-size: 3.41rem;
+  line-height: 1;
+  color: var(--cream-text);
+  text-shadow: 0.28rem 0.28rem 0 var(--forest-dark);
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.clock-tab.is-active {
+  background: var(--cream-light);
+  box-shadow: 0 0.49rem 0.24rem rgb(0 0 0 / 30%);
+  color: var(--forest);
+  text-shadow: 0.28rem 0.28rem 0 var(--cream-light);
+}
+
+/* ---------- Tomato clock ---------- */
+
+.clock-art {
+  width: 56.6rem;
+  margin-top: 3.8rem;
+  filter: drop-shadow(0.3rem 2.3rem 3.6rem #d4ffe7);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* A slow breathing glow while the stopwatch counts. */
+.clock-art.is-running {
+  animation: clock-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes clock-glow {
+  50% {
+    filter: drop-shadow(0.3rem 2.3rem 5.6rem #b9f5d3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock-art.is-running {
+    animation: none;
+  }
+}
+
+.clock-caption {
+  align-self: stretch;
+  margin: 1.6rem 0 0;
+  font-family: Podkova, Georgia, serif;
+  font-size: 3.92rem;
+  line-height: 1.25;
+  color: var(--gray);
+  text-align: center;
+  text-shadow: 0.2rem 0.2rem 0 rgb(0 0 0 / 25%);
+}
+
+/* ---------- Stopwatch card ---------- */
+
+.stopwatch-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin-top: 15.4rem;
+  padding: 2.2rem 3.6rem 4rem;
+  border: 0.4rem solid var(--orange);
+  border-radius: 2.26rem;
+  background: var(--cream-light);
+  box-shadow: var(--card-shadow);
+}
+
+.stopwatch-title {
+  margin: 0;
+  padding-bottom: 0.6rem;
+  border-bottom: 0.16rem solid var(--orange);
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 3.92rem;
+  line-height: 1.25;
+  color: var(--orange);
+  text-shadow: 0.2rem 0.2rem 0 rgb(0 0 0 / 25%);
+}
+
+.stopwatch-time {
+  margin: 4rem 0 0;
+  font-family: var(--font-heading);
+  font-size: 15rem;
+  line-height: 1;
+  color: var(--forest);
+  text-align: center;
+  text-shadow: 0.9rem 0.9rem 0 rgb(160 187 59 / 41%);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stopwatch-hundredths {
+  font-size: 7rem;
+  color: var(--orange);
+  text-shadow: 0.4rem 0.4rem 0 rgb(0 0 0 / 15%);
+}
+
+.stopwatch-controls {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-top: 4rem;
+}
+
+.stopwatch-btn {
+  width: 21.5rem;
+  height: 6.76rem;
+  min-height: 40px;
+  padding: 0.4rem 0 0;
+  border: 0.4rem solid transparent;
+  border-radius: 2.19rem;
+  box-shadow: 0 0.49rem 0.24rem rgb(0 0 0 / 30%);
+  font-family: var(--font-display);
+  font-size: 3.41rem;
+  line-height: 1;
+  transition:
+    transform 150ms ease-out,
+    opacity 150ms ease-out;
+}
+
+.stopwatch-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.stopwatch-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.stopwatch-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
+
+.stopwatch-btn.is-primary {
+  background: var(--forest);
+  color: var(--cream-text);
+  text-shadow: 0.28rem 0.28rem 0 var(--forest-dark);
+}
+
+.stopwatch-btn.is-secondary {
+  border-color: var(--forest);
+  background: var(--cream-light);
+  color: var(--forest);
+  text-shadow: 0.2rem 0.2rem 0 rgb(160 187 59 / 41%);
+}
+
+.stopwatch-btn.is-stop {
+  background: var(--tomato);
+  color: var(--cream-text);
+  text-shadow: 0.28rem 0.28rem 0 var(--tomato-dark);
+}
+
+/* ---------- Laps ---------- */
+
+.stopwatch-laps {
+  max-height: 36rem;
+  margin: 4.4rem 0 0;
+  padding: 0 1.6rem 0 0;
+  list-style: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray) transparent;
+}
+
+.stopwatch-lap {
+  display: grid;
+  /* Fixed columns so the times line up from row to row. */
+  grid-template-columns: 1fr 24rem 22rem;
+  align-items: baseline;
+  column-gap: 4rem;
+  padding: 1.2rem 0.4rem;
+  border-top: 0.16rem dashed rgb(230 107 51 / 45%);
+  font-variant-numeric: tabular-nums;
+}
+
+.stopwatch-lap:first-child {
+  border-top: 0;
+}
+
+.lap-name {
+  font-family: var(--font-heading);
+  font-size: 3.6rem;
+  color: var(--orange);
+}
+
+.lap-split,
+.lap-total {
+  text-align: right;
+}
+
+.lap-split {
+  font-family: Podkova, Georgia, serif;
+  font-size: 3rem;
+  color: var(--gray);
+}
+
+.lap-total {
+  font-family: var(--font-heading);
+  font-size: 3.6rem;
+  color: var(--forest);
+}
+
+/* ---------- Smaller screens ---------- */
+
+@media (max-width: 1200px) {
+  .clock-page {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 4rem;
+  }
+
+  .clock-side {
+    align-items: center;
+  }
+
+  .clock-side .page-title {
+    align-self: flex-start;
+  }
+
+  .clock-tabs {
+    margin-left: 0;
+  }
+
+  .stopwatch-card {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .clock-tabs {
+    width: min(300px, 100%);
+    height: 48px;
+    padding: 5px;
+    border-radius: 16px;
+  }
+
+  .clock-tab {
+    border-radius: 12px;
+    font-size: 19px;
+  }
+
+  .clock-art {
+    width: min(240px, 70vw);
+    margin-top: 20px;
+  }
+
+  .clock-caption {
+    font-size: 18px;
+  }
+
+  .stopwatch-card {
+    padding: 12px 14px 18px;
+    border-width: 3px;
+    border-radius: 16px;
+  }
+
+  .stopwatch-title {
+    font-size: 22px;
+  }
+
+  .stopwatch-time {
+    margin-top: 16px;
+    font-size: 54px;
+    text-shadow: 3px 3px 0 rgb(160 187 59 / 41%);
+  }
+
+  .stopwatch-hundredths {
+    font-size: 26px;
+  }
+
+  .stopwatch-controls {
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .stopwatch-btn {
+    flex: 1;
+    width: auto;
+    height: 44px;
+    border-width: 3px;
+    border-radius: 14px;
+    font-size: 18px;
+  }
+
+  .stopwatch-laps {
+    max-height: 260px;
+    margin-top: 16px;
+    padding-right: 6px;
+  }
+
+  .stopwatch-lap {
+    grid-template-columns: 1fr 96px 100px;
+    column-gap: 8px;
+    padding: 8px 2px;
+  }
+
+  .lap-name,
+  .lap-total {
+    font-size: 18px;
+  }
+
+  .lap-split {
+    font-size: 14px;
+  }
+}
