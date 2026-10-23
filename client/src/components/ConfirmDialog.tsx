@@ -7,6 +7,8 @@ interface ConfirmDialogProps {
   children: ReactNode
   confirmLabel: string
   cancelLabel?: string
+  /** Red confirm button, for deleting things. */
+  danger?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
@@ -17,6 +19,7 @@ export default function ConfirmDialog({
   children,
   confirmLabel,
   cancelLabel = 'Cancel',
+  danger = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -44,7 +47,12 @@ export default function ConfirmDialog({
           <button type="button" className="confirm-btn" onClick={onCancel}>
             {cancelLabel}
           </button>
-          <button type="button" className="confirm-btn confirm-btn-primary" onClick={onConfirm} autoFocus>
+          <button
+            type="button"
+            className={`confirm-btn confirm-btn-primary${danger ? ' confirm-btn-danger' : ''}`}
+            onClick={onConfirm}
+            autoFocus
+          >
             {confirmLabel}
           </button>
         </div>
