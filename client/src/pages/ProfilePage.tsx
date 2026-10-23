@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { PROFILE_NAME_MAX, type AvatarConfig, type BodyShape } from '@tomonook/shared'
+import AdjustControls from '../components/avatar/AdjustControls.tsx'
 import Avatar from '../components/avatar/Avatar.tsx'
 import ColorPicker from '../components/ColorPicker.tsx'
 import {
@@ -24,6 +25,8 @@ const range = (n: number) => Array.from({ length: n }, (_, i) => i + 1)
 
 export default function ProfilePage() {
   const [tab, setTab] = useState<Tab>('Body')
+  // The Eyes tab holds eyes and brows; this picks which one the arrows move.
+  const [faceTarget, setFaceTarget] = useState<'eyes' | 'brows'>('eyes')
   const avatar = useProfileStore((s) => s.avatar)
   const updateAvatar = useProfileStore((s) => s.updateAvatar)
 
@@ -88,45 +91,70 @@ export default function ProfilePage() {
                   />
                 ))}
               </OptionGrid>
-              <div className="avatar-panel-links">
-                <button
-                  type="button"
-                  className={`avatar-link${avatar.lashes ? '' : ' is-off'}`}
-                  aria-pressed={avatar.lashes}
-                  onClick={() => updateAvatar({ lashes: !avatar.lashes })}
-                >
-                  Lashes
-                </button>
-                <ColorPicker
-                  swatches={EYE_COLORS}
-                  value={avatar.eyeColor}
-                  onChange={(eyeColor) => updateAvatar({ eyeColor })}
-                  label="Eye color"
-                  triggerClassName="avatar-link"
-                >
-                  Eye Color
-                </ColorPicker>
+              <div className="avatar-panel-footer">
+                <div className="adjust-target" role="radiogroup" aria-label="Part to move">
+                  {(['eyes', 'brows'] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      role="radio"
+                      aria-checked={faceTarget === t}
+                      className={`adjust-target-btn${faceTarget === t ? ' is-active' : ''}`}
+                      onClick={() => setFaceTarget(t)}
+                    >
+                      {t === 'eyes' ? 'Eyes' : 'Brows'}
+                    </button>
+                  ))}
+                </div>
+                <AdjustControls part={faceTarget} name={faceTarget} />
+                <div className="avatar-panel-links">
+                  <button
+                    type="button"
+                    className={`avatar-link${avatar.lashes ? '' : ' is-off'}`}
+                    aria-pressed={avatar.lashes}
+                    onClick={() => updateAvatar({ lashes: !avatar.lashes })}
+                  >
+                    Lashes
+                  </button>
+                  <ColorPicker
+                    swatches={EYE_COLORS}
+                    value={avatar.eyeColor}
+                    onChange={(eyeColor) => updateAvatar({ eyeColor })}
+                    label="Eye color"
+                    triggerClassName="avatar-link"
+                  >
+                    Eye Color
+                  </ColorPicker>
+                </div>
               </div>
             </>
           )}
 
           {(tab === 'Nose' || tab === 'Mouth') && (
-            <PartGrid part={tab === 'Nose' ? 'nose' : 'mouth'} avatar={avatar} update={updateAvatar} />
+            <>
+              <PartGrid part={tab === 'Nose' ? 'nose' : 'mouth'} avatar={avatar} update={updateAvatar} />
+              <div className="avatar-panel-footer">
+                <AdjustControls part={tab === 'Nose' ? 'nose' : 'mouth'} name={tab.toLowerCase()} />
+              </div>
+            </>
           )}
 
           {tab === 'Hair' && (
             <>
               <PartGrid part="hair" avatar={avatar} update={updateAvatar} />
-              <div className="avatar-panel-links">
-                <ColorPicker
-                  swatches={HAIR_COLORS}
-                  value={avatar.hairColor}
-                  onChange={(hairColor) => updateAvatar({ hairColor })}
-                  label="Hair color"
-                  triggerClassName="avatar-link"
-                >
-                  Hair Color
-                </ColorPicker>
+              <div className="avatar-panel-footer">
+                <AdjustControls part="hair" name="hair" />
+                <div className="avatar-panel-links">
+                  <ColorPicker
+                    swatches={HAIR_COLORS}
+                    value={avatar.hairColor}
+                    onChange={(hairColor) => updateAvatar({ hairColor })}
+                    label="Hair color"
+                    triggerClassName="avatar-link"
+                  >
+                    Hair Color
+                  </ColorPicker>
+                </div>
               </div>
             </>
           )}
@@ -239,7 +267,8 @@ function OptionTile({ label, selected, onSelect, avatar, part }: OptionTileProps
       className={`option-tile${selected ? ' is-active' : ''}`}
       onClick={onSelect}
     >
-      <Avatar avatar={avatar} parts={[part]} crop={CROPS[part]} className="option-art" />
+      {/* Thumbnails show each option in its default spot. */}
+      <Avatar avatar={{ ...avatar, adjust: {} }} parts={[part]} crop={CROPS[part]} className="option-art" />
     </button>
   )
 }

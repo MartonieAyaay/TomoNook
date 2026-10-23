@@ -211,13 +211,48 @@
   text-shadow: 0.2rem 0.2rem 0 var(--cream-light);
 }
 
-.avatar-panel-links {
+/* Sits over the faded bottom of the options: move/resize controls on the
+   left, the tab's links on the right. */
+.avatar-panel-footer {
   position: absolute;
+  left: 2.6rem;
   right: 4.2rem;
-  bottom: 0.6rem;
+  bottom: 1.2rem;
   display: flex;
   align-items: center;
-  gap: 5rem;
+  gap: 1.6rem;
+}
+
+.avatar-panel-links {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+  margin-left: auto;
+  padding-left: 1.6rem;
+}
+
+.adjust-target {
+  display: flex;
+  padding: 0.4rem;
+  border-radius: 1.8rem;
+  background: var(--forest);
+}
+
+.adjust-target-btn {
+  min-height: 36px;
+  padding: 0.6rem 1.6rem 0.2rem;
+  border: 0;
+  border-radius: 1.4rem;
+  background: none;
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--cream-light);
+}
+
+.adjust-target-btn.is-active {
+  background: #c6d97e;
+  color: var(--forest);
 }
 
 .avatar-link {
@@ -385,7 +420,13 @@
   .option-grid {
     grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
     gap: 12px;
-    padding: 16px 16px 72px;
+    padding: 16px 16px 24px;
+  }
+
+  /* No fade on phones: the footer sits below the grid instead of over it. */
+  .option-scroll {
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   .option-tile {
@@ -399,10 +440,20 @@
     font-size: 22px;
   }
 
+  .avatar-panel-footer {
+    position: static;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 12px 12px;
+    border-top: 2px solid var(--orange);
+  }
+
   .avatar-panel-links {
-    right: 16px;
-    bottom: 4px;
     gap: 20px;
+  }
+
+  .adjust-target-btn {
+    font-size: 16px;
   }
 
   .body-colors {
