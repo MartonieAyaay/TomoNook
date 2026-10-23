@@ -35,8 +35,8 @@ export default function Avatar({ avatar, parts = PART_ORDER, crop = CROPS.full, 
       <span className="avatar-canvas" style={canvas}>
         {PART_ORDER.filter((p) => parts.includes(p)).map((p) => {
           const l = partLayer(p, avatar)
-          return (
-            <span key={l.key} className="avatar-layer" style={adjustStyle(p, avatar)}>
+          const art = (
+            <>
               {l.mask && (
                 <span
                   className="avatar-fill"
@@ -44,6 +44,31 @@ export default function Avatar({ avatar, parts = PART_ORDER, crop = CROPS.full, 
                 />
               )}
               <img src={l.src} alt="" draggable={false} />
+            </>
+          )
+          const spacing = p === 'body' ? 0 : (avatar.adjust?.[p]?.spacing ?? 0)
+          return (
+            <span key={l.key} className="avatar-layer" style={adjustStyle(p, avatar)}>
+              {spacing === 0 ? (
+                art
+              ) : (
+                // Paired parts are centered on the canvas, so each half can be
+                // cut at the middle and pushed out (or in) on its own.
+                <>
+                  <span
+                    className="avatar-layer"
+                    style={{ clipPath: 'inset(0 50% 0 0)', transform: `translateX(${-spacing}%)` }}
+                  >
+                    {art}
+                  </span>
+                  <span
+                    className="avatar-layer"
+                    style={{ clipPath: 'inset(0 0 0 50%)', transform: `translateX(${spacing}%)` }}
+                  >
+                    {art}
+                  </span>
+                </>
+              )}
             </span>
           )
         })}
