@@ -113,7 +113,7 @@
 .avatar-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 2rem;
+  gap: 1.4rem;
 }
 
 .avatar-tab {
@@ -211,8 +211,7 @@
   text-shadow: 0.2rem 0.2rem 0 var(--cream-light);
 }
 
-/* Sits over the faded bottom of the options: move/resize controls on the
-   left, the tab's links on the right. */
+/* The tab's links, over the faded bottom-right of the options. */
 .avatar-panel-footer {
   position: absolute;
   left: 2.6rem;
@@ -231,29 +230,6 @@
   padding-left: 1.6rem;
 }
 
-.adjust-target {
-  display: flex;
-  padding: 0.4rem;
-  border-radius: 1.8rem;
-  background: var(--forest);
-}
-
-.adjust-target-btn {
-  min-height: 36px;
-  padding: 0.6rem 1.6rem 0.2rem;
-  border: 0;
-  border-radius: 1.4rem;
-  background: none;
-  font-family: var(--font-heading);
-  font-size: 3rem;
-  line-height: 1;
-  color: var(--cream-light);
-}
-
-.adjust-target-btn.is-active {
-  background: #c6d97e;
-  color: var(--forest);
-}
 
 .avatar-link {
   min-height: 40px;
@@ -387,7 +363,13 @@
 }
 
 @media (max-width: 720px) {
+  /* Wide enough for the arrow pad's corner buttons. */
+  .profile-card {
+    width: min(320px, 100%);
+  }
+
   .profile-avatar-frame {
+    margin-inline: auto;
     width: min(260px, 70vw);
     border-width: 10px;
     border-radius: 20px;
@@ -399,7 +381,7 @@
 
   .avatar-tabs {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 6px;
   }
 
@@ -452,9 +434,6 @@
     gap: 20px;
   }
 
-  .adjust-target-btn {
-    font-size: 16px;
-  }
 
   .body-colors {
     flex-wrap: wrap;

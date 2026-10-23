@@ -104,6 +104,8 @@ export interface PartAdjust {
   x: number;
   y: number;
   scale: number;
+  /** Eyes and brows only: extra gap between the left and right halves, in %. */
+  spacing?: number;
 }
 
 /** Option numbers match the art files (e.g. hair 3 = hair-3.png). */

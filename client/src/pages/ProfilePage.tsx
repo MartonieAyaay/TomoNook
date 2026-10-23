@@ -1,5 +1,10 @@
 import { useState, type ReactNode } from 'react'
-import { PROFILE_NAME_MAX, type AvatarConfig, type BodyShape } from '@tomonook/shared'
+import {
+  PROFILE_NAME_MAX,
+  type AdjustablePart,
+  type AvatarConfig,
+  type BodyShape,
+} from '@tomonook/shared'
 import AdjustControls from '../components/avatar/AdjustControls.tsx'
 import Avatar from '../components/avatar/Avatar.tsx'
 import ColorPicker from '../components/ColorPicker.tsx'
@@ -16,8 +21,18 @@ import { useProfileStore } from '../store/profileStore.ts'
 import pencilIcon from '../assets/icons/pencil.png'
 import './ProfilePage.css'
 
-const TABS = ['Body', 'Eyes', 'Nose', 'Mouth', 'Hair'] as const
+const TABS = ['Body', 'Eyes', 'Brows', 'Nose', 'Mouth', 'Hair'] as const
 type Tab = (typeof TABS)[number]
+
+/** The part the arrow pad moves while each tab is open. */
+const TAB_PART: Record<Tab, AdjustablePart | null> = {
+  Body: null,
+  Eyes: 'eyes',
+  Brows: 'brows',
+  Nose: 'nose',
+  Mouth: 'mouth',
+  Hair: 'hair',
+}
 
 const BODIES: BodyShape[] = ['skinny', 'plus']
 
@@ -25,8 +40,6 @@ const range = (n: number) => Array.from({ length: n }, (_, i) => i + 1)
 
 export default function ProfilePage() {
   const [tab, setTab] = useState<Tab>('Body')
-  // The Eyes tab holds eyes and brows; this picks which one the arrows move.
-  const [faceTarget, setFaceTarget] = useState<'eyes' | 'brows'>('eyes')
   const avatar = useProfileStore((s) => s.avatar)
   const updateAvatar = useProfileStore((s) => s.updateAvatar)
 
@@ -39,6 +52,7 @@ export default function ProfilePage() {
           <Avatar avatar={avatar} className="profile-avatar" />
         </div>
         <ProfileName />
+        <AdjustControls part={TAB_PART[tab]} />
       </section>
 
       <section className="avatar-editor" aria-label="Edit avatar">
@@ -69,10 +83,10 @@ export default function ProfilePage() {
 
           {tab === 'Eyes' && (
             <>
-              <OptionGrid label="Eye shapes and brows">
+              <OptionGrid label="Eye shapes">
                 {range(OPTION_COUNT.eyes).map((n) => (
                   <OptionTile
-                    key={`eyes-${n}`}
+                    key={n}
                     label={`Eyes ${n}`}
                     selected={avatar.eyes === n}
                     onSelect={() => updateAvatar({ eyes: n })}
@@ -80,33 +94,8 @@ export default function ProfilePage() {
                     part="eyes"
                   />
                 ))}
-                {range(OPTION_COUNT.brows).map((n) => (
-                  <OptionTile
-                    key={`brows-${n}`}
-                    label={`Brows ${n}`}
-                    selected={avatar.brows === n}
-                    onSelect={() => updateAvatar({ brows: n })}
-                    avatar={{ ...avatar, brows: n }}
-                    part="brows"
-                  />
-                ))}
               </OptionGrid>
               <div className="avatar-panel-footer">
-                <div className="adjust-target" role="radiogroup" aria-label="Part to move">
-                  {(['eyes', 'brows'] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      role="radio"
-                      aria-checked={faceTarget === t}
-                      className={`adjust-target-btn${faceTarget === t ? ' is-active' : ''}`}
-                      onClick={() => setFaceTarget(t)}
-                    >
-                      {t === 'eyes' ? 'Eyes' : 'Brows'}
-                    </button>
-                  ))}
-                </div>
-                <AdjustControls part={faceTarget} name={faceTarget} />
                 <div className="avatar-panel-links">
                   <button
                     type="button"
@@ -130,20 +119,14 @@ export default function ProfilePage() {
             </>
           )}
 
-          {(tab === 'Nose' || tab === 'Mouth') && (
-            <>
-              <PartGrid part={tab === 'Nose' ? 'nose' : 'mouth'} avatar={avatar} update={updateAvatar} />
-              <div className="avatar-panel-footer">
-                <AdjustControls part={tab === 'Nose' ? 'nose' : 'mouth'} name={tab.toLowerCase()} />
-              </div>
-            </>
+          {(tab === 'Brows' || tab === 'Nose' || tab === 'Mouth') && (
+            <PartGrid part={TAB_PART[tab] as 'brows' | 'nose' | 'mouth'} avatar={avatar} update={updateAvatar} />
           )}
 
           {tab === 'Hair' && (
             <>
               <PartGrid part="hair" avatar={avatar} update={updateAvatar} />
               <div className="avatar-panel-footer">
-                <AdjustControls part="hair" name="hair" />
                 <div className="avatar-panel-links">
                   <ColorPicker
                     swatches={HAIR_COLORS}
@@ -220,7 +203,7 @@ function BodyPanel({ avatar, update }: PanelProps) {
   )
 }
 
-function PartGrid({ part, avatar, update }: PanelProps & { part: 'nose' | 'mouth' | 'hair' }) {
+function PartGrid({ part, avatar, update }: PanelProps & { part: 'brows' | 'nose' | 'mouth' | 'hair' }) {
   const name = part[0].toUpperCase() + part.slice(1)
   return (
     <OptionGrid label={`${name} styles`}>
