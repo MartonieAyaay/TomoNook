@@ -221,6 +221,28 @@
   color: #6a6a6a;
 }
 
+.diary-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.diary-empty img {
+  width: 14rem;
+  height: 14rem;
+  filter: drop-shadow(0 0.6rem 0.4rem rgb(0 0 0 / 18%));
+}
+
+.diary-empty p {
+  margin: 0;
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 3.2rem;
+  color: #6a6a6a;
+}
+
 @media (max-width: 1100px) {
   .mood-page {
     grid-template-columns: minmax(0, 87.7rem);
