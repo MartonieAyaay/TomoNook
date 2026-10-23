@@ -44,6 +44,7 @@ export interface Mood {
 }
 
 export const MAX_MOODS = 8;
+export const MOOD_NAME_MAX = 15;
 
 export const DEFAULT_MOODS: Mood[] = [
   { id: "happy", name: "Happy", color: "#F5C842" },

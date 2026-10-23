@@ -1,0 +1,167 @@
+/* Sits under the calendar, in the same orange-bordered butter style. */
+.mood-picker {
+  width: min(87.7rem, 100%);
+  margin-top: 3.6rem;
+  padding: 2rem 3.2rem 2.8rem;
+  border: 0.6rem solid var(--orange);
+  border-radius: 3.25rem;
+  background: var(--butter);
+}
+
+.mood-picker-header {
+  display: flex;
+  align-items: baseline;
+  gap: 2rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 0.2rem solid var(--orange);
+}
+
+.mood-picker-title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 4.8rem;
+  line-height: 1.2;
+  color: var(--tomato);
+  text-shadow: 0.2rem 0.2rem 0 rgb(0 0 0 / 25%);
+}
+
+.mood-edit-link {
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-heading);
+  font-size: 3.2rem;
+  color: var(--tomato-dark);
+  text-decoration: underline;
+  text-decoration-thickness: 0.25rem;
+  text-underline-offset: 0.4rem;
+}
+
+/* Up to 8 moods: four to a row. */
+.mood-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.6rem;
+  margin-top: 2.2rem;
+}
+
+.mood-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 1.4rem 0.8rem 1rem;
+  border: 0.4rem solid transparent;
+  border-radius: 2.2rem;
+  background: var(--cream-light);
+  box-shadow: 0 0.4rem 0.2rem rgb(0 0 0 / 12%);
+  transition:
+    transform 150ms ease-out,
+    border-color 150ms ease-out,
+    box-shadow 150ms ease-out;
+}
+
+.mood-option:hover {
+  transform: translateY(-0.3rem);
+}
+
+.mood-option.is-active {
+  border-color: var(--forest);
+  box-shadow: 0 0 0 0.5rem rgb(160 187 59 / 60%);
+}
+
+.mood-option-tomato {
+  display: block;
+  flex: none;
+  width: 8rem;
+  height: 8rem;
+}
+
+.mood-option-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  line-height: 1.2;
+  color: var(--brown);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mood-picker-logged {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin: 2rem 0 0;
+}
+
+.mood-picker-logged .mood-option-name {
+  font-size: 4rem;
+  text-shadow: 0.15rem 0.15rem 0 rgb(0 0 0 / 20%);
+}
+
+.mood-picker-note {
+  margin: 2rem 0 0;
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 3rem;
+  color: #6a6a6a;
+}
+
+.mood-picker-empty {
+  display: block;
+  width: 100%;
+  padding: 2rem;
+  border: 0.3rem dashed var(--orange);
+  border-radius: 2rem;
+  background: rgb(255 246 222 / 60%);
+  text-align: left;
+}
+
+@media (max-width: 720px) {
+  .mood-picker {
+    margin-top: 20px;
+    padding: 12px 14px 16px;
+    border-width: 4px;
+    border-radius: 20px;
+  }
+
+  .mood-picker-title {
+    font-size: 24px;
+  }
+
+  .mood-edit-link {
+    font-size: 17px;
+  }
+
+  .mood-options {
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .mood-option {
+    padding: 8px 4px 6px;
+    border-width: 3px;
+    border-radius: 14px;
+  }
+
+  .mood-option-tomato {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mood-option-name {
+    font-size: 14px;
+  }
+
+  .mood-picker-logged .mood-option-name {
+    font-size: 20px;
+  }
+
+  .mood-picker-note {
+    font-size: 16px;
+  }
+}

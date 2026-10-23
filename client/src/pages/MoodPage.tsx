@@ -4,8 +4,11 @@ import Calendar from '../components/calendar/Calendar.tsx'
 import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import DiaryComposer from '../components/diary/DiaryComposer.tsx'
 import DiaryPost from '../components/diary/DiaryPost.tsx'
+import MoodPicker from '../components/mood/MoodPicker.tsx'
+import TomatoFill from '../components/TomatoFill.tsx'
 import { useMoodStore } from '../store/moodStore.ts'
 import smilingTomato from '../assets/tomato/tomato-face.png'
+import grayTomato from '../assets/tomato/gray-tomato.png'
 import './TodoPage.css'
 import './MoodPage.css'
 
@@ -14,6 +17,15 @@ export default function MoodPage() {
   const [deleting, setDeleting] = useState<MoodPost | null>(null)
   const allPosts = useMoodStore((s) => s.posts)
   const { addPost, editPost, deletePost } = useMoodStore.getState()
+  const moods = useMoodStore((s) => s.moods)
+  const entries = useMoodStore((s) => s.entries)
+  // Each logged day's tomato fills with its mood's color.
+  const moodColor = new Map(
+    entries.flatMap((e) => {
+      const mood = moods.find((m) => m.id === e.moodId)
+      return mood ? [[e.day, mood.color] as const] : []
+    }),
+  )
 
   const isToday = selected === today()
   // Newest first.
@@ -25,7 +37,17 @@ export default function MoodPage() {
         <h1 className="page-title">Mood Tracker !!</h1>
       </header>
 
-      <Calendar selected={selected} onSelect={setSelected} />
+      <div className="mood-left">
+        <Calendar
+          selected={selected}
+          onSelect={setSelected}
+          renderTomato={(day) => {
+            const color = moodColor.get(day)
+            return color ? <TomatoFill fraction={1} color={color} /> : <img src={grayTomato} alt="" />
+          }}
+        />
+        <MoodPicker day={selected} />
+      </div>
 
       <section className="diary" aria-labelledby="diary-title">
         <h2 id="diary-title" className="diary-title">
