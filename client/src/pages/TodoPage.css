@@ -272,10 +272,10 @@ span.priority-pill {
   line-height: 1.35;
 }
 
+/* Fixed width so every row's name box lines up. */
 .priority-preview {
   flex: none;
-  min-width: 12rem;
-  max-width: 18rem;
+  width: 18rem;
   padding: 0.6rem 1.6rem 0.2rem;
   overflow: hidden;
   border-radius: 99rem;
@@ -284,6 +284,58 @@ span.priority-pill {
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.priority-dialog {
+  width: min(84rem, calc(100vw - 32px));
+}
+
+.priority-list .cat-row {
+  gap: 1.2rem;
+}
+
+.priority-row-tools {
+  display: flex;
+  flex: none;
+}
+
+.priority-row-tools .cat-icon-btn {
+  width: 4.6rem;
+  height: 4.6rem;
+}
+
+.priority-row-tools .cat-icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+  background: none;
+}
+
+.priority-move svg {
+  width: 3rem;
+  height: 3rem;
+  fill: none;
+  stroke: var(--forest);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.priority-add {
+  display: block;
+  margin: 0.4rem 0 1.6rem;
+  border-style: dashed;
+}
+
+.priority-add:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.priority-warning {
+  margin: -0.6rem 0 1.6rem;
+  font-family: var(--font-hand);
+  font-size: 2.6rem;
+  color: var(--tomato);
 }
 
 .priority-actions {
