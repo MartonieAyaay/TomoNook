@@ -4,6 +4,16 @@
   column-gap: 5.8rem;
 }
 
+.mood-left {
+  grid-area: calendar;
+  min-width: 0;
+}
+
+/* Keeps day numbers readable on light mood colors like yellow. */
+.mood-page .calendar-num {
+  text-shadow: 0 0 0.6cqw rgb(60 30 20 / 55%);
+}
+
 .diary {
   grid-area: side;
   display: flex;
