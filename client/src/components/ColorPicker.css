@@ -1,0 +1,63 @@
+.color-picker {
+  position: relative;
+  flex: none;
+}
+
+.color-swatch {
+  width: 4.4rem;
+  height: 4.4rem;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0.3rem solid var(--cream-light);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0.2rem rgb(0 0 0 / 20%);
+}
+
+.color-picker-toggle {
+  width: 5.2rem;
+  height: 5.2rem;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.color-swatch.is-active {
+  box-shadow: 0 0 0 0.3rem var(--brown);
+}
+
+.color-popover {
+  position: fixed;
+  z-index: 2;
+  box-sizing: border-box;
+  height: 130px;
+  align-content: center;
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 1rem;
+  padding: 1.2rem;
+  border: 0.25rem solid var(--orange);
+  border-radius: 1.6rem;
+  background: var(--cream-light);
+  box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 20%);
+}
+
+.color-custom {
+  display: grid;
+  place-items: center;
+  width: 4.4rem;
+  height: 4.4rem;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+  box-shadow: 0 0 0 0.2rem rgb(0 0 0 / 20%);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.color-custom input {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
