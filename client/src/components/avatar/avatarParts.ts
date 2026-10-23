@@ -56,14 +56,17 @@ export function partLayer(part: AvatarPart, a: AvatarConfig): Layer | null {
     case 'nose':
       return layer(part, `nose/nose-${a.nose}`)
     case 'mouth':
-      return layer(part, `mouth/mouth-${a.mouth}`)
+      return layer(part, `mouth/mouth-${a.mouth === LIPSTICK_MOUTH ? 10 : a.mouth}`)
   }
 }
+
+/** Mouth 10 again, with lipstick drawn under it. */
+export const LIPSTICK_MOUTH = 11
 
 /** Tint drawn under the mouth (multiplied, so it suits every skin tone). */
 export const lipstickLayer = (): Layer => layer('lipstick', 'mouth/lipstick')
 
-export const OPTION_COUNT = { eyes: 6, brows: 8, nose: 4, mouth: 10, hair: 9 } as const
+export const OPTION_COUNT = { eyes: 6, brows: 8, nose: 4, mouth: 11, hair: 9 } as const
 
 /** Sampled from the skin art, light to dark. */
 export const SKIN_TONES = ['#f1ded1', '#f9cfb3', '#d7ad91', '#ae7b5a', '#865b3e', '#522f19']

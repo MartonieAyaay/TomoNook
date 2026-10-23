@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { AvatarConfig } from '@tomonook/shared'
-import { CHIN_LINE, CROPS, PART_ORDER, lipstickLayer, partLayer, type AvatarPart, type Crop } from './avatarParts.ts'
+import { CHIN_LINE, CROPS, LIPSTICK_MOUTH, PART_ORDER, lipstickLayer, partLayer, type AvatarPart, type Crop } from './avatarParts.ts'
 import './Avatar.css'
 
 /** Moves/resizes a part around its own center, as set in the editor. */
@@ -40,7 +40,7 @@ export default function Avatar({ avatar, parts = PART_ORDER, crop = CROPS.full, 
       draws.splice(0, 0, { part: p, key: 'hair-back', clip: `inset(${CHIN_LINE * 100 - 0.1}% 0 0 0)` })
       draws.push({ part: p, key: 'hair', clip: `inset(0 0 ${100 - CHIN_LINE * 100 - 0.1}% 0)` })
     } else {
-      if (p === 'mouth' && avatar.lipstick) draws.push({ part: p, key: 'lipstick', lipstick: true })
+      if (p === 'mouth' && avatar.mouth === LIPSTICK_MOUTH) draws.push({ part: p, key: 'lipstick', lipstick: true })
       draws.push({ part: p, key: p })
     }
   }
