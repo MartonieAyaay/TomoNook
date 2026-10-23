@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Sidebar from './components/Sidebar.tsx'
 import SplashScreen from './components/SplashScreen.tsx'
+import TimerTicker from './components/TimerTicker.tsx'
 import TodoPage from './pages/TodoPage.tsx'
 import MoodPage from './pages/MoodPage.tsx'
 import TimersPage from './pages/TimersPage.tsx'
@@ -17,6 +18,7 @@ export default function App() {
   return (
     <div className="app">
       {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+      <TimerTicker />
       <Sidebar />
       <main className="main">
         <Routes>

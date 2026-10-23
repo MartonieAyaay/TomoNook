@@ -71,27 +71,20 @@ export const POSTS_PER_DAY_STREAK = 10;
 
 // ---------- Timers ----------
 
-export type TimerPresetKind =
-  | "custom"
-  | "pomodoro"
-  | "52-17"
-  | "ultradian-90"
-  | "reverse-pomodoro"
-  | "animedoro";
-
-export interface TimerPhase {
-  label: string;
-  minutes: number;
-}
-
-export interface TimerConfig {
+/** A saved timer card: focus time, then a break, repeated until stopped. */
+export interface TimerPreset {
   id: string;
   name: string;
-  kind: TimerPresetKind;
-  phases: TimerPhase[];
-  /** Uploaded image URL shown riding the tip of the progress bar. */
-  imageUrl?: string;
+  lockMs: number;
+  chillMs: number;
 }
+
+export type TimerPhaseName = "lock" | "chill";
+
+export const MAX_TIMERS = 12;
+export const TIMER_NAME_MAX = 20;
+/** Longest a single phase can be: 23:59:59. */
+export const TIMER_PHASE_MAX_MS = (24 * 3600 - 1) * 1000;
 
 // ---------- Avatar & profile ----------
 

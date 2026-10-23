@@ -1,5 +1,6 @@
 /* Clock on the left, the open mode's controls on the right (Figma 10:584). */
 .clock-page {
+  position: relative;
   display: grid;
   grid-template-columns: 56.6rem minmax(0, 89.8rem);
   column-gap: 18rem;
@@ -10,6 +11,27 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+}
+
+/* Add + sits top right, as on the to-do page. */
+.clock-add {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.clock-add:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.clock-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5rem;
+  min-width: 0;
+  margin-top: 15.4rem;
 }
 
 /* ---------- Timer / Stopwatch switch ---------- */
@@ -93,7 +115,6 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  margin-top: 15.4rem;
   padding: 2.2rem 3.6rem 4rem;
   border: 0.4rem solid var(--orange);
   border-radius: 2.26rem;
@@ -237,6 +258,361 @@
   color: var(--forest);
 }
 
+/* ---------- Running timer, under the clock ---------- */
+
+.timer-status {
+  align-self: stretch;
+  margin-top: 0.4rem;
+  text-align: center;
+}
+
+.timer-status p {
+  margin: 0;
+}
+
+.timer-status-label {
+  font-family: var(--font-heading);
+  font-size: 3.6rem;
+  line-height: 1.2;
+  color: var(--orange);
+  text-shadow: 0.2rem 0.2rem 0 rgb(0 0 0 / 25%);
+}
+
+.timer-status-time {
+  font-family: var(--font-heading);
+  font-size: 8.6rem;
+  line-height: 1;
+  color: var(--forest);
+  text-shadow: 0.6rem 0.6rem 0 rgb(160 187 59 / 41%);
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-status .timer-status-name {
+  margin-top: 0.4rem;
+  font-family: Podkova, Georgia, serif;
+  font-size: 3.2rem;
+  color: var(--gray);
+}
+
+.timer-status-controls {
+  margin-top: 1.6rem;
+  gap: 1.6rem;
+}
+
+.timer-status-controls .stopwatch-btn {
+  width: 16.4rem;
+  height: 5.8rem;
+}
+
+/* ---------- Timer cards (Figma 11:641) ---------- */
+
+.timer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 41rem);
+  column-gap: 7.8rem;
+  row-gap: 6rem;
+  align-items: start;
+}
+
+.timer-empty {
+  grid-column: 1 / -1;
+  text-align: left;
+}
+
+.timer-card {
+  position: relative;
+  min-height: 41.8rem;
+  padding: 2rem 3.6rem 3rem;
+  border: 0.4rem solid var(--orange);
+  border-radius: 2.26rem;
+  background: var(--cream-light);
+  box-shadow: var(--card-shadow);
+  transition:
+    transform 150ms ease-out,
+    border-color 150ms ease-out,
+    box-shadow 150ms ease-out;
+}
+
+.timer-card:has(.timer-card-start:hover:not(:disabled)) {
+  transform: translateY(-0.4rem);
+}
+
+.timer-card.is-on {
+  border-color: var(--forest);
+  box-shadow:
+    0 0 0 0.6rem rgb(160 187 59 / 60%),
+    var(--card-shadow);
+}
+
+.timer-card p {
+  margin: 0;
+}
+
+/* Covers the card so a click anywhere starts it. */
+.timer-card-start {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+}
+
+.timer-card-start:disabled {
+  cursor: default;
+}
+
+/* The card's text lets clicks through to the start button underneath. */
+.timer-card > :not(.timer-card-start) {
+  position: relative;
+  pointer-events: none;
+}
+
+.timer-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 0.6rem;
+  margin-bottom: 1.8rem;
+  border-bottom: 0.16rem solid var(--orange);
+}
+
+.timer-card-name {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 3.92rem;
+  line-height: 1.25;
+  color: var(--orange);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0.2rem 0.2rem 0 rgb(0 0 0 / 25%);
+}
+
+.timer-card-icons {
+  display: flex;
+  gap: 0.4rem;
+  pointer-events: auto;
+}
+
+.timer-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 4.6rem;
+  height: 4.6rem;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  transition: transform 150ms ease-out;
+}
+
+.timer-icon-btn:hover {
+  transform: scale(1.12);
+}
+
+.timer-icon-btn img {
+  width: 3.6rem;
+  height: 3.6rem;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.timer-icon-pencil {
+  rotate: 41deg;
+}
+
+.timer-card .timer-card-label {
+  margin-top: 0.4rem;
+  font-family: Podkova, Georgia, serif;
+  font-size: 3.05rem;
+  line-height: 1.25;
+  color: var(--orange);
+  text-shadow: 0.156rem 0.156rem 0 rgb(0 0 0 / 25%);
+}
+
+.timer-card-time {
+  font-family: var(--font-heading);
+  font-size: 8.6rem;
+  line-height: 1.05;
+  color: var(--forest);
+  text-shadow: 0.61rem 0.61rem 0 rgb(160 187 59 / 41%);
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-card > .timer-card-badge {
+  position: absolute;
+  right: 2.4rem;
+  bottom: 2rem;
+  padding: 0.4rem 1.6rem 0;
+  border-radius: 1.2rem;
+  background: var(--forest);
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  color: var(--cream-text);
+}
+
+/* ---------- Add / edit timer dialog ---------- */
+
+.timer-dialog {
+  width: min(60rem, calc(100vw - 32px));
+}
+
+.timer-field {
+  display: block;
+  margin: 2.4rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.timer-field-label {
+  display: block;
+  padding: 0;
+  margin-bottom: 0.6rem;
+  font-family: Podkova, Georgia, serif;
+  font-size: 3rem;
+  color: var(--orange);
+}
+
+.timer-name-input {
+  width: 100%;
+  padding: 0.8rem 1.4rem;
+  border: 0.25rem solid var(--orange);
+  border-radius: 1.4rem;
+  background: #fff;
+  font-family: var(--font-heading);
+  font-size: 3.6rem;
+  line-height: 1.2;
+  color: var(--orange);
+}
+
+.timer-duration-part {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-heading);
+  font-size: 6rem;
+  color: var(--forest);
+}
+
+.timer-duration-part > span {
+  padding: 0 0.6rem;
+}
+
+.timer-duration input {
+  width: 11rem;
+  min-width: 52px;
+  padding: 0.6rem 0 0;
+  border: 0.25rem solid var(--forest);
+  border-radius: 1.4rem;
+  background: #fff;
+  font-family: var(--font-heading);
+  font-size: 6rem;
+  line-height: 1.1;
+  color: var(--forest);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.timer-duration input::-webkit-inner-spin-button,
+.timer-duration input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.confirm-body .timer-error {
+  margin: 1.6rem 0 0;
+  font-size: 2.6rem;
+  color: var(--tomato);
+}
+
+.timer-dialog .confirm-actions {
+  margin-top: 3rem;
+}
+
+.timer-dialog .confirm-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- Stopwatch history ---------- */
+
+.stopwatch-history {
+  padding-bottom: 2.6rem;
+}
+
+.stopwatch-history-header {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 0.16rem solid var(--orange);
+}
+
+.stopwatch-history-header .stopwatch-title {
+  flex: 1;
+  border-bottom: 0;
+}
+
+.stopwatch-clear {
+  min-height: 36px;
+  padding: 0 0 0.6rem;
+  border: 0;
+  background: none;
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  color: var(--tomato-dark);
+  text-decoration: underline;
+  text-underline-offset: 0.4rem;
+}
+
+.stopwatch-history-empty {
+  margin: 2rem 0 0;
+  font-family: Podkova, Georgia, serif;
+  font-size: 3rem;
+  color: var(--gray);
+}
+
+.stopwatch-history-list {
+  margin: 1.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stopwatch-run {
+  display: grid;
+  grid-template-columns: 1fr 16rem 22rem;
+  align-items: baseline;
+  column-gap: 4rem;
+  padding: 1.2rem 0.4rem;
+  border-top: 0.16rem dashed rgb(230 107 51 / 45%);
+}
+
+.stopwatch-run:first-child {
+  border-top: 0;
+}
+
+.run-when {
+  font-family: var(--font-heading);
+  font-size: 3.4rem;
+  color: var(--orange);
+}
+
+.run-laps {
+  font-family: Podkova, Georgia, serif;
+  font-size: 3rem;
+  color: var(--gray);
+  text-align: right;
+}
+
+.stopwatch-run .lap-total {
+  text-align: right;
+}
+
 /* ---------- Smaller screens ---------- */
 
 @media (max-width: 1200px) {
@@ -257,12 +633,102 @@
     margin-left: 0;
   }
 
-  .stopwatch-card {
+  .clock-main {
     margin-top: 0;
   }
 }
 
 @media (max-width: 720px) {
+  .clock-add {
+    top: 4px;
+    width: auto;
+    height: 40px;
+    margin-top: 0;
+    padding: 4px 16px 0;
+    font-size: 18px;
+  }
+
+  /* Clear of the Add + button. */
+  .clock-side .clock-tabs {
+    margin-top: 14px;
+  }
+
+  .clock-main {
+    gap: 20px;
+  }
+
+  .timer-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .timer-card {
+    min-height: 0;
+    padding: 10px 12px 14px;
+    border-width: 3px;
+    border-radius: 16px;
+  }
+
+  .timer-card-name {
+    font-size: 19px;
+  }
+
+  .timer-card .timer-card-label {
+    font-size: 14px;
+  }
+
+  .timer-card-time {
+    font-size: 32px;
+    text-shadow: 2px 2px 0 rgb(160 187 59 / 41%);
+  }
+
+  .timer-card > .timer-card-badge {
+    right: 10px;
+    bottom: 10px;
+    font-size: 13px;
+  }
+
+  .timer-status-label {
+    font-size: 20px;
+  }
+
+  .timer-status-time {
+    font-size: 48px;
+  }
+
+  .timer-status .timer-status-name {
+    font-size: 15px;
+  }
+
+  .timer-status-controls .stopwatch-btn {
+    width: auto;
+  }
+
+  .timer-field-label,
+  .stopwatch-history-empty,
+  .run-laps {
+    font-size: 15px;
+  }
+
+  .timer-name-input {
+    font-size: 18px;
+  }
+
+  .timer-duration-part,
+  .timer-duration input {
+    font-size: 26px;
+  }
+
+  .stopwatch-run {
+    grid-template-columns: 1fr 56px 100px;
+    column-gap: 8px;
+  }
+
+  .run-when,
+  .stopwatch-clear {
+    font-size: 16px;
+  }
+
   .clock-tabs {
     width: min(300px, 100%);
     height: 48px;
