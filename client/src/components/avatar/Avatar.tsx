@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { AvatarConfig } from '@tomonook/shared'
-import { CROPS, PART_ORDER, partLayer, type AvatarPart, type Crop } from './avatarParts.ts'
+import { CHIN_LINE, CROPS, PART_ORDER, partLayer, type AvatarPart, type Crop } from './avatarParts.ts'
 import './Avatar.css'
 
 /** Moves/resizes a part around its own center, as set in the editor. */
@@ -30,11 +30,26 @@ export default function Avatar({ avatar, parts = PART_ORDER, crop = CROPS.full, 
     top: `${(-crop.top / crop.size) * 100}%`,
   }
 
+  // Long hair is cut at the chin: the lower piece goes under the body, the
+  // upper piece stays in its usual spot above it. The cuts overlap slightly so
+  // no seam shows where they meet.
+  const draws: { part: AvatarPart; key: string; clip?: string }[] = []
+  for (const p of PART_ORDER) {
+    if (!parts.includes(p)) continue
+    if (p === 'hair') {
+      draws.splice(0, 0, { part: p, key: 'hair-back', clip: `inset(${CHIN_LINE * 100 - 0.1}% 0 0 0)` })
+      draws.push({ part: p, key: 'hair', clip: `inset(0 0 ${100 - CHIN_LINE * 100 - 0.1}% 0)` })
+    } else {
+      draws.push({ part: p, key: p })
+    }
+  }
+
   return (
     <span className={`avatar${className ? ` ${className}` : ''}`}>
       <span className="avatar-canvas" style={canvas}>
-        {PART_ORDER.filter((p) => parts.includes(p)).map((p) => {
+        {draws.map(({ part: p, key, clip }) => {
           const l = partLayer(p, avatar)
+          if (!l) return null
           const art = (
             <>
               {l.mask && (
@@ -48,7 +63,7 @@ export default function Avatar({ avatar, parts = PART_ORDER, crop = CROPS.full, 
           )
           const spacing = p === 'body' ? 0 : (avatar.adjust?.[p]?.spacing ?? 0)
           return (
-            <span key={l.key} className="avatar-layer" style={adjustStyle(p, avatar)}>
+            <span key={key} className="avatar-layer" style={{ ...adjustStyle(p, avatar), clipPath: clip }}>
               {spacing === 0 ? (
                 art
               ) : (

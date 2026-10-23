@@ -33,7 +33,16 @@ export type AvatarPart = 'body' | 'hair' | 'eyes' | 'brows' | 'nose' | 'mouth'
 /** Bottom to top. */
 export const PART_ORDER: AvatarPart[] = ['body', 'hair', 'eyes', 'brows', 'nose', 'mouth']
 
-export function partLayer(part: AvatarPart, a: AvatarConfig): Layer {
+/**
+  Just under the chin, as a fraction of the canvas height. Hair below this
+  line is drawn behind the body, so long hair falls behind the shoulders of
+  either body shape instead of being drawn over them.
+*/
+export const CHIN_LINE = 0.665
+
+/** Option 0 means "none": every part but the body can be left off. */
+export function partLayer(part: AvatarPart, a: AvatarConfig): Layer | null {
+  if (part !== 'body' && a[part] === 0) return null
   switch (part) {
     case 'body':
       return layer(part, `body/${a.body}-${a.skin}`, a.shirtColor)

@@ -196,6 +196,24 @@
   box-shadow: 0 0 0 0.6rem rgb(160 187 59 / 60%);
 }
 
+/* "None" leads every part's options. */
+.option-none {
+  align-content: center;
+  gap: 0.6rem;
+  font-family: var(--font-heading);
+  font-size: 3.2rem;
+  line-height: 1;
+  color: var(--tomato-dark);
+}
+
+.option-none svg {
+  width: 55%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
 .option-art {
   width: 100%;
   pointer-events: none;
@@ -409,6 +427,10 @@
   .option-scroll {
     -webkit-mask-image: none;
     mask-image: none;
+  }
+
+  .option-none {
+    font-size: 15px;
   }
 
   .option-tile {

@@ -42,6 +42,9 @@ export default function ProfilePage() {
   const [tab, setTab] = useState<Tab>('Body')
   const avatar = useProfileStore((s) => s.avatar)
   const updateAvatar = useProfileStore((s) => s.updateAvatar)
+  // Nothing to move when the open tab's part is set to "none".
+  const padPart = TAB_PART[tab]
+  const shownPart = padPart && avatar[padPart] !== 0 ? padPart : null
 
   return (
     <div className="profile-page">
@@ -52,7 +55,7 @@ export default function ProfilePage() {
           <Avatar avatar={avatar} className="profile-avatar" />
         </div>
         <ProfileName />
-        <AdjustControls part={TAB_PART[tab]} />
+        <AdjustControls part={shownPart} />
       </section>
 
       <section className="avatar-editor" aria-label="Edit avatar">
@@ -84,6 +87,7 @@ export default function ProfilePage() {
           {tab === 'Eyes' && (
             <>
               <OptionGrid label="Eye shapes">
+                <NoneTile label="No eyes" selected={avatar.eyes === 0} onSelect={() => updateAvatar({ eyes: 0 })} />
                 {range(OPTION_COUNT.eyes).map((n) => (
                   <OptionTile
                     key={n}
@@ -207,6 +211,7 @@ function PartGrid({ part, avatar, update }: PanelProps & { part: 'brows' | 'nose
   const name = part[0].toUpperCase() + part.slice(1)
   return (
     <OptionGrid label={`${name} styles`}>
+      <NoneTile label={`No ${part}`} selected={avatar[part] === 0} onSelect={() => update({ [part]: 0 })} />
       {range(OPTION_COUNT[part]).map((n) => (
         <OptionTile
           key={n}
@@ -252,6 +257,26 @@ function OptionTile({ label, selected, onSelect, avatar, part }: OptionTileProps
     >
       {/* Thumbnails show each option in its default spot. */}
       <Avatar avatar={{ ...avatar, adjust: {} }} parts={[part]} crop={CROPS[part]} className="option-art" />
+    </button>
+  )
+}
+
+function NoneTile({ label, selected, onSelect }: Omit<OptionTileProps, 'avatar' | 'part'>) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      aria-label={label}
+      title={label}
+      className={`option-tile option-none${selected ? ' is-active' : ''}`}
+      onClick={onSelect}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden>
+        <circle cx="12" cy="12" r="8" />
+        <path d="m6.5 17.5 11-11" />
+      </svg>
+      <span>None</span>
     </button>
   )
 }
