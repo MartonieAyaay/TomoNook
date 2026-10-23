@@ -117,7 +117,6 @@ export interface AvatarConfig {
   /** 1–6 */
   eyes: number;
   lashes: boolean;
-  lipstick: boolean;
   eyeColor: string;
   /** 1–8 */
   brows: number;
@@ -138,7 +137,6 @@ export const DEFAULT_AVATAR: AvatarConfig = {
   shirtColor: "#c13828",
   eyes: 1,
   lashes: true,
-  lipstick: false,
   eyeColor: "#5a3825",
   brows: 1,
   nose: 1,
