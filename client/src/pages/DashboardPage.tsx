@@ -21,7 +21,7 @@ export default function DashboardPage() {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <Link to="/profile" className="dashboard-avatar" title="Edit your avatar">
+        <Link to="/profile" className="dashboard-avatar" title="Profile">
           <Avatar avatar={avatar} className="dashboard-avatar-img" />
           <span className="visually-hidden">Profile</span>
         </Link>

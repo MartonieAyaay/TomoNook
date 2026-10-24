@@ -53,11 +53,9 @@
   height: 7.31rem;
 }
 
-/* Pinned to the bottom of the bar. */
 .sidebar-profile {
-  width: 7.3rem;
-  height: 7.3rem;
-  margin: auto 0 3rem;
+  width: 9.1rem;
+  height: 9.1rem;
 }
 
 .sidebar-divider {
@@ -89,9 +87,5 @@
 
   .sidebar-divider {
     display: none;
-  }
-
-  .sidebar-profile {
-    margin: 0;
   }
 }
