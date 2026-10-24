@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar.tsx'
 import SplashScreen from './components/SplashScreen.tsx'
+import StreakSplat from './components/splatter/StreakSplat.tsx'
 import TimerTicker from './components/TimerTicker.tsx'
 import TodoPage from './pages/TodoPage.tsx'
 import MoodPage from './pages/MoodPage.tsx'
@@ -23,6 +24,8 @@ export default function App() {
   return (
     <div className="app">
       {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+      {/* After the loading screen, so the splat is seen. */}
+      {!showSplash && <StreakSplat />}
       <TimerTicker />
       <Sidebar />
       <main className="main">

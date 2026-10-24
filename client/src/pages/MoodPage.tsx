@@ -6,6 +6,7 @@ import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import DiaryComposer from '../components/diary/DiaryComposer.tsx'
 import DiaryPost from '../components/diary/DiaryPost.tsx'
 import MoodPicker from '../components/mood/MoodPicker.tsx'
+import StreakBadge from '../components/mood/StreakBadge.tsx'
 import TomatoFill from '../components/TomatoFill.tsx'
 import { useMoodStore } from '../store/moodStore.ts'
 import smilingTomato from '../assets/tomato/tomato-face.png'
@@ -38,6 +39,7 @@ export default function MoodPage() {
     <div className="split-page mood-page">
       <header className="split-header">
         <h1 className="page-title">Mood Tracker !!</h1>
+        <StreakBadge />
       </header>
 
       <div className="mood-left">
