@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { today, type DayKey, type MoodPost } from '@tomonook/shared'
 import Calendar from '../components/calendar/Calendar.tsx'
 import ConfirmDialog from '../components/ConfirmDialog.tsx'
@@ -15,6 +16,8 @@ import './MoodPage.css'
 export default function MoodPage() {
   const [selected, setSelected] = useState<DayKey>(today)
   const [deleting, setDeleting] = useState<MoodPost | null>(null)
+  // Arriving from the dashboard's "Why so ___?" link: jump into the diary box.
+  const writeDiary = (useLocation().state as { writeDiary?: boolean } | null)?.writeDiary ?? false
   const allPosts = useMoodStore((s) => s.posts)
   const { addPost, editPost, deletePost } = useMoodStore.getState()
   const moods = useMoodStore((s) => s.moods)
@@ -55,7 +58,7 @@ export default function MoodPage() {
         </h2>
 
         {isToday ? (
-          <DiaryComposer onPost={(text) => addPost(selected, text)} />
+          <DiaryComposer onPost={(text) => addPost(selected, text)} autoFocus={writeDiary} />
         ) : (
           <p className="diary-note">
             {selected < today() ? 'Past entries can be read and deleted.' : 'You can write here on that day.'}
