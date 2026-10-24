@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { fromDayKey, today, type DayKey } from '@tomonook/shared'
 import { useMoodStore } from '../../store/moodStore.ts'
 import TomatoFill from '../TomatoFill.tsx'
@@ -9,7 +10,7 @@ import './MoodPicker.css'
   Today's mood: pick one of your moods and that day's tomato fills with its
   color. Other days just show what was logged.
 */
-export default function MoodPicker({ day }: { day: DayKey }) {
+export default function MoodPicker({ day, compact = false }: { day: DayKey; compact?: boolean }) {
   const moods = useMoodStore((s) => s.moods)
   const entry = useMoodStore((s) => s.entries.find((e) => e.day === day))
   const setDayMood = useMoodStore((s) => s.setDayMood)
@@ -24,9 +25,18 @@ export default function MoodPicker({ day }: { day: DayKey }) {
         <h2 id="mood-picker-title" className="mood-picker-title">
           {isToday ? 'Today’s Mood' : `Mood on ${dateLabel}`}
         </h2>
-        <button type="button" className="mood-edit-link" onClick={() => setManaging(true)}>
-          Edit moods
-        </button>
+        {compact ? (
+          // On the dashboard: once a mood is picked, nudge the user to write about it.
+          current && (
+            <Link to="/mood" state={{ writeDiary: true }} className="mood-edit-link mood-why-link">
+              Why so {current.name.toLowerCase()}?
+            </Link>
+          )
+        ) : (
+          <button type="button" className="mood-edit-link" onClick={() => setManaging(true)}>
+            Edit moods
+          </button>
+        )}
       </header>
 
       {isToday ? (

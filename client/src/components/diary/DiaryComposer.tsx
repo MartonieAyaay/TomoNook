@@ -3,7 +3,7 @@ import { POST_MAX_CHARS } from '@tomonook/shared'
 import AutoTextarea from './AutoTextarea.tsx'
 
 /** The "What's up?" box. Enter posts, Shift+Enter adds a new line. */
-export default function DiaryComposer({ onPost }: { onPost: (text: string) => void }) {
+export default function DiaryComposer({ onPost, autoFocus = false }: { onPost: (text: string) => void; autoFocus?: boolean }) {
   const [text, setText] = useState('')
 
   const submit = () => {
@@ -25,6 +25,7 @@ export default function DiaryComposer({ onPost }: { onPost: (text: string) => vo
       </label>
       <AutoTextarea
         id="diary-new"
+        autoFocus={autoFocus}
         className="diary-text diary-input"
         value={text}
         placeholder="What’s up?"

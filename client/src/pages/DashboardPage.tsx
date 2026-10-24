@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { today } from '@tomonook/shared'
 import Avatar from '../components/avatar/Avatar.tsx'
 import MoodPicker from '../components/mood/MoodPicker.tsx'
@@ -34,7 +34,7 @@ export default function DashboardPage() {
       <div className="dashboard-grid">
         <TodayTasks />
         <div className="dashboard-side">
-          <MoodPicker day={today()} />
+          <MoodPicker day={today()} compact />
           <ClockCard />
         </div>
       </div>
@@ -121,6 +121,7 @@ function ClockCard() {
   const timers = useTimerStore((s) => s.timers)
   const active = useTimerStore((s) => s.active)
   const { startTimer, pauseTimer, resumeTimer } = useTimerStore.getState()
+  const navigate = useNavigate()
   const timer = timers.find((t) => t.id === active?.id)
   const running = active?.endsAt != null
   const [now, setNow] = useState(Date.now)
@@ -163,6 +164,7 @@ function ClockCard() {
                 onClick={() => {
                   unlockChime()
                   startTimer(t.id)
+                  navigate('/timers')
                 }}
               >
                 ▶ {t.name}
