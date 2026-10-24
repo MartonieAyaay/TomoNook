@@ -111,7 +111,7 @@
   font-size: 1em;
   color: var(--orange);
   text-decoration: none;
-  transition: background-color 150ms ease-out, transform 150ms ease-out;
+  transition: background-color 150ms ease-out, transform 220ms var(--ease-bubbly);
 }
 
 /* The + itself; the box above stays a big target. */
@@ -317,7 +317,7 @@
   background: none;
   font-size: 1em;
   text-decoration: none;
-  transition: transform 150ms ease-out;
+  transition: transform 220ms var(--ease-bubbly);
 }
 
 .tomato-button img {
@@ -362,7 +362,8 @@
   border: 0.5rem solid var(--orange);
   border-radius: 3rem;
   background: var(--butter);
-  animation: bubble-in 200ms ease-out;
+  animation: pop-in 240ms var(--ease-bubbly);
+  transform-origin: 15% 0;
 }
 
 .feed-list {
@@ -389,7 +390,19 @@
   border-radius: 2rem;
   background: var(--cream-light);
   box-shadow: 0 0.4rem 0.2rem rgb(0 0 0 / 12%);
-  transition: transform 150ms ease-out;
+  transition: transform 220ms var(--ease-bubbly);
+}
+
+.feed-list > li {
+  animation: pop-in 260ms var(--ease-pop) backwards;
+}
+
+.feed-list > li:nth-child(2) {
+  animation-delay: 30ms;
+}
+
+.feed-list > li:nth-child(n + 3) {
+  animation-delay: 60ms;
 }
 
 .feed-food:hover {

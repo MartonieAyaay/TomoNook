@@ -10,17 +10,18 @@
 }
 
 .cat-dialog[open] {
-  animation: cat-dialog-in 180ms ease-out;
+  animation: cat-dialog-in 280ms var(--ease-bubbly);
 }
 
 .cat-dialog::backdrop {
   background: rgb(40 40 40 / 45%);
+  animation: backdrop-in 200ms ease-out;
 }
 
 @keyframes cat-dialog-in {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    transform: translateY(16px) scale(0.86);
   }
 }
 

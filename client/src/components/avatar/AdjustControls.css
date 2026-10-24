@@ -91,7 +91,7 @@
   color: var(--forest);
   touch-action: manipulation;
   user-select: none;
-  transition: transform 100ms ease-out;
+  transition: transform 220ms var(--ease-bubbly);
 }
 
 .adjust-btn svg {

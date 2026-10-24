@@ -83,7 +83,7 @@
   background: var(--cream-light);
   box-shadow: 0 0.4rem 0.2rem rgb(0 0 0 / 12%);
   transition:
-    transform 150ms ease-out,
+    transform 220ms var(--ease-bubbly),
     border-color 150ms ease-out,
     box-shadow 150ms ease-out;
 }
@@ -187,4 +187,9 @@
   .mood-picker-note {
     font-size: 16px;
   }
+}
+
+/* The picked mood's tomato squishes. */
+.mood-option.is-active .mood-option-tomato {
+  animation: boing 320ms ease-out;
 }

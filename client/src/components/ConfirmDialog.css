@@ -9,17 +9,18 @@
 }
 
 .confirm-dialog[open] {
-  animation: confirm-in 160ms ease-out;
+  animation: confirm-in 260ms var(--ease-bubbly);
 }
 
 .confirm-dialog::backdrop {
   background: rgb(40 40 40 / 45%);
+  animation: backdrop-in 200ms ease-out;
 }
 
 @keyframes confirm-in {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+    transform: translateY(14px) scale(0.86);
   }
 }
 

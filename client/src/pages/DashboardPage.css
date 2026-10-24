@@ -17,7 +17,7 @@
   border-radius: 50%;
   background: var(--cream-light);
   box-shadow: var(--card-shadow);
-  transition: transform 150ms ease-out;
+  transition: transform 220ms var(--ease-bubbly);
 }
 
 .dashboard-avatar:hover {
@@ -130,7 +130,7 @@
   height: 100%;
   border-radius: inherit;
   background: var(--tomato);
-  transition: width 300ms ease-out;
+  transition: width 400ms var(--ease-bubbly);
 }
 
 .dash-progress-count {
@@ -165,7 +165,7 @@
   padding: 0;
   border: 0;
   background: none;
-  transition: transform 150ms ease-out;
+  transition: transform 220ms var(--ease-bubbly);
 }
 
 .dash-task-check:hover {
@@ -196,6 +196,10 @@
   font-size: 2.2rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.dash-task.is-done .dash-task-check img {
+  animation: boing 320ms ease-out;
 }
 
 .dash-task.is-done .dash-task-title {
@@ -249,7 +253,7 @@
   font-family: var(--font-display);
   font-size: 2.6rem;
   color: var(--cream-text);
-  transition: transform 150ms ease-out;
+  transition: transform 220ms var(--ease-bubbly);
 }
 
 .dash-btn:hover {

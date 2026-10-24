@@ -191,7 +191,7 @@
   border: 0;
   border-radius: 50%;
   background: none;
-  transition: transform 150ms ease-out;
+  transition: transform 220ms var(--ease-bubbly);
 }
 
 .diary-icon-btn:hover {
@@ -313,4 +313,10 @@
   .diary-note {
     font-size: 16px;
   }
+}
+
+/* New posts pop in. */
+.diary-post {
+  animation: pop-in 260ms var(--ease-bubbly);
+  transform-origin: 50% 0;
 }
