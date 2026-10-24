@@ -1,0 +1,96 @@
+/* The badge drops under the title when there isn't room beside it. */
+.mood-page .split-header {
+  flex-wrap: wrap;
+}
+
+.streak {
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  margin-top: 1.6rem;
+  padding: 1.2rem 2.8rem 1.2rem 1.6rem;
+  border: 0.6rem solid var(--orange);
+  border-radius: 3.25rem;
+  background: var(--butter);
+}
+
+.streak-tomato {
+  flex: none;
+  width: 8rem;
+  height: 8rem;
+  object-fit: contain;
+}
+
+.streak.is-happy .streak-tomato {
+  animation: streak-bob 1.6s var(--ease-bubbly) infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes streak-bob {
+  0%,
+  60%,
+  100% {
+    scale: 1;
+    translate: 0 0;
+  }
+
+  20% {
+    scale: 1.08 0.92;
+    translate: 0 0;
+  }
+
+  40% {
+    scale: 0.95 1.06;
+    translate: 0 -1.2rem;
+  }
+}
+
+.streak-text p {
+  margin: 0;
+}
+
+.streak-count {
+  font-family: var(--font-heading);
+  font-size: 4rem;
+  line-height: 1.1;
+  color: var(--tomato);
+}
+
+.streak:not(.is-happy) .streak-count {
+  color: var(--tomato-dark);
+}
+
+.streak-hint {
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 2.2rem;
+  color: var(--tomato-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak.is-happy .streak-tomato {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .streak {
+    gap: 10px;
+    margin-top: 0;
+    padding: 8px 16px 8px 10px;
+    border-width: 4px;
+    border-radius: 20px;
+  }
+
+  .streak-tomato {
+    width: 44px;
+    height: 44px;
+  }
+
+  .streak-count {
+    font-size: 20px;
+  }
+
+  .streak-hint {
+    font-size: 14px;
+  }
+}
