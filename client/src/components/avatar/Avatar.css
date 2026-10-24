@@ -29,19 +29,19 @@
   user-select: none;
 }
 
-/* A quick blink every few seconds. */
+/* A quick blink every 1.5 seconds. */
 .avatar-blink {
-  animation: avatar-blink 5s infinite;
+  animation: avatar-blink 1.5s infinite;
 }
 
 @keyframes avatar-blink {
   0%,
-  94%,
+  84%,
   100% {
     transform: scaleY(1);
   }
 
-  96.5% {
+  92% {
     transform: scaleY(0.08);
   }
 }
