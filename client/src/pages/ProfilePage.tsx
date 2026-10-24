@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import {
   PROFILE_NAME_MAX,
   type AdjustablePart,
@@ -48,7 +49,12 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-page">
-      <h1 className="page-title profile-title">Profile !!</h1>
+      <header className="profile-title profile-edit-header">
+        <h1 className="page-title">Profile !!</h1>
+        <Link to="/profile" className="profile-done">
+          Done
+        </Link>
+      </header>
 
       <section className="profile-card" aria-label="Your avatar">
         <div className="profile-avatar-frame">

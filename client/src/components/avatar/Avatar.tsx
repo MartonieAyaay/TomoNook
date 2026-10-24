@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { AvatarConfig } from '@tomonook/shared'
 import { CHIN_LINE, CROPS, LIPSTICK_MOUTH, PART_ORDER, lipstickLayer, partLayer, type AvatarPart, type Crop } from './avatarParts.ts'
 import './Avatar.css'
@@ -21,9 +21,23 @@ interface AvatarProps {
   parts?: AvatarPart[]
   crop?: Crop
   className?: string
+  /** Blinks every few seconds (the profile screen). */
+  blinking?: boolean
+  /** Little stars over the eyes, e.g. after eating. */
+  sparkle?: boolean
 }
 
-export default function Avatar({ avatar, parts = PART_ORDER, crop = CROPS.full, className }: AvatarProps) {
+// Where the eyes sit on the canvas, for blinking and sparkles.
+const EYE_CENTER = { x: CROPS.eyes.left + CROPS.eyes.size / 2, y: CROPS.eyes.top + CROPS.eyes.size / 2 }
+
+export default function Avatar({
+  avatar,
+  parts = PART_ORDER,
+  crop = CROPS.full,
+  className,
+  blinking = false,
+  sparkle = false,
+}: AvatarProps) {
   const canvas = {
     width: `${100 / crop.size}%`,
     left: `${(-crop.left / crop.size) * 100}%`,
@@ -71,9 +85,17 @@ export default function Avatar({ avatar, parts = PART_ORDER, crop = CROPS.full, 
             </>
           )
           const spacing = p === 'body' ? 0 : (avatar.adjust?.[p]?.spacing ?? 0)
+          const blinks = blinking && p === 'eyes'
           return (
             <span key={key} className="avatar-layer" style={{ ...adjustStyle(p, avatar), clipPath: clip }}>
-              {spacing === 0 ? (
+              {blinks ? (
+                <span
+                  className="avatar-layer avatar-blink"
+                  style={{ transformOrigin: `50% ${EYE_CENTER.y * 100}%` }}
+                >
+                  {spacing === 0 ? art : <Spaced art={art} spacing={spacing} />}
+                </span>
+              ) : spacing === 0 ? (
                 art
               ) : (
                 // Paired parts are centered on the canvas, so each half can be
@@ -96,7 +118,35 @@ export default function Avatar({ avatar, parts = PART_ORDER, crop = CROPS.full, 
             </span>
           )
         })}
+        {sparkle && avatar.eyes !== 0 && (
+          <span className="avatar-layer avatar-sparkles" style={adjustStyle('eyes', avatar)} aria-hidden>
+            {[-1, 1].map((side) => (
+              <span
+                key={side}
+                className="avatar-sparkle"
+                style={{
+                  left: `${(EYE_CENTER.x + side * (0.075 + (avatar.adjust?.eyes?.spacing ?? 0) / 100)) * 100}%`,
+                  top: `${(EYE_CENTER.y - 0.005) * 100}%`,
+                }}
+              />
+            ))}
+          </span>
+        )}
       </span>
     </span>
+  )
+}
+
+/** A paired part cut down the middle, each half pushed out (or in). */
+function Spaced({ art, spacing }: { art: ReactNode; spacing: number }) {
+  return (
+    <>
+      <span className="avatar-layer" style={{ clipPath: 'inset(0 50% 0 0)', transform: `translateX(${-spacing}%)` }}>
+        {art}
+      </span>
+      <span className="avatar-layer" style={{ clipPath: 'inset(0 0 0 50%)', transform: `translateX(${spacing}%)` }}>
+        {art}
+      </span>
+    </>
   )
 }

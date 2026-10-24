@@ -13,6 +13,38 @@
   grid-area: title;
 }
 
+.profile-edit-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+/* Back to the profile home screen. */
+.profile-done {
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: 18rem;
+  min-height: 44px;
+  height: 6.76rem;
+  margin-top: 2.2rem;
+  padding: 0 3rem;
+  border-radius: 2.19rem;
+  background: var(--forest);
+  box-shadow: 0 0.49rem 0.24rem rgb(0 0 0 / 30%);
+  font-family: var(--font-display);
+  font-size: 3.41rem;
+  color: var(--cream-text);
+  text-decoration: none;
+  text-shadow: 0.28rem 0.28rem 0 var(--forest-dark);
+  transition: transform 150ms ease-out;
+}
+
+.profile-done:hover {
+  transform: translateY(-2px);
+}
+
 /* ---------- Avatar card ---------- */
 
 .profile-card {

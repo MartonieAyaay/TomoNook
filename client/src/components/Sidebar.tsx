@@ -3,7 +3,7 @@ import homeIcon from '../assets/icons/nav-home.png'
 import todoIcon from '../assets/icons/nav-todo.png'
 import moodIcon from '../assets/icons/nav-mood.png'
 import timersIcon from '../assets/icons/nav-timers.png'
-import profileIcon from '../assets/icons/avatar-overlay.png'
+import profileIcon from '../assets/icons/nav-profile.png'
 import './Sidebar.css'
 
 const tabs = [

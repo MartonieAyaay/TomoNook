@@ -1,0 +1,606 @@
+/*
+  Laid out like the Figma frame (18:2). Everything on the stage is in em,
+  measured from the avatar frame's top-left corner, so the whole picture
+  can shrink together on small screens.
+*/
+.profile-stage {
+  position: relative;
+  width: 102.5em;
+  height: 86em;
+  margin: 3em 0 0 46.3em;
+  font-size: 1rem;
+}
+
+.profile-frame {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 59.6em;
+  height: 59.6em;
+  overflow: hidden;
+  border: 2.631em solid var(--orange);
+  border-radius: 4.627em;
+  background: var(--cream-light);
+}
+
+.profile-home-avatar {
+  width: 100%;
+}
+
+/* ---------- Decorations ---------- */
+
+.profile-deco {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+}
+
+.profile-deco-1 {
+  left: 47.93em;
+  top: -12.06em;
+  width: 19.53em;
+  rotate: 11.43deg;
+}
+
+.profile-deco-2 {
+  left: 42.22em;
+  top: -7.92em;
+  width: 13.71em;
+  rotate: 11.43deg;
+}
+
+.profile-deco-3 {
+  left: -4.96em;
+  top: 43.84em;
+  width: 21.32em;
+  transform: scaleX(-1);
+}
+
+.profile-deco-4 {
+  left: 7.18em;
+  top: 50.17em;
+  width: 14.96em;
+  transform: scaleX(-1);
+}
+
+/* ---------- Bubbles ---------- */
+
+.profile-bubble-spot {
+  position: absolute;
+  left: 51.67em;
+  top: -13.8em;
+  width: 50.8em;
+  height: 50.8em;
+}
+
+/* Speech goes over the corner tomatoes; the thought bubble sits behind them. */
+.profile-bubble-spot.is-speaking {
+  z-index: 1;
+}
+
+.thought-bubble {
+  position: absolute;
+  inset: 1.3em;
+  rotate: 3.19deg;
+  animation: bubble-in 250ms ease-out;
+}
+
+.thought-bubble-art {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* The inside of the cloud. */
+.thought-bubble-content {
+  position: absolute;
+  left: 19%;
+  top: 17%;
+  width: 71%;
+  height: 48%;
+  display: grid;
+  place-items: center;
+}
+
+.thought-plus {
+  display: grid;
+  place-items: center;
+  width: 12em;
+  height: 12em;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 1em;
+  color: var(--orange);
+  text-decoration: none;
+  transition: background-color 150ms ease-out, transform 150ms ease-out;
+}
+
+/* The + itself; the box above stays a big target. */
+.thought-plus span {
+  font-size: 12em;
+  line-height: 1;
+}
+
+.thought-plus:hover {
+  background: rgb(230 107 51 / 12%);
+  transform: scale(1.05);
+}
+
+.thought-mood {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6em;
+  color: inherit;
+  text-decoration: none;
+}
+
+.thought-mood-tomato {
+  display: block;
+  width: 11em;
+}
+
+.thought-mood-name {
+  max-width: 30em;
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-size: 4.4em;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0.05em 0.05em 0 rgb(0 0 0 / 25%);
+}
+
+/* Takes the thought bubble's place for the quote and for "Yum!". */
+.speech-bubble {
+  position: absolute;
+  left: 11em;
+  top: 7em;
+  width: 38em;
+  min-height: 18em;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 3em 3.6em;
+  border: 0.6em solid var(--orange);
+  border-radius: 5em;
+  background: #fffbec;
+  font-family: var(--font-hand);
+  font-size: 1em;
+  text-align: center;
+  color: var(--brown);
+  animation: bubble-pop 300ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.speech-text {
+  /* Stays readable when the stage shrinks on phones. */
+  font-size: max(3.8em, 16px);
+  line-height: 1.25;
+}
+
+/* The tail, pointing down-left toward the avatar's head. */
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  left: 2em;
+  bottom: -5.2em;
+  width: 7em;
+  height: 6em;
+  background: var(--orange);
+  clip-path: polygon(40% 0, 100% 0, 0 100%);
+}
+
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  left: 3em;
+  bottom: -3.4em;
+  width: 5.4em;
+  height: 4.4em;
+  background: #fffbec;
+  clip-path: polygon(40% 0, 100% 0, 0 100%);
+}
+
+.speech-bubble.is-yum {
+  left: 10em;
+  width: 28em;
+  min-height: 14em;
+}
+
+.speech-bubble.is-yum .speech-text {
+  font-size: 7em;
+  color: var(--tomato);
+}
+
+@keyframes bubble-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- Eating ---------- */
+
+.profile-food {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  width: 26%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  translate: -50% 0;
+  animation: food-pop 2.6s ease-out forwards;
+  pointer-events: none;
+}
+
+.profile-food img,
+.profile-food .cookie {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0.4em 0.4em rgb(0 0 0 / 25%));
+}
+
+@keyframes food-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(30%) scale(0.4);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translateY(0) scale(1.1);
+  }
+
+  25%,
+  70% {
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-20%) scale(0.5);
+  }
+}
+
+/* ---------- Name and buttons ---------- */
+
+.profile-home-name {
+  position: absolute;
+  left: 3.4em;
+  top: 61.2em;
+  width: 52.8em;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 1em;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--tomato);
+  text-shadow: 0.2em 0.2em 0 rgb(0 0 0 / 25%);
+}
+
+.profile-home-name span {
+  font-size: 6.4em;
+  line-height: 1.25;
+}
+
+.profile-home-name.is-placeholder {
+  opacity: 0.7;
+}
+
+.profile-actions {
+  position: absolute;
+  left: 0;
+  top: 70.8em;
+  display: flex;
+  gap: 7em;
+}
+
+.tomato-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 15.2em;
+  height: 15.2em;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 1em;
+  text-decoration: none;
+  transition: transform 150ms ease-out;
+}
+
+.tomato-button img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tomato-button span {
+  position: relative;
+  padding-top: 0.2em;
+  font-family: var(--font-hand);
+  font-size: 5.03em;
+  line-height: 0.75;
+  letter-spacing: -0.02em;
+  text-align: center;
+  color: var(--cream);
+  text-shadow: 0.083em 0.083em 0 rgb(0 0 0 / 25%);
+}
+
+.tomato-button:hover {
+  transform: translateY(-0.3em) scale(1.04);
+}
+
+.tomato-button:active {
+  transform: scale(0.97);
+}
+
+.tomato-button[aria-expanded='true'] {
+  transform: scale(1.06);
+  filter: drop-shadow(0 0 0.8em rgb(230 107 51 / 60%));
+}
+
+/* ---------- Feed panel ---------- */
+
+.feed-panel {
+  width: 59.6rem;
+  margin: 1.6rem 0 4rem 46.3rem;
+  padding: 2rem 2.4rem;
+  border: 0.5rem solid var(--orange);
+  border-radius: 3rem;
+  background: var(--butter);
+  animation: bubble-in 200ms ease-out;
+}
+
+.feed-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.4rem, 1fr));
+  gap: 1.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feed-item {
+  position: relative;
+}
+
+.feed-food {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 1.2rem 0.8rem 1rem;
+  border: 0;
+  border-radius: 2rem;
+  background: var(--cream-light);
+  box-shadow: 0 0.4rem 0.2rem rgb(0 0 0 / 12%);
+  transition: transform 150ms ease-out;
+}
+
+.feed-food:hover {
+  transform: translateY(-0.3rem);
+}
+
+.feed-food-art {
+  display: grid;
+  place-items: center;
+  width: 7rem;
+  height: 7rem;
+}
+
+.feed-food-art img,
+.feed-food-art .cookie {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.feed-add .feed-food-art {
+  border: 0.3rem dashed var(--orange);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 4.4rem;
+  color: var(--orange);
+}
+
+.feed-food-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--brown);
+}
+
+.feed-delete {
+  position: absolute;
+  top: -0.8rem;
+  right: -0.8rem;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0.25rem solid var(--cream-light);
+  border-radius: 50%;
+  background: var(--tomato);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--cream-light);
+}
+
+.feed-form {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1.4rem 2rem;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 0.2rem solid var(--orange);
+}
+
+.feed-pick {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 12rem;
+  height: 12rem;
+  min-width: 72px;
+  min-height: 72px;
+  overflow: hidden;
+  border: 0.3rem dashed var(--orange);
+  border-radius: 2rem;
+  background: var(--cream-light);
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  line-height: 1.1;
+  text-align: center;
+  color: var(--orange);
+  cursor: pointer;
+}
+
+.feed-pick:focus-within {
+  outline: 3px solid var(--forest);
+  outline-offset: 2px;
+}
+
+.feed-pick img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.feed-pick input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.feed-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+}
+
+.feed-name input {
+  min-height: 40px;
+  padding: 0.8rem 1.4rem 0.4rem;
+  border: 0.25rem solid var(--orange);
+  border-radius: 1.4rem;
+  background: var(--cream-light);
+  font-family: var(--font-heading);
+  font-size: 2.6rem;
+  color: var(--brown);
+}
+
+.feed-form-actions {
+  display: flex;
+  gap: 1.2rem;
+}
+
+.feed-btn {
+  min-height: 40px;
+  padding: 0.6rem 2.4rem 0.2rem;
+  border: 0;
+  border-radius: 1.4rem;
+  background: var(--forest);
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+  color: var(--cream-text);
+}
+
+.feed-btn.is-secondary {
+  background: none;
+  box-shadow: inset 0 0 0 0.25rem var(--forest);
+  color: var(--forest);
+}
+
+.feed-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 2.6rem;
+  color: var(--tomato);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thought-bubble,
+  .speech-bubble,
+  .feed-panel {
+    animation: none;
+  }
+
+  .profile-food {
+    animation-duration: 0s;
+    animation-delay: 0s;
+  }
+}
+
+/* Below this, the stage no longer fits beside the sidebar at full size. */
+@media (max-width: 1100px) {
+  .profile-stage {
+    font-size: calc((100vw - 32px - 15.1rem - 12.2rem) / 102.5);
+    margin: 16em 0 0;
+  }
+
+  .feed-panel {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .profile-stage {
+    font-size: calc((100vw - 32px) / 102.5);
+  }
+
+  .feed-panel {
+    width: 100%;
+    padding: 12px;
+    border-width: 3px;
+    border-radius: 16px;
+  }
+
+  .feed-list {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+  }
+
+  .feed-food-art {
+    width: 48px;
+    height: 48px;
+  }
+
+  .feed-food-name,
+  .feed-name,
+  .feed-pick,
+  .feed-btn {
+    font-size: 15px;
+  }
+
+  .feed-name input {
+    font-size: 16px;
+  }
+
+  .feed-error {
+    font-size: 16px;
+  }
+}

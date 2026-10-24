@@ -29,6 +29,56 @@
   user-select: none;
 }
 
+/* A quick blink every few seconds. */
+.avatar-blink {
+  animation: avatar-blink 5s infinite;
+}
+
+@keyframes avatar-blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  96.5% {
+    transform: scaleY(0.08);
+  }
+}
+
+/* Four-point stars over the eyes. */
+.avatar-sparkle {
+  position: absolute;
+  width: 7%;
+  aspect-ratio: 1;
+  background: #fff6a8;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  filter: drop-shadow(0 0 0.4rem #fff);
+  transform: translate(-50%, -50%);
+  animation: avatar-sparkle 700ms ease-in-out infinite alternate;
+}
+
+.avatar-sparkle + .avatar-sparkle {
+  animation-delay: 350ms;
+}
+
+@keyframes avatar-sparkle {
+  from {
+    transform: translate(-50%, -50%) scale(0.6) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) scale(1.15) rotate(20deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-blink,
+  .avatar-sparkle {
+    animation: none;
+  }
+}
+
 /* The recolorable area: a flat color cut to the part's mask, under its lines. */
 .avatar-fill {
   -webkit-mask: var(--avatar-mask) center / 100% 100% no-repeat;
