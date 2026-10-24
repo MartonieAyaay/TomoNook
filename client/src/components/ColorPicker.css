@@ -25,39 +25,176 @@
   box-shadow: 0 0 0 0.3rem var(--brown);
 }
 
+/* A small window; sizes in px so it stays usable at any zoom. */
 .color-popover {
   position: fixed;
   z-index: 2;
   box-sizing: border-box;
-  height: 130px;
-  align-content: center;
-  display: grid;
-  grid-template-columns: repeat(4, auto);
-  gap: 1rem;
-  padding: 1.2rem;
-  border: 0.25rem solid var(--orange);
-  border-radius: 1.6rem;
+  width: 264px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  padding: 10px 14px 14px;
+  border: 2.5px solid var(--orange);
+  border-radius: 16px;
   background: var(--cream-light);
-  box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 20%);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 20%);
+  font-family: var(--font-heading);
+  color: var(--brown);
 }
 
-.color-custom {
-  display: grid;
-  place-items: center;
-  width: 4.4rem;
-  height: 4.4rem;
-  min-width: 32px;
+.color-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 3px;
+  border-radius: 99px;
+  background: var(--butter);
+}
+
+.color-tab {
+  flex: 1;
   min-height: 32px;
-  border-radius: 50%;
-  background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
-  box-shadow: 0 0 0 0.2rem rgb(0 0 0 / 20%);
-  cursor: pointer;
-  overflow: hidden;
+  padding: 4px 0 0;
+  border: 0;
+  border-radius: 99px;
+  background: none;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  color: var(--brown);
+  transition: background-color 150ms ease-out;
 }
 
-.color-custom input {
+.color-tab.is-active {
+  background: var(--forest);
+  color: var(--cream-text);
+}
+
+/* ---------- Picker tab ---------- */
+
+.shade-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shade-square {
+  position: relative;
+  height: 150px;
+  border-radius: 10px;
+  background-image:
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to right, #fff, transparent);
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.shade-square:focus-visible {
+  outline: 3px solid var(--forest);
+  outline-offset: 2px;
+}
+
+.shade-thumb {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 40%), 0 1px 3px rgb(0 0 0 / 40%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.hue-field {
+  display: block;
+}
+
+.hue-slider {
+  display: block;
   width: 100%;
-  height: 100%;
-  opacity: 0;
+  height: 16px;
+  margin: 0;
+  border-radius: 99px;
+  background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+  appearance: none;
   cursor: pointer;
+}
+
+.hue-slider::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 40%), 0 1px 3px rgb(0 0 0 / 40%);
+  appearance: none;
+}
+
+.hue-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 40%);
+}
+
+.hue-slider:focus-visible {
+  outline: 3px solid var(--forest);
+  outline-offset: 2px;
+}
+
+.shade-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shade-preview {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--cream-light), 0 0 0 3.5px rgb(0 0 0 / 20%);
+}
+
+.shade-hex {
+  flex: 1;
+}
+
+.shade-hex input {
+  width: 100%;
+  height: 36px;
+  padding: 3px 10px 0;
+  border: 2px solid var(--orange);
+  border-radius: 10px;
+  background: #fff;
+  font-family: var(--font-heading);
+  font-size: 17px;
+  color: var(--brown);
+  text-transform: uppercase;
+}
+
+.shade-hex input:focus-visible {
+  outline: 2px solid var(--forest);
+  outline-offset: 1px;
+}
+
+/* ---------- Recent tab ---------- */
+
+.color-recent-note {
+  margin: 0 0 10px;
+  font-family: var(--font-hand);
+  font-size: 17px;
+}
+
+.color-recent-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 40px);
+  justify-content: space-between;
+  row-gap: 12px;
+}
+
+.color-recent-grid .color-swatch {
+  width: 40px;
+  height: 40px;
 }
