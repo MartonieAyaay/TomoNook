@@ -16,7 +16,7 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  transition: transform 150ms ease-out;
+  transition: transform 220ms var(--ease-bubbly);
 }
 
 .sidebar-link img {

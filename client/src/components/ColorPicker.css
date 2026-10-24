@@ -39,6 +39,8 @@
   background: var(--cream-light);
   box-shadow: 0 8px 20px rgb(0 0 0 / 20%);
   font-family: var(--font-heading);
+  animation: pop-in 220ms var(--ease-bubbly);
+  transform-origin: 20% 0;
   color: var(--brown);
 }
 
@@ -61,7 +63,13 @@
   font-family: var(--font-heading);
   font-size: 17px;
   color: var(--brown);
-  transition: background-color 150ms ease-out;
+  transition:
+    background-color 150ms ease-out,
+    scale 220ms var(--ease-bubbly);
+}
+
+.color-tab:active {
+  scale: 0.94;
 }
 
 .color-tab.is-active {

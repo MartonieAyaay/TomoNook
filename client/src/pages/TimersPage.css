@@ -171,7 +171,7 @@
   font-size: 3.41rem;
   line-height: 1;
   transition:
-    transform 150ms ease-out,
+    transform 220ms var(--ease-bubbly),
     opacity 150ms ease-out;
 }
 
@@ -328,7 +328,7 @@
   background: var(--cream-light);
   box-shadow: var(--card-shadow);
   transition:
-    transform 150ms ease-out,
+    transform 220ms var(--ease-bubbly),
     border-color 150ms ease-out,
     box-shadow 150ms ease-out;
 }
@@ -409,7 +409,7 @@
   border: 0;
   border-radius: 50%;
   background: none;
-  transition: transform 150ms ease-out;
+  transition: transform 220ms var(--ease-bubbly);
 }
 
 .timer-icon-btn:hover {
@@ -804,4 +804,10 @@
   .lap-split {
     font-size: 14px;
   }
+}
+
+/* New cards and laps pop in. */
+.timer-card,
+.stopwatch-lap {
+  animation: pop-in 240ms var(--ease-bubbly);
 }

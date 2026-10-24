@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar.tsx'
 import SplashScreen from './components/SplashScreen.tsx'
 import TimerTicker from './components/TimerTicker.tsx'
@@ -17,12 +17,16 @@ export default function App() {
     () => !(import.meta.env.DEV && location.search.includes('nosplash')),
   )
 
+  // Re-mounting on a new section replays the pop-in.
+  const section = useLocation().pathname.split('/')[1]
+
   return (
     <div className="app">
       {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
       <TimerTicker />
       <Sidebar />
       <main className="main">
+        <div key={section} className="page-enter">
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -32,6 +36,7 @@ export default function App() {
           <Route path="/profile" element={<ProfileHome />} />
           <Route path="/profile/edit" element={<ProfilePage />} />
         </Routes>
+        </div>
       </main>
     </div>
   )
