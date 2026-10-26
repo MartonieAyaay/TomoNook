@@ -1,7 +1,8 @@
 import { addDays, today } from '@tomonook/shared'
 import { fill, pickForms } from './pronouns.ts'
 import { moodStreak } from './streak.ts'
-import { cachedWeather, celsius, describeWeather, skyOf } from './weather.ts'
+import { cachedWeather, celsius, defaultTempUnit, describeWeather, formatTemp, skyOf } from './weather.ts'
+import { useSettingsStore } from '../store/settingsStore.ts'
 import { useFocusStore } from '../store/focusStore.ts'
 import { useGossipStore } from '../store/gossipStore.ts'
 import { useMoodStore } from '../store/moodStore.ts'
@@ -168,7 +169,8 @@ function weatherLine(): GossipLine | null {
         : c <= 10
           ? 'Bundle up, {name}!'
           : 'Perfect tomato-ripening weather.'
-  return { text: `It's ${w.temp}° and ${desc} out there. ${tip}`, tone: 'meh' }
+  const temp = formatTemp(w, w.temp, useSettingsStore.getState().tempUnit ?? defaultTempUnit())
+  return { text: `It's ${temp} and ${desc} out there. ${tip}`, tone: 'meh' }
 }
 
 /** Every line the tomatoes could say right now, filled in with the user's name and pronouns. */
