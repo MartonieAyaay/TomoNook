@@ -1,0 +1,280 @@
+.tomato-reaction {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.reaction-caption {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 6rem;
+  color: var(--tomato);
+  text-align: center;
+  text-shadow:
+    0.3rem 0.3rem 0 var(--cream-light),
+    -0.3rem -0.3rem 0 var(--cream-light),
+    0.3rem -0.3rem 0 var(--cream-light),
+    -0.3rem 0.3rem 0 var(--cream-light);
+}
+
+@keyframes reaction-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---------- Yes: a happy tomato sparkles in, then fades away ---------- */
+
+.tomato-reaction.is-yay {
+  /* Doesn't block the page while it shows. */
+  pointer-events: none;
+  align-content: center;
+  gap: 2rem;
+  background: radial-gradient(circle, rgb(255 233 170 / 75%) 0, transparent 60%);
+  animation:
+    backdrop-in 400ms ease-out,
+    reaction-out 500ms ease-in 2100ms forwards;
+}
+
+.yay-tomato {
+  position: relative;
+  width: 32rem;
+  max-width: 60vw;
+  animation: yay-in 600ms var(--ease-pop) backwards;
+}
+
+.yay-tomato img {
+  display: block;
+  width: 100%;
+  animation: yay-bob 1.2s ease-in-out 600ms infinite;
+}
+
+@keyframes yay-in {
+  from {
+    opacity: 0;
+    scale: 0.4;
+    rotate: -12deg;
+  }
+}
+
+@keyframes yay-bob {
+  50% {
+    translate: 0 -1.6rem;
+    rotate: 3deg;
+  }
+}
+
+.yay-sparkle {
+  position: absolute;
+  width: 14%;
+  aspect-ratio: 1;
+  background: #fff6a8;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  filter: drop-shadow(0 0 0.6rem #fff) drop-shadow(0 0 0.4rem #f5c851);
+  animation: yay-twinkle 700ms ease-in-out infinite alternate backwards;
+}
+
+.yay-sparkle-1 {
+  left: -6%;
+  top: 10%;
+}
+
+.yay-sparkle-2 {
+  right: -4%;
+  top: 4%;
+  width: 18%;
+  animation-delay: 200ms;
+}
+
+.yay-sparkle-3 {
+  right: -10%;
+  top: 52%;
+  width: 10%;
+  animation-delay: 400ms;
+}
+
+.yay-sparkle-4 {
+  left: -12%;
+  top: 60%;
+  width: 16%;
+  animation-delay: 300ms;
+}
+
+.yay-sparkle-5 {
+  left: 40%;
+  top: -12%;
+  width: 11%;
+  animation-delay: 100ms;
+}
+
+.yay-sparkle-6 {
+  left: 70%;
+  bottom: -6%;
+  width: 9%;
+  animation-delay: 500ms;
+}
+
+@keyframes yay-twinkle {
+  from {
+    opacity: 0.2;
+    scale: 0.4;
+    rotate: 0deg;
+  }
+
+  to {
+    opacity: 1;
+    scale: 1.15;
+    rotate: 25deg;
+  }
+}
+
+.tomato-reaction.is-yay .reaction-caption {
+  animation: pop-in 300ms var(--ease-pop) 300ms backwards;
+}
+
+/* ---------- No: fade in, charge up for 2s, launch, splat ---------- */
+
+.tomato-reaction.is-nay {
+  cursor: pointer;
+  animation: reaction-out 400ms ease-in 5000ms forwards;
+}
+
+.nay-tomato {
+  grid-area: 1 / 1;
+  width: 30rem;
+  max-width: 55vw;
+  animation:
+    nay-in 300ms ease-out backwards,
+    nay-shake 100ms linear 300ms 20,
+    nay-charge 2000ms ease-in 300ms forwards,
+    nay-launch 350ms cubic-bezier(0.5, 0, 1, 1) 2300ms forwards;
+}
+
+@keyframes nay-in {
+  from {
+    opacity: 0;
+    scale: 0.7;
+  }
+}
+
+@keyframes nay-shake {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  25% {
+    translate: -1.2rem 0.4rem;
+  }
+
+  50% {
+    translate: 0.8rem -0.6rem;
+  }
+
+  75% {
+    translate: 1.2rem 0.6rem;
+  }
+}
+
+/* Swells and glows red while it winds up. */
+@keyframes nay-charge {
+  from {
+    scale: 1;
+    filter: drop-shadow(0 0 0 rgb(193 56 40 / 0%));
+  }
+
+  to {
+    scale: 1.18;
+    filter: drop-shadow(0 0 3rem rgb(193 56 40 / 90%));
+  }
+}
+
+/* Flies straight at the viewer. */
+@keyframes nay-launch {
+  from {
+    scale: 1.18;
+  }
+
+  to {
+    scale: 7;
+    opacity: 0.6;
+    visibility: hidden;
+  }
+}
+
+.nay-mess {
+  grid-area: 1 / 1;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.nay-splat {
+  position: absolute;
+  animation:
+    nay-hit 260ms var(--ease-pop) 2600ms backwards,
+    nay-drip 2400ms ease-in 2860ms forwards;
+}
+
+.nay-splat-main {
+  width: 85vmax;
+  rotate: -8deg;
+}
+
+.nay-splat-2 {
+  left: -6vmax;
+  top: -8vmax;
+  width: 38vmax;
+  rotate: 140deg;
+  animation-delay: 2640ms, 2900ms;
+}
+
+.nay-splat-3 {
+  right: -8vmax;
+  bottom: -10vmax;
+  width: 44vmax;
+  rotate: 60deg;
+  animation-delay: 2680ms, 2940ms;
+}
+
+.nay-splat-4 {
+  right: 4vmax;
+  top: -6vmax;
+  width: 24vmax;
+  rotate: -100deg;
+  animation-delay: 2700ms, 2960ms;
+}
+
+@keyframes nay-hit {
+  from {
+    opacity: 0;
+    scale: 0.2;
+  }
+}
+
+/* The splat slowly slides down the glass. */
+@keyframes nay-drip {
+  to {
+    translate: 0 3rem;
+  }
+}
+
+.nay-caption {
+  position: relative;
+  max-width: 90vw;
+  color: var(--cream-light);
+  text-shadow: 0.4rem 0.4rem 0 var(--tomato-dark);
+  animation: pop-in 300ms var(--ease-pop) 2900ms backwards;
+}
+
+@media (max-width: 720px) {
+  .reaction-caption {
+    font-size: 30px;
+  }
+}

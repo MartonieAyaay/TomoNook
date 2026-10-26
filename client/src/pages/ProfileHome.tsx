@@ -6,6 +6,8 @@ import TomatoFill from '../components/TomatoFill.tsx'
 import { quoteOfTheDay } from '../lib/quotes.ts'
 import { useMoodStore } from '../store/moodStore.ts'
 import { useProfileStore } from '../store/profileStore.ts'
+import ProfileInfoCard from '../components/profile/ProfileInfoCard.tsx'
+import TomatoReaction from '../components/profile/TomatoReaction.tsx'
 import { FOOD_NAME_MAX, MAX_FOODS, imageToDataUrl, useFoodStore, type Food } from '../store/foodStore.ts'
 import tomato from '../assets/tomato/tomato-no-face.png'
 import thoughtBubble from '../assets/tomato/thought-bubble.png'
@@ -29,6 +31,8 @@ export default function ProfileHome() {
   const [feeding, setFeeding] = useState(false)
   const [eating, setEating] = useState<{ food: Food | null; key: number } | null>(null)
   const timer = useRef<number>(undefined)
+  // The tomato's reaction to whether the user likes tomatoes.
+  const [reaction, setReaction] = useState<{ likes: boolean; key: number } | null>(null)
 
   // Each bubble goes back to the thought bubble after a while; pressing again restarts the wait.
   const show = (kind: 'quote' | 'yum', ms: number) => {
@@ -50,61 +54,66 @@ export default function ProfileHome() {
     <div className="profile-home">
       <h1 className="page-title">Profile !!</h1>
 
-      <div className="profile-stage">
-        <div className="profile-frame">
-          <Avatar avatar={avatar} className="profile-home-avatar" blinking sparkle={eating !== null} />
-          {eating && (
-            <span key={eating.key} className="profile-food" aria-hidden>
-              {eating.food ? <img src={eating.food.image} alt="" /> : <Cookie />}
-            </span>
-          )}
+      <div className="profile-left">
+        <div className="profile-stage">
+          <div className="profile-frame">
+            <Avatar avatar={avatar} className="profile-home-avatar" blinking sparkle={eating !== null} />
+            {eating && (
+              <span key={eating.key} className="profile-food" aria-hidden>
+                {eating.food ? <img src={eating.food.image} alt="" /> : <Cookie />}
+              </span>
+            )}
+          </div>
+
+          <div className={`profile-bubble-spot${bubble.kind === 'thought' ? '' : ' is-speaking'}`} aria-live="polite">
+            {bubble.kind === 'thought' ? (
+              <ThoughtBubble />
+            ) : (
+              <p key={bubble.key} className={`speech-bubble${bubble.kind === 'yum' ? ' is-yum' : ''}`}>
+                <span className="speech-text">{bubble.kind === 'yum' ? 'Yum!' : quoteOfTheDay()}</span>
+              </p>
+            )}
+          </div>
+
+          <img className="profile-deco profile-deco-1" src={tomato} alt="" />
+          <img className="profile-deco profile-deco-2" src={tomato} alt="" />
+          <img className="profile-deco profile-deco-3" src={tomato} alt="" />
+          <img className="profile-deco profile-deco-4" src={tomato} alt="" />
+
+          <h2 className={`profile-home-name${name ? '' : ' is-placeholder'}`}><span>{name || 'Name'}</span>
+          </h2>
+
+          <div className="profile-actions">
+            <button
+              type="button"
+              className="tomato-button"
+              aria-expanded={feeding}
+              aria-controls="feed-panel"
+              onClick={() => setFeeding((f) => !f)}
+            >
+              <img src={buttonTomato} alt="" />
+              <span>Feed</span>
+            </button>
+            <button type="button" className="tomato-button" onClick={() => show('quote', QUOTE_MS)}>
+              <img src={buttonTomato} alt="" />
+              <span>
+                Daily
+                <br />
+                Quote
+              </span>
+            </button>
+            <Link to="/profile/edit" className="tomato-button">
+              <img src={buttonTomato} alt="" />
+              <span>Edit</span>
+            </Link>
+          </div>
         </div>
 
-        <div className={`profile-bubble-spot${bubble.kind === 'thought' ? '' : ' is-speaking'}`} aria-live="polite">
-          {bubble.kind === 'thought' ? (
-            <ThoughtBubble />
-          ) : (
-            <p key={bubble.key} className={`speech-bubble${bubble.kind === 'yum' ? ' is-yum' : ''}`}>
-              <span className="speech-text">{bubble.kind === 'yum' ? 'Yum!' : quoteOfTheDay()}</span>
-            </p>
-          )}
-        </div>
-
-        <img className="profile-deco profile-deco-1" src={tomato} alt="" />
-        <img className="profile-deco profile-deco-2" src={tomato} alt="" />
-        <img className="profile-deco profile-deco-3" src={tomato} alt="" />
-        <img className="profile-deco profile-deco-4" src={tomato} alt="" />
-
-        <h2 className={`profile-home-name${name ? '' : ' is-placeholder'}`}><span>{name || 'Name'}</span>
-        </h2>
-
-        <div className="profile-actions">
-          <button
-            type="button"
-            className="tomato-button"
-            aria-expanded={feeding}
-            aria-controls="feed-panel"
-            onClick={() => setFeeding((f) => !f)}
-          >
-            <img src={buttonTomato} alt="" />
-            <span>Feed</span>
-          </button>
-          <button type="button" className="tomato-button" onClick={() => show('quote', QUOTE_MS)}>
-            <img src={buttonTomato} alt="" />
-            <span>
-              Daily
-              <br />
-              Quote
-            </span>
-          </button>
-          <Link to="/profile/edit" className="tomato-button">
-            <img src={buttonTomato} alt="" />
-            <span>Edit</span>
-          </Link>
-        </div>
+        {feeding && <FeedPanel onFeed={feed} />}
       </div>
 
-      {feeding && <FeedPanel onFeed={feed} />}
+      <ProfileInfoCard onSaved={(likes) => setReaction({ likes, key: Date.now() })} />
+      {reaction && <TomatoReaction key={reaction.key} likes={reaction.likes} onDone={() => setReaction(null)} />}
     </div>
   )
 }

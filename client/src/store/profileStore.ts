@@ -14,6 +14,21 @@ export const ADJUST_LIMITS = { move: 10, minScale: 0.5, maxScale: 1.6, minSpacin
 /** Parts drawn as a left/right pair, so their spacing can change. */
 export const SPACED_PARTS: AdjustablePart[] = ['eyes', 'brows']
 
+/** What the user tells us about themselves on the profile page. */
+export interface ProfileInfo {
+  age: number | null
+  gender: string
+  pronouns: string
+  /** null until they've answered. */
+  likesTomatoes: boolean | null
+}
+
+export const INFO_TEXT_MAX = 30
+export const AGE_MIN = 1
+export const AGE_MAX = 120
+
+const NO_INFO: ProfileInfo = { age: null, gender: '', pronouns: '', likesTomatoes: null }
+
 const HISTORY_MAX = 50
 /** Nudges to the same part closer together than this undo as one step. */
 const NUDGE_MERGE_MS = 800
@@ -21,11 +36,13 @@ const NUDGE_MERGE_MS = 800
 interface ProfileState {
   name: string
   avatar: AvatarConfig
+  info: ProfileInfo
   /** Earlier avatars for undo, oldest first. Not saved across reloads. */
   past: AvatarConfig[]
   future: AvatarConfig[]
   lastNudge: { part: AdjustablePart; at: number } | null
   setName: (name: string) => void
+  setInfo: (info: ProfileInfo) => void
   updateAvatar: (patch: Partial<AvatarConfig>) => void
   /** Adds the given amounts to a part's position, size or spacing. */
   nudgePart: (part: AdjustablePart, delta: Partial<PartAdjust>) => void
@@ -52,10 +69,19 @@ export const useProfileStore = create<ProfileState>((set) => ({
   name: load('name', ''),
   // Merge so avatars saved before a new option existed still get its default.
   avatar: { ...DEFAULT_AVATAR, ...load<Partial<AvatarConfig>>('avatar', {}) },
+  info: { ...NO_INFO, ...load<Partial<ProfileInfo>>('profileInfo', {}) },
   past: [],
   future: [],
   lastNudge: null,
 
+  setInfo: (info) =>
+    set({
+      info: {
+        ...info,
+        gender: info.gender.trim().slice(0, INFO_TEXT_MAX),
+        pronouns: info.pronouns.trim().slice(0, INFO_TEXT_MAX),
+      },
+    }),
   setName: (name) => set({ name: name.trim().slice(0, PROFILE_NAME_MAX) }),
   updateAvatar: (patch) => set((s) => commit(s, { ...s.avatar, ...patch })),
 
@@ -115,4 +141,5 @@ export const useProfileStore = create<ProfileState>((set) => ({
 useProfileStore.subscribe((s) => {
   save('name', s.name)
   save('avatar', s.avatar)
+  save('profileInfo', s.info)
 })

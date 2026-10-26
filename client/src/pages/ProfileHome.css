@@ -3,11 +3,27 @@
   measured from the avatar frame's top-left corner, so the whole picture
   can shrink together on small screens.
 */
+/* The avatar on the left, the About me card on the right. */
+.profile-home {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 60rem);
+  column-gap: 8rem;
+  align-items: start;
+}
+
+.profile-home > .page-title {
+  grid-column: 1 / -1;
+}
+
+.profile-left {
+  min-width: 0;
+}
+
 .profile-stage {
   position: relative;
   width: 102.5em;
   height: 86em;
-  margin: 3em 0 0 46.3em;
+  margin: 3em 0 0;
   font-size: 1rem;
 }
 
@@ -357,7 +373,7 @@
 
 .feed-panel {
   width: 59.6rem;
-  margin: 1.6rem 0 4rem 46.3rem;
+  margin: 1.6rem 0 4rem;
   padding: 2rem 2.4rem;
   border: 0.5rem solid var(--orange);
   border-radius: 3rem;
@@ -568,6 +584,17 @@
   }
 }
 
+/* Not enough room side by side: the card goes under the avatar. */
+@media (max-width: 1300px) {
+  .profile-home {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .profile-info {
+    max-width: 72rem;
+  }
+}
+
 /* Below this, the stage no longer fits beside the sidebar at full size. */
 @media (max-width: 1100px) {
   .profile-stage {
@@ -575,9 +602,6 @@
     margin: 16em 0 0;
   }
 
-  .feed-panel {
-    margin-left: 0;
-  }
 }
 
 @media (max-width: 720px) {
