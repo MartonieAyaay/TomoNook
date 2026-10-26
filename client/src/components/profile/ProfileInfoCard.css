@@ -1,6 +1,6 @@
 .profile-info {
   margin-top: 3rem;
-  padding: 2.4rem 3.2rem 3.2rem;
+  padding: 3.2rem 4.4rem 4rem;
   border: 0.6rem solid var(--orange);
   border-radius: 3.25rem;
   background: var(--butter);
@@ -8,7 +8,7 @@
 }
 
 .profile-info-title {
-  margin: 0 0 1.6rem;
+  margin: 0 0 2rem;
   padding-bottom: 0.6rem;
   border-bottom: 0.2rem solid var(--orange);
   font-family: var(--font-heading);
@@ -23,7 +23,7 @@
 
 .profile-info-list {
   display: grid;
-  gap: 1.2rem;
+  gap: 1.4rem;
   margin: 0 0 2.4rem;
 }
 
@@ -56,7 +56,13 @@
 
 .info-form {
   display: grid;
-  gap: 1.6rem;
+  gap: 2.2rem;
+}
+
+.info-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 2rem;
 }
 
 .info-field {
@@ -65,13 +71,14 @@
 }
 
 .info-field span,
-.info-tomatoes legend {
+.info-group legend {
   font-family: var(--font-heading);
   font-size: 2.6rem;
   color: var(--forest);
 }
 
 .info-field input {
+  min-width: 0;
   min-height: 44px;
   padding: 0.8rem 1.6rem;
   border: 0.3rem solid var(--forest);
@@ -82,76 +89,80 @@
   color: var(--tomato-dark);
 }
 
-.info-tomatoes {
+.info-group {
   margin: 0;
   padding: 0;
   border: 0;
 }
 
-.info-tomatoes legend {
+.info-group legend {
   margin-bottom: 0.8rem;
   padding: 0;
 }
 
-.info-tomato-options {
-  display: flex;
-  gap: 1.6rem;
+.info-hint {
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 0.8em;
+  color: #6a6a6a;
 }
 
-.info-tomato {
-  position: relative;
+.info-chips {
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 1.2rem;
-  border: 0.3rem solid transparent;
-  border-radius: 2rem;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+}
+
+.info-chip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 0.6rem 2.6rem 0.2rem;
+  border: 0.3rem solid var(--forest);
+  border-radius: 999px;
   background: var(--cream-light);
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+  color: var(--forest);
   cursor: pointer;
+  user-select: none;
   transition:
     transform 220ms var(--ease-bubbly),
-    border-color 150ms ease-out;
+    background-color 150ms ease-out,
+    color 150ms ease-out;
 }
 
-.info-tomato:hover {
-  transform: translateY(-0.4rem);
+.info-chip:hover {
+  transform: translateY(-0.3rem);
 }
 
-.info-tomato.is-on {
-  border-color: var(--forest);
-  box-shadow: 0 0 0 0.4rem rgb(160 187 59 / 41%);
+.info-chip:active {
+  transform: scale(0.95);
 }
 
-.info-tomato.is-on img {
-  animation: boing 320ms ease-out;
+.info-chip.is-on {
+  background: var(--forest);
+  color: var(--cream-text);
 }
 
-/* The real radio stays for keyboards and screen readers, over the card. */
-.info-tomato input {
+.info-chip.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* The real input stays for keyboards and screen readers, over the chip. */
+.info-chip input {
   position: absolute;
   inset: 0;
   margin: 0;
   opacity: 0;
-  cursor: pointer;
+  cursor: inherit;
 }
 
-.info-tomato:has(input:focus-visible) {
+.info-chip:has(input:focus-visible) {
   outline: 3px solid var(--orange);
   outline-offset: 3px;
-}
-
-.info-tomato img {
-  width: 8rem;
-  height: 8rem;
-  object-fit: contain;
-}
-
-.info-tomato span {
-  font-family: var(--font-heading);
-  font-size: 2.8rem;
-  color: var(--tomato-dark);
 }
 
 .info-error {
@@ -209,23 +220,32 @@
     grid-template-columns: 120px minmax(0, 1fr);
   }
 
+  .info-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
   .profile-info-row dt,
   .profile-info-row dd,
   .info-field span,
-  .info-tomatoes legend,
-  .info-tomato span,
+  .info-group legend,
   .info-btn {
     font-size: 17px;
+  }
+
+  .info-chips {
+    gap: 8px;
+  }
+
+  .info-chip {
+    padding: 4px 16px 0;
+    border-width: 2px;
+    font-size: 16px;
   }
 
   /* 16px keeps phones from zooming in on focus. */
   .info-field input {
     font-size: 16px;
-  }
-
-  .info-tomato img {
-    width: 52px;
-    height: 52px;
   }
 
   .info-error {

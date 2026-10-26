@@ -6,7 +6,7 @@
 /* The avatar on the left, the About me card on the right. */
 .profile-home {
   display: grid;
-  grid-template-columns: max-content minmax(0, 60rem);
+  grid-template-columns: max-content minmax(0, 1fr);
   column-gap: 8rem;
   align-items: start;
 }
@@ -590,9 +590,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .profile-info {
-    max-width: 72rem;
-  }
 }
 
 /* Below this, the stage no longer fits beside the sidebar at full size. */
