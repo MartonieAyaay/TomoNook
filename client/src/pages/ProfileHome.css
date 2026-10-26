@@ -22,6 +22,20 @@
   max-width: 100%;
 }
 
+/* First visit: dims the page so only the About me card can be used. */
+.setup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(40 40 40 / 55%);
+  animation: backdrop-in 300ms ease-out;
+}
+
+.profile-info.is-setup {
+  position: relative;
+  z-index: 51;
+}
+
 /* Fills the rest of the row; drops under the avatar when it would get too narrow. */
 .profile-info {
   flex: 1 1 52rem;
@@ -61,30 +75,6 @@
   user-select: none;
 }
 
-/* The corner tomatoes are buttons: tap one and it gossips. */
-.gossip-tomato {
-  padding: 0;
-  border: 0;
-  background: none;
-  font-size: 1em;
-  cursor: pointer;
-  pointer-events: auto;
-  transition: translate 220ms var(--ease-bubbly);
-}
-
-.gossip-tomato img {
-  display: block;
-  width: 100%;
-  pointer-events: none;
-}
-
-.gossip-tomato:hover {
-  translate: 0 -1em;
-}
-
-.gossip-tomato:active img {
-  animation: boing 320ms ease-out;
-}
 
 .profile-deco-1 {
   left: 47.93em;
@@ -251,82 +241,6 @@
   height: 4.4em;
   background: #fffbec;
   clip-path: polygon(40% 0, 100% 0, 0 100%);
-}
-
-/* Gossip from the top tomatoes: the tail points left, at them. */
-.speech-bubble.is-gossip {
-  left: 18em;
-  top: 2em;
-  width: max(32em, 180px);
-  min-height: 14em;
-  padding: 2.4em 3em;
-}
-
-.speech-bubble.is-gossip::after,
-.gossip-bubble::after {
-  top: 3.4em;
-  bottom: auto;
-  left: -5.6em;
-  width: 6.4em;
-  height: 4.4em;
-  clip-path: polygon(0 0, 100% 30%, 100% 100%);
-}
-
-.speech-bubble.is-gossip::before,
-.gossip-bubble::before {
-  top: 4.5em;
-  bottom: auto;
-  left: -3.2em;
-  width: 4.2em;
-  height: 2.6em;
-  clip-path: polygon(0 0, 100% 30%, 100% 100%);
-}
-
-.speech-bubble.is-gossip .speech-text,
-.gossip-bubble .speech-text {
-  font-size: max(3.2em, 15px);
-}
-
-/* Gossip from the bottom tomatoes, beside them. */
-.gossip-bubble {
-  position: absolute;
-  z-index: 2;
-  left: 26em;
-  top: 40em;
-  width: max(32em, 180px);
-  min-height: 12em;
-  display: grid;
-  place-items: center;
-  margin: 0;
-  padding: 2.4em 3em;
-  border: 0.6em solid var(--orange);
-  border-radius: 5em;
-  background: #fffbec;
-  font-family: var(--font-hand);
-  text-align: center;
-  color: var(--brown);
-  animation: bubble-pop 300ms cubic-bezier(0.3, 1.6, 0.5, 1);
-}
-
-.gossip-bubble::after,
-.gossip-bubble::before {
-  content: '';
-  position: absolute;
-}
-
-.gossip-bubble::after {
-  top: auto;
-  bottom: 2.4em;
-  background: var(--orange);
-  clip-path: polygon(0 100%, 100% 0, 100% 70%);
-}
-
-.gossip-bubble::before {
-  z-index: 1;
-  top: auto;
-  bottom: 3.3em;
-  background: #fffbec;
-  clip-path: polygon(0 100%, 100% 0, 100% 70%);
 }
 
 .speech-bubble.is-yum {

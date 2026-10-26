@@ -1,0 +1,151 @@
+.naming-dialog {
+  width: min(60rem, calc(100vw - 32px));
+  padding: 0;
+  border: 0.6rem solid var(--orange);
+  border-radius: 3rem;
+  background: var(--cream-light);
+  color: var(--brown);
+  box-shadow: var(--card-shadow);
+}
+
+.naming-dialog[open] {
+  animation: naming-in 280ms var(--ease-bubbly);
+}
+
+.naming-dialog::backdrop {
+  background: rgb(40 40 40 / 55%);
+  animation: backdrop-in 200ms ease-out;
+}
+
+@keyframes naming-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.86);
+  }
+}
+
+.naming-body {
+  display: grid;
+  justify-items: center;
+  gap: 1.6rem;
+  padding: 3rem 4rem 3.6rem;
+  text-align: center;
+  animation: pop-in 240ms var(--ease-bubbly);
+}
+
+.naming-step {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  color: #767676;
+}
+
+.naming-art {
+  height: 12rem;
+  animation: boing 420ms ease-out 200ms backwards;
+}
+
+.naming-field {
+  display: grid;
+  gap: 0.8rem;
+  width: 100%;
+}
+
+.naming-question {
+  font-family: var(--font-heading);
+  font-size: 3.4rem;
+  line-height: 1.2;
+  color: var(--tomato);
+}
+
+.naming-hint {
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 2.2rem;
+  color: var(--brown);
+}
+
+.naming-field input {
+  min-height: 48px;
+  margin-top: 0.8rem;
+  padding: 0.8rem 1.6rem;
+  border: 0.3rem solid var(--forest);
+  border-radius: 1.4rem;
+  background: #fffbec;
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 2.6rem;
+  text-align: center;
+  color: var(--tomato-dark);
+}
+
+.naming-error {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 2.6rem;
+  color: var(--tomato);
+}
+
+.naming-actions {
+  display: flex;
+  gap: 1.6rem;
+}
+
+.naming-btn {
+  min-height: 44px;
+  padding: 0.6rem 3.6rem 0.2rem;
+  border: 0;
+  border-radius: 1.4rem;
+  background: var(--forest);
+  font-family: var(--font-heading);
+  font-size: 2.8rem;
+  color: var(--cream-text);
+  transition: transform 220ms var(--ease-bubbly);
+}
+
+.naming-btn:hover {
+  transform: scale(1.04);
+}
+
+.naming-btn:active {
+  transform: scale(0.96);
+}
+
+.naming-btn.is-secondary {
+  background: none;
+  box-shadow: inset 0 0 0 0.25rem var(--forest);
+  color: var(--forest);
+}
+
+@media (max-width: 720px) {
+  .naming-dialog {
+    border-width: 4px;
+    border-radius: 20px;
+  }
+
+  .naming-body {
+    gap: 10px;
+    padding: 18px 16px 20px;
+  }
+
+  .naming-step,
+  .naming-hint {
+    font-size: 14px;
+  }
+
+  .naming-art {
+    height: 72px;
+  }
+
+  .naming-question {
+    font-size: 21px;
+  }
+
+  /* 16px keeps phones from zooming in on focus. */
+  .naming-field input {
+    font-size: 16px;
+  }
+
+  .naming-error,
+  .naming-btn {
+    font-size: 17px;
+  }
+}

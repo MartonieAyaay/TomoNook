@@ -12,9 +12,10 @@ const tabs = [
   { to: '/timers', label: 'Timers', icon: timersIcon, size: 'timers' },
 ]
 
-export default function Sidebar() {
+/** `locked`: during first-time setup the tabs can't be used yet. */
+export default function Sidebar({ locked = false }: { locked?: boolean }) {
   return (
-    <nav className="sidebar" aria-label="Main">
+    <nav className={`sidebar${locked ? ' is-locked' : ''}`} aria-label="Main" inert={locked}>
       <NavLink to="/dashboard" className="sidebar-link sidebar-home" title="Dashboard">
         <img src={homeIcon} alt="" />
         <span className="visually-hidden">Dashboard</span>

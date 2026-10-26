@@ -6,25 +6,35 @@ import {
   GENDERS,
   PRONOUNS,
   useProfileStore,
+  isInfoComplete,
   type Gender,
   type Pronoun,
 } from '../../store/profileStore.ts'
 import './ProfileInfoCard.css'
 
 /** Name, age, gender, pronouns, and the important one: do they like tomatoes? */
-export default function ProfileInfoCard({ onSaved }: { onSaved: (likesTomatoes: boolean) => void }) {
+export default function ProfileInfoCard({
+  settingUp,
+  onSaved,
+}: {
+  /** First visit: the card is the only thing on the page that can be used. */
+  settingUp: boolean
+  onSaved: (likesTomatoes: boolean) => void
+}) {
   const name = useProfileStore((s) => s.name)
   const info = useProfileStore((s) => s.info)
-  const [editing, setEditing] = useState(info.likesTomatoes === null)
+  const complete = isInfoComplete(name, info)
+  const [editing, setEditing] = useState(!complete)
 
   return (
-    <section className="profile-info" aria-labelledby="profile-info-title">
+    <section className={`profile-info${settingUp ? ' is-setup' : ''}`} aria-labelledby="profile-info-title">
       <h2 id="profile-info-title" className="profile-info-title">
-        About me
+        {settingUp ? 'Welcome to TomoNook!' : 'About me'}
       </h2>
-      {editing ? (
+      {settingUp && !complete && <p className="info-welcome">Tell us about yourself to get started.</p>}
+      {editing || !complete ? (
         <InfoForm
-          canCancel={info.likesTomatoes !== null}
+          canCancel={complete}
           onCancel={() => setEditing(false)}
           onSaved={(likes) => {
             setEditing(false)
@@ -115,11 +125,19 @@ function InfoForm({
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    const ageNum = age.trim() === '' ? null : Number(age)
-    if (ageNum !== null && (!Number.isInteger(ageNum) || ageNum < AGE_MIN || ageNum > AGE_MAX)) {
+    const missing = [
+      !name.trim() && 'Name',
+      !age.trim() && 'Age',
+      !gender && 'Gender',
+      pronouns.length === 0 && 'Pronouns',
+      likes === null && 'Do you like tomatoes?',
+    ].filter(Boolean)
+    if (missing.length) return setError(`Please fill in: ${missing.join(', ')}`)
+    const ageNum = Number(age)
+    if (!Number.isInteger(ageNum) || ageNum < AGE_MIN || ageNum > AGE_MAX) {
       return setError(`Age should be a whole number from ${AGE_MIN} to ${AGE_MAX}.`)
     }
-    if (likes === null) return setError('One more: do you like tomatoes? Pick Yes or No.')
+    if (likes === null) return
     store.setName(name)
     store.setInfo({ age: ageNum, gender, pronouns, likesTomatoes: likes })
     onSaved(likes)

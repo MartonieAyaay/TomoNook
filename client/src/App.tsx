@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import GossipTomatoes from './components/gossip/GossipTomatoes.tsx'
+import { startFocusLog } from './store/focusStore.ts'
+import { useGossipStore } from './store/gossipStore.ts'
 import Sidebar from './components/Sidebar.tsx'
 import Companion from './components/companion/Companion.tsx'
 import SplashScreen from './components/SplashScreen.tsx'
@@ -23,6 +26,10 @@ export default function App() {
   )
 
   useEffect(() => startCompanionReactions(), [])
+  useEffect(() => startFocusLog(), [])
+  // First visit: only the profile page until the user has filled it in and named the tomatoes.
+  const settingUp = useGossipStore((s) => s.names === null)
+  const { pathname } = useLocation()
 
   // Once the loading bar is done, the avatar pops up and says hi.
   useEffect(() => {
@@ -30,18 +37,22 @@ export default function App() {
   }, [showSplash])
 
   // Re-mounting on a new section replays the pop-in.
-  const section = useLocation().pathname.split('/')[1]
+  const section = pathname.split('/')[1]
 
   return (
     <div className="app">
       {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
       {/* After the loading screen, so the splat is seen. */}
-      {!showSplash && <StreakSplat />}
+      {!showSplash && !settingUp && <StreakSplat />}
       <TimerTicker />
       {!showSplash && <Companion />}
-      <Sidebar />
+      {!showSplash && <GossipTomatoes />}
+      <Sidebar locked={settingUp} />
       <main className="main">
         <div key={section} className="page-enter">
+        {settingUp && pathname !== '/profile' ? (
+          <Navigate to="/profile" replace />
+        ) : (
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -51,6 +62,7 @@ export default function App() {
           <Route path="/profile" element={<ProfileHome />} />
           <Route path="/profile/edit" element={<ProfilePage />} />
         </Routes>
+        )}
         </div>
       </main>
     </div>
