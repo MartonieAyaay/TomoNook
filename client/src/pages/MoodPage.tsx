@@ -9,9 +9,7 @@ import MoodPicker from '../components/mood/MoodPicker.tsx'
 import StreakBadge from '../components/mood/StreakBadge.tsx'
 import TomatoFill from '../components/TomatoFill.tsx'
 import { useMoodStore } from '../store/moodStore.ts'
-import Avatar from '../components/avatar/Avatar.tsx'
-import { useProfileStore } from '../store/profileStore.ts'
-import thoughtBubble from '../assets/tomato/thought-bubble.png'
+import smilingTomato from '../assets/tomato/tomato-face.png'
 import grayTomato from '../assets/tomato/gray-tomato.png'
 import './TodoPage.css'
 import './MoodPage.css'
@@ -23,7 +21,6 @@ export default function MoodPage() {
   const writeDiary = (useLocation().state as { writeDiary?: boolean } | null)?.writeDiary ?? false
   const allPosts = useMoodStore((s) => s.posts)
   const { addPost, editPost, deletePost } = useMoodStore.getState()
-  const avatar = useProfileStore((s) => s.avatar)
   const moods = useMoodStore((s) => s.moods)
   const entries = useMoodStore((s) => s.entries)
   // Each logged day's tomato fills with its mood's color.
@@ -82,11 +79,8 @@ export default function MoodPage() {
           ))}
           {posts.length === 0 && (
             <div className="diary-empty">
-              <div className="diary-thought">
-                <img src={thoughtBubble} alt="" />
-                <p>{isToday ? 'Tell me what you’re feeling...' : 'No entries this day.'}</p>
-              </div>
-              <Avatar avatar={avatar} blinking className="diary-avatar" />
+              <img src={smilingTomato} alt="" />
+              <p>{isToday ? 'Tell me what you’re feeling...' : 'No entries this day.'}</p>
             </div>
           )}
         </div>
