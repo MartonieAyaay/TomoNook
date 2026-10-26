@@ -10,7 +10,8 @@
 .main {
   flex: 1;
   min-width: 0;
-  padding: 1.6rem 4.4rem 4rem 7.8rem;
+  /* Room at the bottom so the companion avatar never hides the end of a page. */
+  padding: 1.6rem 4.4rem 20rem 7.8rem;
 }
 
 @media (max-width: 720px) {
@@ -19,6 +20,6 @@
   }
 
   .main {
-    padding: 16px 16px 24px;
+    padding: 16px 16px 96px;
   }
 }

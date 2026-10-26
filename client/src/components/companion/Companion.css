@@ -1,0 +1,259 @@
+.companion {
+  position: fixed;
+  right: 3.2rem;
+  bottom: 2.4rem;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  /* Only the avatar and bubble take clicks, not the empty box around them. */
+  pointer-events: none;
+}
+
+.companion-avatar {
+  width: 15rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  filter: drop-shadow(0 0.8rem 0.6rem rgb(0 0 0 / 18%));
+  transition: transform 220ms var(--ease-bubbly);
+  animation: companion-in 480ms var(--ease-pop) backwards;
+  transform-origin: 50% 100%;
+}
+
+.companion-avatar:hover {
+  transform: translateY(-0.6rem) rotate(-3deg);
+}
+
+.companion-avatar:active {
+  transform: scale(0.94);
+}
+
+.companion-avatar .avatar {
+  width: 100%;
+}
+
+@keyframes companion-in {
+  from {
+    opacity: 0;
+    scale: 0.5;
+    translate: 0 60%;
+  }
+}
+
+.companion-bubble {
+  position: relative;
+  max-width: 34rem;
+  margin: 0 5rem 1.8rem 0;
+  padding: 1.4rem 2.4rem;
+  border: 0.5rem solid var(--orange);
+  border-radius: 3rem;
+  background: #fffbec;
+  box-shadow: var(--card-shadow);
+  font-family: var(--font-hand);
+  font-size: 2.8rem;
+  line-height: 1.25;
+  color: var(--brown);
+  text-align: center;
+  pointer-events: auto;
+  animation: pop-in 280ms var(--ease-pop);
+  transform-origin: 85% 100%;
+}
+
+/* The tail, pointing down at the avatar. */
+.companion-bubble::after,
+.companion-bubble::before {
+  content: '';
+  position: absolute;
+  clip-path: polygon(0 0, 60% 0, 100% 100%);
+}
+
+.companion-bubble::after {
+  right: 3rem;
+  bottom: -3.4rem;
+  width: 4.6rem;
+  height: 3.4rem;
+  background: var(--orange);
+}
+
+.companion-bubble::before {
+  z-index: 1;
+  right: 3.9rem;
+  bottom: -2.2rem;
+  width: 3.2rem;
+  height: 2.4rem;
+  background: #fffbec;
+}
+
+@media (max-width: 720px) {
+  .companion {
+    right: 10px;
+    /* Above the tab bar. */
+    bottom: 72px;
+  }
+
+  .companion-avatar {
+    width: 64px;
+  }
+
+  .companion-bubble {
+    max-width: min(240px, calc(100vw - 40px));
+    margin: 0 22px 14px 0;
+    padding: 8px 14px;
+    border-width: 3px;
+    border-radius: 18px;
+    font-size: 16px;
+  }
+
+  .companion-bubble::after {
+    right: 14px;
+    bottom: -16px;
+    width: 22px;
+    height: 16px;
+  }
+
+  .companion-bubble::before {
+    right: 19px;
+    bottom: -10px;
+    width: 14px;
+    height: 10px;
+  }
+}
+
+/* ---------- Beside the clock ---------- */
+
+.clock-art-wrap {
+  position: relative;
+  margin-top: 3.8rem;
+}
+
+.clock-art-wrap .clock-art {
+  margin-top: 0;
+}
+
+.clock-buddy {
+  position: absolute;
+  right: -8%;
+  bottom: -2%;
+  width: 38%;
+  filter: drop-shadow(0 0.8rem 0.6rem rgb(0 0 0 / 18%));
+}
+
+.clock-buddy .avatar {
+  width: 100%;
+  transform-origin: 50% 100%;
+}
+
+.clock-buddy .companion-bubble {
+  position: absolute;
+  right: 30%;
+  bottom: 92%;
+  width: max-content;
+  max-width: 30rem;
+  margin: 0;
+}
+
+/* Working: eyes narrowed, a small steady nod. */
+.clock-buddy.is-focus .avatar-blink {
+  animation: none;
+  transform: scaleY(0.5);
+}
+
+.clock-buddy.is-focus .avatar {
+  animation: buddy-nod 2.4s ease-in-out infinite;
+}
+
+@keyframes buddy-nod {
+  50% {
+    rotate: -3deg;
+    translate: 0 0.4rem;
+  }
+}
+
+/* On a break: eyes shut, slow breathing, floating z's. */
+.clock-buddy.is-doze .avatar-blink {
+  animation: none;
+  transform: scaleY(0.08);
+}
+
+.clock-buddy.is-doze .avatar {
+  animation: buddy-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes buddy-breathe {
+  50% {
+    scale: 1.03 0.97;
+  }
+}
+
+.clock-buddy-z {
+  position: absolute;
+  top: 14%;
+  right: 22%;
+  font-family: var(--font-heading);
+  color: var(--forest);
+}
+
+.clock-buddy-z span {
+  position: absolute;
+  font-size: 3.6rem;
+  opacity: 0;
+  animation: buddy-z 3s ease-out infinite;
+}
+
+.clock-buddy-z span:nth-child(2) {
+  font-size: 4.6rem;
+  animation-delay: 1s;
+}
+
+.clock-buddy-z span:nth-child(3) {
+  font-size: 5.6rem;
+  animation-delay: 2s;
+}
+
+@keyframes buddy-z {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    translate: 3rem -7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock-buddy .avatar,
+  .clock-buddy-z span {
+    animation: none;
+  }
+
+  .clock-buddy-z span {
+    opacity: 1;
+  }
+
+  .clock-buddy-z span:nth-child(2) {
+    translate: 1.6rem -3rem;
+  }
+
+  .clock-buddy-z span:nth-child(3) {
+    translate: 3.4rem -6.4rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .clock-art-wrap {
+    margin-top: 20px;
+  }
+
+  .clock-buddy .companion-bubble {
+    max-width: 200px;
+  }
+}
