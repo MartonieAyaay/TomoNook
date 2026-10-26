@@ -1,7 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { today } from '@tomonook/shared'
-import Avatar from '../components/avatar/Avatar.tsx'
 import MoodPicker from '../components/mood/MoodPicker.tsx'
 import { textOn } from '../components/todo/PrioritySelect.tsx'
 import { unlockChime } from '../lib/chime.ts'
@@ -15,16 +14,11 @@ import './DashboardPage.css'
 /** A quick look at today: tasks, mood and the clock, each linking to its page. */
 export default function DashboardPage() {
   const name = useProfileStore((s) => s.name)
-  const avatar = useProfileStore((s) => s.avatar)
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <Link to="/profile" className="dashboard-avatar" title="Profile">
-          <Avatar avatar={avatar} className="dashboard-avatar-img" />
-          <span className="visually-hidden">Profile</span>
-        </Link>
         <div>
           <h1 className="page-title dashboard-title">Hi{name ? `, ${name}` : ''} !!</h1>
           <p className="dashboard-date">{dateLabel}</p>

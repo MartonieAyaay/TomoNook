@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar.tsx'
+import Companion from './components/companion/Companion.tsx'
 import SplashScreen from './components/SplashScreen.tsx'
 import StreakSplat from './components/splatter/StreakSplat.tsx'
 import TimerTicker from './components/TimerTicker.tsx'
@@ -10,6 +11,9 @@ import TimersPage from './pages/TimersPage.tsx'
 import ProfilePage from './pages/ProfilePage.tsx'
 import ProfileHome from './pages/ProfileHome.tsx'
 import DashboardPage from './pages/DashboardPage.tsx'
+import { greeting, startCompanionReactions } from './lib/companionReactions.ts'
+import { useCompanionStore } from './store/companionStore.ts'
+import { useProfileStore } from './store/profileStore.ts'
 import './App.css'
 
 export default function App() {
@@ -17,6 +21,13 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(
     () => !(import.meta.env.DEV && location.search.includes('nosplash')),
   )
+
+  useEffect(() => startCompanionReactions(), [])
+
+  // Once the loading bar is done, the avatar pops up and says hi.
+  useEffect(() => {
+    if (!showSplash) useCompanionStore.getState().say(greeting(useProfileStore.getState().name), { ms: 4500 })
+  }, [showSplash])
 
   // Re-mounting on a new section replays the pop-in.
   const section = useLocation().pathname.split('/')[1]
@@ -27,6 +38,7 @@ export default function App() {
       {/* After the loading screen, so the splat is seen. */}
       {!showSplash && <StreakSplat />}
       <TimerTicker />
+      {!showSplash && <Companion />}
       <Sidebar />
       <main className="main">
         <div key={section} className="page-enter">

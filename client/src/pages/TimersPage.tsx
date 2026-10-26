@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { MAX_TIMERS, TIMER_NAME_MAX, TIMER_PHASE_MAX_MS, type TimerPreset } from '@tomonook/shared'
 import ConfirmDialog from '../components/ConfirmDialog.tsx'
+import ClockBuddy from '../components/companion/ClockBuddy.tsx'
 import { LAP_MAX, elapsedMs, useStopwatchStore } from '../store/stopwatchStore.ts'
 import { remainingMs, useTimerStore } from '../store/timerStore.ts'
 import { unlockChime } from '../lib/chime.ts'
@@ -25,6 +26,7 @@ export default function TimersPage() {
   const swPaused = useStopwatchStore((s) => s.startedAt === null && s.banked > 0)
   const timerOn = useTimerStore((s) => s.active !== null)
   const timerRunning = useTimerStore((s) => s.active?.endsAt != null)
+  const phase = useTimerStore((s) => s.active?.phase)
   const timerCount = useTimerStore((s) => s.timers.length)
   const [editing, setEditing] = useState<TimerPreset | 'new' | null>(null)
 
@@ -72,7 +74,10 @@ export default function TimersPage() {
           })}
         </div>
 
-        <img src={clockArt} alt="" className={`clock-art${glowing ? ' is-running' : ''}`} />
+        <div className="clock-art-wrap">
+          <img src={clockArt} alt="" className={`clock-art${glowing ? ' is-running' : ''}`} />
+          <ClockBuddy state={(timerRunning && phase === 'lock') || swRunning ? 'focus' : timerRunning ? 'doze' : 'idle'} />
+        </div>
         {!stopwatch && timerOn ? (
           <TimerStatus />
         ) : (
