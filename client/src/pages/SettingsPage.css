@@ -1,0 +1,307 @@
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(58rem, 100%), 1fr));
+  align-items: start;
+  gap: 3.2rem;
+  margin-top: 3rem;
+}
+
+.settings-card {
+  padding: 2.4rem 3.2rem 2.8rem;
+  border: 0.6rem solid var(--orange);
+  border-radius: 3.25rem;
+  background: var(--butter);
+  box-shadow: var(--card-shadow);
+}
+
+.settings-card-title {
+  margin: 0 0 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 0.2rem solid var(--orange);
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: 4rem;
+  line-height: 1.2;
+  color: var(--tomato);
+  text-shadow: 0.2rem 0.2rem 0 rgb(0 0 0 / 25%);
+}
+
+/* ---------- One setting per row ---------- */
+
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  padding: 1.2rem 0;
+}
+
+.settings-row + .settings-row {
+  border-top: 0.15rem dashed rgb(230 107 51 / 35%);
+}
+
+.settings-row-end {
+  justify-content: flex-end;
+}
+
+.settings-row-text {
+  display: grid;
+  flex: 1 1 24rem;
+  gap: 0.2rem;
+}
+
+.settings-label {
+  font-family: var(--font-heading);
+  font-size: 2.6rem;
+  line-height: 1.2;
+  color: var(--forest);
+}
+
+.settings-note,
+.settings-text {
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 2.1rem;
+  line-height: 1.35;
+  color: #6a5a52;
+}
+
+.settings-text {
+  margin: 0.8rem 0 1.6rem;
+}
+
+.settings-control {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---------- Switch ---------- */
+
+.settings-switch {
+  position: relative;
+  flex: none;
+  width: 56px;
+  height: 32px;
+  padding: 0;
+  border: 0.3rem solid var(--forest);
+  border-radius: 999px;
+  background: var(--cream-light);
+  transition: background-color 200ms ease-out;
+}
+
+.settings-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--forest);
+  transition:
+    translate 260ms var(--ease-bubbly),
+    background-color 200ms ease-out;
+}
+
+.settings-switch.is-on {
+  background: var(--forest);
+}
+
+.settings-switch.is-on .settings-switch-knob {
+  translate: 24px 0;
+  background: var(--cream-light);
+}
+
+.settings-switch:disabled {
+  opacity: 0.45;
+}
+
+/* ---------- Choices ---------- */
+
+.settings-choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.8rem;
+}
+
+.settings-choice {
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0.4rem 1.8rem 0;
+  border: 0.3rem solid var(--forest);
+  border-radius: 999px;
+  background: var(--cream-light);
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  color: var(--forest);
+  transition:
+    transform 220ms var(--ease-bubbly),
+    background-color 150ms ease-out;
+}
+
+.settings-choice:active {
+  transform: scale(0.94);
+}
+
+.settings-choice.is-on {
+  background: var(--forest);
+  color: var(--cream-text);
+}
+
+/* ---------- Slider ---------- */
+
+.settings-slider {
+  width: min(28rem, 100%);
+  accent-color: var(--forest);
+}
+
+/* ---------- Buttons ---------- */
+
+.settings-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+}
+
+.settings-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 0.6rem 2.6rem 0.2rem;
+  border: 0;
+  border-radius: 1.4rem;
+  background: var(--forest);
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+  color: var(--cream-text);
+  cursor: pointer;
+  transition: transform 220ms var(--ease-bubbly);
+}
+
+.settings-btn:hover:not(:disabled) {
+  transform: scale(1.04);
+}
+
+.settings-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.settings-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.settings-btn.is-secondary {
+  background: none;
+  box-shadow: inset 0 0 0 0.25rem var(--forest);
+  color: var(--forest);
+}
+
+.settings-btn.is-danger {
+  background: var(--tomato);
+}
+
+/* The file picker hides behind its button. */
+.settings-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.settings-file:has(input:focus-visible) {
+  outline: 3px solid var(--orange);
+  outline-offset: 3px;
+}
+
+.settings-error {
+  margin: 1.2rem 0 0;
+  font-family: var(--font-hand);
+  font-size: 2.6rem;
+  color: var(--tomato);
+}
+
+/* ---------- Renaming the gossip tomatoes ---------- */
+
+.settings-names {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1.6rem;
+  padding: 1.2rem 0;
+}
+
+.settings-name {
+  display: flex;
+  flex: 1 1 20rem;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.settings-name img {
+  height: 7rem;
+}
+
+.settings-name input {
+  min-width: 0;
+  flex: 1;
+  min-height: 44px;
+  padding: 0.6rem 1.4rem;
+  border: 0.3rem solid var(--forest);
+  border-radius: 1.4rem;
+  background: var(--cream-light);
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 2.4rem;
+  color: var(--tomato-dark);
+}
+
+.settings-names-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+@media (max-width: 720px) {
+  .settings-grid {
+    gap: 16px;
+    margin-top: 12px;
+  }
+
+  .settings-card {
+    padding: 14px 16px 16px;
+    border-width: 4px;
+    border-radius: 20px;
+  }
+
+  .settings-card-title {
+    font-size: 24px;
+  }
+
+  .settings-label,
+  .settings-btn {
+    font-size: 17px;
+  }
+
+  .settings-note,
+  .settings-text {
+    font-size: 14px;
+  }
+
+  .settings-choice {
+    font-size: 15px;
+  }
+
+  /* 16px keeps phones from zooming in on focus. */
+  .settings-name input {
+    font-size: 16px;
+  }
+
+  .settings-name img {
+    height: 44px;
+  }
+
+  .settings-error {
+    font-size: 16px;
+  }
+}

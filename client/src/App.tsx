@@ -3,6 +3,8 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import GossipTomatoes from './components/gossip/GossipTomatoes.tsx'
 import { startFocusLog } from './store/focusStore.ts'
 import { useGossipStore } from './store/gossipStore.ts'
+import { useSettingsStore } from './store/settingsStore.ts'
+import SettingsPage from './pages/SettingsPage.tsx'
 import Sidebar from './components/Sidebar.tsx'
 import Companion from './components/companion/Companion.tsx'
 import SplashScreen from './components/SplashScreen.tsx'
@@ -27,13 +29,22 @@ export default function App() {
 
   useEffect(() => startCompanionReactions(), [])
   useEffect(() => startFocusLog(), [])
+
+  // Settings that change the whole page: fewer animations, and the size of everything.
+  const reduceMotion = useSettingsStore((s) => s.reduceMotion)
+  const uiSize = useSettingsStore((s) => s.uiSize)
+  useEffect(() => {
+    document.documentElement.classList.toggle('reduce-motion', reduceMotion)
+    document.documentElement.dataset.size = uiSize
+  }, [reduceMotion, uiSize])
   // First visit: only the profile page until the user has filled it in and named the tomatoes.
   const settingUp = useGossipStore((s) => s.names === null)
   const { pathname } = useLocation()
 
   // Once the loading bar is done, the avatar pops up and says hi.
   useEffect(() => {
-    if (!showSplash) useCompanionStore.getState().say(greeting(useProfileStore.getState().name), { ms: 4500 })
+    if (!showSplash && useSettingsStore.getState().companionChat !== 'off')
+      useCompanionStore.getState().say(greeting(useProfileStore.getState().name), { ms: 4500 })
   }, [showSplash])
 
   // Re-mounting on a new section replays the pop-in.
@@ -61,6 +72,7 @@ export default function App() {
           <Route path="/timers/*" element={<TimersPage />} />
           <Route path="/profile" element={<ProfileHome />} />
           <Route path="/profile/edit" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
         )}
         </div>

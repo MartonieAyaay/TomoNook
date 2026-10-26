@@ -1,5 +1,6 @@
 import { today, type Mood } from '@tomonook/shared'
 import { useCompanionStore } from '../store/companionStore.ts'
+import { useSettingsStore } from '../store/settingsStore.ts'
 import { useMoodStore } from '../store/moodStore.ts'
 import { useTimerStore } from '../store/timerStore.ts'
 import { useTodoStore } from '../store/todoStore.ts'
@@ -25,15 +26,19 @@ export function greeting(name: string) {
 
 /** Makes the companion react to what happens around the app. Returns a cleanup. */
 export function startCompanionReactions() {
-  const say = (text: string, options?: { ms?: number; sparkle?: boolean }) =>
+  // "big" moments still show when Settings says big moments only; nothing shows when it's off.
+  const say = (text: string, options?: { ms?: number; sparkle?: boolean; big?: boolean }) => {
+    const level = useSettingsStore.getState().companionChat
+    if (level === 'off' || (level === 'big' && !options?.big)) return
     useCompanionStore.getState().say(text, options)
+  }
 
   const offTodos = useTodoStore.subscribe((s, prev) => {
     if (s.todos === prev.todos) return
     const done = s.todos.find((t) => t.done && prev.todos.some((p) => p.id === t.id && !p.done))
     if (!done) return
     const allDone = done.day === today() && s.todos.filter((t) => t.day === done.day).every((t) => t.done)
-    if (allDone) say('All done for today!! You’re amazing.', { ms: 4500, sparkle: true })
+    if (allDone) say('All done for today!! You’re amazing.', { ms: 4500, sparkle: true, big: true })
     else say(pick(CHEERS))
   })
 
@@ -51,7 +56,7 @@ export function startCompanionReactions() {
     const before = prev.active
     if (now && !before) say('Let’s lock in!')
     else if (now && before && now.id === before.id && now.phase !== before.phase)
-      say(now.phase === 'chill' ? 'Break time! Stretch a little.' : 'Back to it, you’ve got this!', { ms: 4500 })
+      say(now.phase === 'chill' ? 'Break time! Stretch a little.' : 'Back to it, you’ve got this!', { ms: 4500, big: true })
   })
 
   return () => {

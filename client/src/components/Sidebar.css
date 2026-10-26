@@ -12,6 +12,25 @@
   background: var(--forest);
 }
 
+/* Settings sits at the very bottom of the panel. */
+.sidebar-settings {
+  width: 6.4rem;
+  height: 6.4rem;
+  margin-top: auto;
+  margin-bottom: 2.6rem;
+}
+
+.sidebar-gear {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0.42rem 0.24rem rgb(0 0 0 / 25%));
+  transition: rotate 400ms var(--ease-bubbly);
+}
+
+.sidebar-settings:hover .sidebar-gear {
+  rotate: 45deg;
+}
+
 .sidebar.is-locked .sidebar-link {
   opacity: 0.45;
 }
@@ -111,6 +130,12 @@
 }
 
 @media (max-width: 720px) {
+  .sidebar-settings {
+    width: 40px;
+    height: 40px;
+    margin: 0;
+  }
+
   .sidebar-link .sidebar-gossip-badge {
     top: -4px;
     right: -6px;

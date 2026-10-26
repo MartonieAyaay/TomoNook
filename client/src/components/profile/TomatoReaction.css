@@ -135,6 +135,32 @@
   animation: pop-in 300ms var(--ease-pop) 300ms backwards;
 }
 
+/* ---------- No, gentle mode: a pout, no splat ---------- */
+
+.tomato-reaction.is-gentle {
+  pointer-events: none;
+  align-content: center;
+  gap: 2rem;
+  animation:
+    backdrop-in 400ms ease-out,
+    reaction-out 500ms ease-in 2300ms forwards;
+}
+
+.gentle-tomato {
+  width: 26rem;
+  max-width: 50vw;
+  animation:
+    pop-in 400ms var(--ease-bubbly) backwards,
+    gentle-pout 900ms ease-in-out 400ms 2;
+}
+
+@keyframes gentle-pout {
+  50% {
+    rotate: -6deg;
+    translate: 0 0.6rem;
+  }
+}
+
 /* ---------- No: fade in, charge up for 2s, launch, splat ---------- */
 
 .tomato-reaction.is-nay {

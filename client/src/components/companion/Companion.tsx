@@ -2,6 +2,7 @@ import { useLocation } from 'react-router-dom'
 import { quoteOfTheDay } from '../../lib/quotes.ts'
 import { useCompanionStore, type Line } from '../../store/companionStore.ts'
 import { useProfileStore } from '../../store/profileStore.ts'
+import { useSettingsStore } from '../../store/settingsStore.ts'
 import Avatar from '../avatar/Avatar.tsx'
 import './Companion.css'
 
@@ -11,9 +12,10 @@ export default function Companion() {
   const avatar = useProfileStore((s) => s.avatar)
   const line = useCompanionStore((s) => s.line)
   const say = useCompanionStore((s) => s.say)
+  const shown = useSettingsStore((s) => s.companion)
 
   // The profile and clock pages have the avatar in the page itself.
-  if (pathname.startsWith('/profile') || pathname.startsWith('/timers')) return null
+  if (!shown || pathname.startsWith('/profile') || pathname.startsWith('/timers')) return null
 
   return (
     <div className="companion">

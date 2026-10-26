@@ -9,6 +9,7 @@ import g8 from '../assets/sounds/gibberish/gibberish8.mp3'
 import g9 from '../assets/sounds/gibberish/gibberish9.mp3'
 import g10 from '../assets/sounds/gibberish/gibberish10.mp3'
 import g11 from '../assets/sounds/gibberish/gibberish11.mp3'
+import { playSound } from './sound.ts'
 
 /** One voice line: its file, length in seconds, and loudest point (0-1). */
 interface Clip {
@@ -54,12 +55,8 @@ export function speak(who: 0 | 1) {
   if (i === last[who]) i = (i + 1) % clips.length
   last[who] = i
   const clip = clips[i]
-  const audio = new Audio(clip.src)
   // Evens out loud and quiet recordings.
-  audio.volume = 0.9 * Math.min(1, 0.22 / clip.peak)
-  playing = audio
-  // Browsers block sound until the user has clicked somewhere; then it's just silent.
-  void audio.play().catch(() => {})
+  playing = playSound(clip.src, 'gossip', Math.min(1, 0.22 / clip.peak))
   return clip.seconds * 1000
 }
 

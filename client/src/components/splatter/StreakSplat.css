@@ -82,6 +82,15 @@
   }
 }
 
+/* Gentle mode: a happy tomato hops in instead. */
+.splat.is-gentle .splat-tomato {
+  animation: pop-in 420ms var(--ease-pop) backwards;
+}
+
+.splat.is-gentle .splat-card {
+  animation-delay: 300ms;
+}
+
 .splat-card {
   max-width: 64rem;
   padding: 2.4rem 3.6rem 2.8rem;

@@ -1,5 +1,6 @@
 import { today } from '@tomonook/shared'
-import { STREAK_MIN, moodStreak } from '../../lib/streak.ts'
+import { moodStreak } from '../../lib/streak.ts'
+import { useSettingsStore } from '../../store/settingsStore.ts'
 import { useMoodStore } from '../../store/moodStore.ts'
 import happyTomato from '../../assets/tomato/tomato-face.png'
 import grayTomato from '../../assets/tomato/gray-tomato.png'
@@ -10,8 +11,9 @@ export default function StreakBadge() {
   const entries = useMoodStore((s) => s.entries)
   const logged = new Set(entries.map((e) => e.day))
   const days = moodStreak(logged)
-  const happy = days >= STREAK_MIN
-  const toGo = STREAK_MIN - days
+  const streakDays = useSettingsStore((s) => s.streakDays)
+  const happy = days >= streakDays
+  const toGo = streakDays - days
 
   const hint =
     days === 0

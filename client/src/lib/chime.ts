@@ -2,6 +2,8 @@
 // Browsers only allow sound after a click, so unlockChime() is called from
 // the button that starts a timer.
 
+import { soundLevel, useSettingsStore, type ChimeStyle } from '../store/settingsStore.ts'
+
 let ctx: AudioContext | null = null
 
 export function unlockChime() {
@@ -13,20 +15,30 @@ export function unlockChime() {
   }
 }
 
-export function chime() {
-  if (!ctx || ctx.state !== 'running') return
+/** The tones for each chime style: [frequency, start, length] in Hz and seconds. */
+const STYLES: Record<ChimeStyle, { wave: OscillatorType; notes: [number, number, number][] }> = {
+  chime: { wave: 'sine', notes: [[660, 0, 0.5], [880, 0.22, 0.5]] },
+  bell: { wave: 'triangle', notes: [[784, 0, 1.2], [988, 0.18, 1.2], [1175, 0.36, 1.4]] },
+  soft: { wave: 'sine', notes: [[440, 0, 0.9]] },
+}
+
+/** Plays the chosen chime, at the volume the settings allow. */
+export function chime(style: ChimeStyle = useSettingsStore.getState().chimeStyle) {
+  const level = soundLevel('chime')
+  if (!ctx || ctx.state !== 'running' || level <= 0) return
   const start = ctx.currentTime
-  ;[660, 880].forEach((freq, i) => {
-    const osc = ctx!.createOscillator()
-    const gain = ctx!.createGain()
-    osc.type = 'sine'
+  const { wave, notes } = STYLES[style]
+  for (const [freq, at, length] of notes) {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = wave
     osc.frequency.value = freq
-    const t = start + i * 0.22
+    const t = start + at
     gain.gain.setValueAtTime(0, t)
-    gain.gain.linearRampToValueAtTime(0.25, t + 0.02)
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5)
-    osc.connect(gain).connect(ctx!.destination)
+    gain.gain.linearRampToValueAtTime(0.3 * level, t + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + length)
+    osc.connect(gain).connect(ctx.destination)
     osc.start(t)
-    osc.stop(t + 0.55)
-  })
+    osc.stop(t + length + 0.05)
+  }
 }
