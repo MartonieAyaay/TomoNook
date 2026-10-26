@@ -7,7 +7,7 @@ import { load, save } from './storage.ts'
 */
 
 export interface Weather {
-  /** Now, in `unit`. */
+  /** Now, in `unit` (always °C for new fetches; shown in the user's unit). */
   temp: number
   feelsLike: number
   /** Today's high and low. */
@@ -24,10 +24,16 @@ export interface Weather {
 
 const FRESH_MS = 60 * 60_000
 
+export type TempUnit = 'F' | 'C' | 'K'
+
+/** The order the unit button steps through. */
+export const TEMP_UNITS: TempUnit[] = ['F', 'C', 'K']
+
 /** Countries that use Fahrenheit, going by the browser's language region. */
 const FAHRENHEIT = new Set(['US', 'LR', 'MM', 'BS', 'BZ', 'KY', 'PW'])
 
-function preferredUnit(): 'C' | 'F' {
+/** The unit to show before the user picks one. */
+export function defaultTempUnit(): TempUnit {
   const region = navigator.language.split('-')[1]?.toUpperCase()
   return region && FAHRENHEIT.has(region) ? 'F' : 'C'
 }
@@ -51,29 +57,29 @@ export const isLocationDenied = (e: unknown) =>
 /** Asks for the location if needed, then fetches. Throws if the user says no or it can't be reached. */
 export async function fetchWeather(): Promise<Weather> {
   const { coords } = await position()
-  const unit = preferredUnit()
   const url =
     'https://api.open-meteo.com/v1/forecast' +
     `?latitude=${coords.latitude.toFixed(2)}&longitude=${coords.longitude.toFixed(2)}` +
     '&current=temperature_2m,apparent_temperature,weather_code,is_day' +
     '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
-    '&timezone=auto&forecast_days=1' +
-    (unit === 'F' ? '&temperature_unit=fahrenheit' : '')
+    '&timezone=auto&forecast_days=1'
   const res = await fetch(url)
   if (!res.ok) throw new Error(`Weather request failed: ${res.status}`)
   const data = (await res.json()) as {
     current: { temperature_2m: number; apparent_temperature: number; weather_code: number; is_day: number }
     daily: { temperature_2m_max: number[]; temperature_2m_min: number[]; precipitation_probability_max: (number | null)[] }
   }
+  // Kept to a tenth, so converting to another unit rounds only once.
+  const tenth = (n: number) => Math.round(n * 10) / 10
   const w: Weather = {
-    temp: Math.round(data.current.temperature_2m),
-    feelsLike: Math.round(data.current.apparent_temperature),
-    high: Math.round(data.daily.temperature_2m_max[0]),
-    low: Math.round(data.daily.temperature_2m_min[0]),
+    temp: tenth(data.current.temperature_2m),
+    feelsLike: tenth(data.current.apparent_temperature),
+    high: tenth(data.daily.temperature_2m_max[0]),
+    low: tenth(data.daily.temperature_2m_min[0]),
     rainChance: data.daily.precipitation_probability_max[0] ?? 0,
     code: data.current.weather_code,
     isDay: data.current.is_day === 1,
-    unit,
+    unit: 'C',
     at: Date.now(),
   }
   save('weather', w)
@@ -108,6 +114,13 @@ export function describeWeather(code: number, isDay = true) {
 
 /** The temperature in °C, whatever unit it was fetched in. */
 export const celsius = (w: Weather, t: number) => (w.unit === 'F' ? ((t - 32) * 5) / 9 : t)
+
+/** A temperature from this weather, rounded, in the unit asked for: "84°", "29°" or "302 K". */
+export function formatTemp(w: Weather, t: number, unit: TempUnit) {
+  const c = celsius(w, t)
+  if (unit === 'K') return `${Math.round(c + 273.15)} K`
+  return `${Math.round(unit === 'F' ? (c * 9) / 5 + 32 : c)}°`
+}
 
 /** A short tomato-flavoured tip for the weather, about "you". */
 export function weatherTip(w: Weather) {

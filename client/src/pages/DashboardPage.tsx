@@ -4,15 +4,19 @@ import { today } from '@tomonook/shared'
 import MoodPicker from '../components/mood/MoodPicker.tsx'
 import WeatherIcon from '../components/WeatherIcon.tsx'
 import {
+  TEMP_UNITS,
   cachedWeather,
+  defaultTempUnit,
   describeWeather,
   fetchWeather,
+  formatTemp,
   isLocationDenied,
   skyOf,
   weatherTip,
   type Weather,
 } from '../lib/weather.ts'
 import { useGossipStore } from '../store/gossipStore.ts'
+import { useSettingsStore } from '../store/settingsStore.ts'
 import { textOn } from '../components/todo/PrioritySelect.tsx'
 import { unlockChime } from '../lib/chime.ts'
 import { useProfileStore } from '../store/profileStore.ts'
@@ -212,6 +216,11 @@ function WeatherCard() {
   const [weather, setWeather] = useState<Weather | null>(cachedWeather)
   const [loading, setLoading] = useState(false)
   const [note, setNote] = useState('')
+  // °F → °C → K, remembered until changed.
+  const unit = useSettingsStore((s) => s.tempUnit) ?? defaultTempUnit()
+  const setUnit = useSettingsStore((s) => s.update)
+  const nextUnit = TEMP_UNITS[(TEMP_UNITS.indexOf(unit) + 1) % TEMP_UNITS.length]
+  const unitLabel = (u: string) => (u === 'K' ? 'K' : `°${u}`)
 
   const check = useCallback(async () => {
     setLoading(true)
@@ -244,16 +253,27 @@ function WeatherCard() {
       title="Weather"
       action={
         shown && (
-          <button
-            type="button"
-            className="weather-refresh"
-            onClick={check}
-            disabled={loading}
-            aria-label="Refresh the weather"
-            title="Refresh"
-          >
-            ↻
-          </button>
+          <>
+            <button
+              type="button"
+              className="weather-unit"
+              onClick={() => setUnit({ tempUnit: nextUnit })}
+              aria-label={`Showing ${unitLabel(unit)}. Switch to ${unitLabel(nextUnit)}`}
+              title={`Switch to ${unitLabel(nextUnit)}`}
+            >
+              {unitLabel(unit)}
+            </button>
+            <button
+              type="button"
+              className="weather-refresh"
+              onClick={check}
+              disabled={loading}
+              aria-label="Refresh the weather"
+              title="Refresh"
+            >
+              ↻
+            </button>
+          </>
         )
       }
     >
@@ -263,15 +283,16 @@ function WeatherCard() {
             <WeatherIcon sky={skyOf(shown.code)} isDay={shown.isDay} />
             <div>
               <p className="weather-temp">
-                {shown.temp}°{shown.unit}
+                {formatTemp(shown, shown.temp, unit)}
+                {unit !== 'K' && unit}
               </p>
               <p className="weather-desc">{desc[0].toUpperCase() + desc.slice(1)}</p>
             </div>
           </div>
           <ul className="weather-facts">
-            <li>Feels like {shown.feelsLike}°</li>
+            <li>Feels like {formatTemp(shown, shown.feelsLike, unit)}</li>
             <li>
-              High {shown.high}° · Low {shown.low}°
+              High {formatTemp(shown, shown.high, unit)} · Low {formatTemp(shown, shown.low, unit)}
             </li>
             <li>{shown.rainChance}% chance of rain</li>
           </ul>

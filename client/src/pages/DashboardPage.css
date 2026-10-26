@@ -330,6 +330,24 @@
   color: var(--tomato);
 }
 
+/* The °F / °C / K switch beside refresh. */
+.weather-unit {
+  min-width: 52px;
+  height: 40px;
+  padding: 0.4rem 1.4rem 0;
+  border: 0.3rem solid var(--forest);
+  border-radius: 999px;
+  background: var(--forest);
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+  color: var(--cream-text);
+  transition: transform 220ms var(--ease-bubbly);
+}
+
+.weather-unit:active {
+  transform: scale(0.92);
+}
+
 .weather-refresh {
   display: grid;
   place-items: center;
