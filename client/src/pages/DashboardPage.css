@@ -244,6 +244,115 @@
   transform: translateY(1px);
 }
 
+/* ---------- Weather ---------- */
+
+.weather {
+  transition: opacity 200ms ease-out;
+}
+
+.weather.is-loading {
+  opacity: 0.55;
+}
+
+.weather-now {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;
+  margin-top: 1.6rem;
+}
+
+.weather-icon {
+  flex: none;
+  width: 12rem;
+  height: 12rem;
+  filter: drop-shadow(0 0.4rem 0.3rem rgb(0 0 0 / 18%));
+  animation: pop-in 320ms var(--ease-pop);
+}
+
+.weather-temp {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 8rem;
+  line-height: 1;
+  color: var(--tomato);
+  text-shadow: 0.3rem 0.3rem 0 rgb(0 0 0 / 15%);
+}
+
+.weather-desc {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  color: var(--forest);
+}
+
+.weather-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.weather-facts li {
+  padding: 0.6rem 1.6rem 0.2rem;
+  border-radius: 999px;
+  background: var(--butter);
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  color: var(--brown);
+}
+
+.weather-tip {
+  margin: 1.8rem 0 0;
+  font-family: var(--font-hand);
+  font-size: 3.2rem;
+  color: var(--tomato-dark);
+}
+
+.weather-updated {
+  margin: 0.6rem 0 0;
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 1.9rem;
+  color: #767676;
+}
+
+.weather-ask {
+  display: grid;
+  justify-items: start;
+  gap: 1.6rem;
+}
+
+.weather-note {
+  margin: 1.4rem 0 0;
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 2.2rem;
+  color: var(--tomato);
+}
+
+.weather-refresh {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0.3rem solid var(--forest);
+  border-radius: 50%;
+  background: var(--cream-light);
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--forest);
+  transition: rotate 400ms var(--ease-bubbly);
+}
+
+.weather-refresh:hover:not(:disabled) {
+  rotate: 180deg;
+}
+
+.weather-refresh:disabled {
+  opacity: 0.5;
+}
+
 @media (max-width: 1100px) {
   .dashboard-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -251,6 +360,31 @@
 }
 
 @media (max-width: 720px) {
+  .weather-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .weather-temp {
+    font-size: 40px;
+  }
+
+  .weather-desc {
+    font-size: 18px;
+  }
+
+  .weather-facts li {
+    font-size: 14px;
+  }
+
+  .weather-tip {
+    font-size: 18px;
+  }
+
+  .weather-updated,
+  .weather-note {
+    font-size: 13px;
+  }
   .dashboard-header {
     gap: 14px;
   }

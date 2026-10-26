@@ -1,7 +1,18 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { today } from '@tomonook/shared'
 import MoodPicker from '../components/mood/MoodPicker.tsx'
+import WeatherIcon from '../components/WeatherIcon.tsx'
+import {
+  cachedWeather,
+  describeWeather,
+  fetchWeather,
+  isLocationDenied,
+  skyOf,
+  weatherTip,
+  type Weather,
+} from '../lib/weather.ts'
+import { useGossipStore } from '../store/gossipStore.ts'
 import { textOn } from '../components/todo/PrioritySelect.tsx'
 import { unlockChime } from '../lib/chime.ts'
 import { useProfileStore } from '../store/profileStore.ts'
@@ -11,7 +22,7 @@ import grayTomato from '../assets/tomato/gray-tomato.png'
 import redTomato from '../assets/tomato/tomato-no-face.png'
 import './DashboardPage.css'
 
-/** A quick look at today: tasks, mood and the clock, each linking to its page. */
+/** A quick look at today: tasks, weather, mood and the clock. */
 export default function DashboardPage() {
   const name = useProfileStore((s) => s.name)
   const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
@@ -26,7 +37,10 @@ export default function DashboardPage() {
       </header>
 
       <div className="dashboard-grid">
-        <TodayTasks />
+        <div className="dashboard-side">
+          <TodayTasks />
+          <WeatherCard />
+        </div>
         <div className="dashboard-side">
           <MoodPicker day={today()} compact />
           <ClockCard />
@@ -36,14 +50,30 @@ export default function DashboardPage() {
   )
 }
 
-function Card({ title, link, linkLabel, children }: { title: string; link: string; linkLabel: string; children: ReactNode }) {
+function Card({
+  title,
+  link,
+  linkLabel,
+  action,
+  children,
+}: {
+  title: string
+  link?: string
+  linkLabel?: string
+  /** Something else for the header's right side, like a refresh button. */
+  action?: ReactNode
+  children: ReactNode
+}) {
   return (
     <section className="dash-card" aria-label={title}>
       <header className="dash-card-header">
         <h2 className="dash-card-title">{title}</h2>
-        <Link to={link} className="dash-card-link">
-          {linkLabel} →
-        </Link>
+        {link && (
+          <Link to={link} className="dash-card-link">
+            {linkLabel} →
+          </Link>
+        )}
+        {action}
       </header>
       {children}
     </section>
@@ -166,6 +196,106 @@ function ClockCard() {
             ))}
           </div>
         </>
+      )}
+    </Card>
+  )
+}
+
+/**
+  Today's weather where the user is. It needs their location and the
+  internet, so it waits for them to ask; the same permission lets the
+  gossip tomatoes talk about the weather (and can be changed in Settings).
+*/
+function WeatherCard() {
+  const permission = useGossipStore((s) => s.weather)
+  const setPermission = useGossipStore((s) => s.setWeather)
+  const [weather, setWeather] = useState<Weather | null>(cachedWeather)
+  const [loading, setLoading] = useState(false)
+  const [note, setNote] = useState('')
+
+  const check = useCallback(async () => {
+    setLoading(true)
+    setNote('')
+    try {
+      setWeather(await fetchWeather())
+      setPermission('allowed')
+    } catch (e) {
+      if (isLocationDenied(e)) {
+        setPermission('denied')
+        setNote('Location is blocked for this site. Allow it in your browser’s site settings to see the weather.')
+      } else {
+        setNote('Couldn’t reach the weather right now. Check your internet and try again.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [setPermission])
+
+  // Already allowed: refresh quietly when what's saved is over an hour old.
+  useEffect(() => {
+    if (permission === 'allowed' && !cachedWeather()) void check()
+  }, [permission, check])
+
+  const shown = permission === 'allowed' ? weather : null
+  const desc = shown ? describeWeather(shown.code, shown.isDay) : ''
+
+  return (
+    <Card
+      title="Weather"
+      action={
+        shown && (
+          <button
+            type="button"
+            className="weather-refresh"
+            onClick={check}
+            disabled={loading}
+            aria-label="Refresh the weather"
+            title="Refresh"
+          >
+            ↻
+          </button>
+        )
+      }
+    >
+      {shown ? (
+        <div className={`weather${loading ? ' is-loading' : ''}`}>
+          <div className="weather-now">
+            <WeatherIcon sky={skyOf(shown.code)} isDay={shown.isDay} />
+            <div>
+              <p className="weather-temp">
+                {shown.temp}°{shown.unit}
+              </p>
+              <p className="weather-desc">{desc[0].toUpperCase() + desc.slice(1)}</p>
+            </div>
+          </div>
+          <ul className="weather-facts">
+            <li>Feels like {shown.feelsLike}°</li>
+            <li>
+              High {shown.high}° · Low {shown.low}°
+            </li>
+            <li>{shown.rainChance}% chance of rain</li>
+          </ul>
+          <p className="weather-tip">{weatherTip(shown)}</p>
+          <p className="weather-updated">
+            Updated {new Date(shown.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+          </p>
+        </div>
+      ) : (
+        <div className="weather-ask">
+          <p className="dash-empty">
+            {loading ? 'Checking the sky...' : 'See today’s weather here. It uses your location and the internet.'}
+          </p>
+          {!loading && (
+            <button type="button" className="dash-btn" onClick={check}>
+              {permission === 'allowed' ? 'Try again' : 'Show the weather'}
+            </button>
+          )}
+        </div>
+      )}
+      {note && (
+        <p className="weather-note" role="alert">
+          {note}
+        </p>
       )}
     </Card>
   )

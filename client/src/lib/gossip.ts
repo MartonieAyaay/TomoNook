@@ -1,7 +1,7 @@
 import { addDays, today } from '@tomonook/shared'
 import { fill, pickForms } from './pronouns.ts'
 import { moodStreak } from './streak.ts'
-import { cachedWeather, describeWeather } from './weather.ts'
+import { cachedWeather, celsius, describeWeather, skyOf } from './weather.ts'
 import { useFocusStore } from '../store/focusStore.ts'
 import { useGossipStore } from '../store/gossipStore.ts'
 import { useMoodStore } from '../store/moodStore.ts'
@@ -157,13 +157,15 @@ function weatherLine(): GossipLine | null {
   if (permission === 'unasked') return { text: "I wonder what the weather's like outside...", tone: 'meh', askWeather: true }
   const w = cachedWeather()
   if (!w) return null
-  const desc = describeWeather(w.code)
+  const desc = describeWeather(w.code, w.isDay)
+  const sky = skyOf(w.code)
+  const c = celsius(w, w.temp)
   const tip =
-    desc === 'rainy' || desc === 'showery' || desc === 'stormy'
+    sky === 'rain' || sky === 'storm' || w.rainChance >= 60
       ? '{Name} should grab an umbrella!'
-      : w.temp >= 30
+      : c >= 30
         ? 'Stay hydrated, {name}!'
-        : w.temp <= 10
+        : c <= 10
           ? 'Bundle up, {name}!'
           : 'Perfect tomato-ripening weather.'
   return { text: `It's ${w.temp}° and ${desc} out there. ${tip}`, tone: 'meh' }
