@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useLocation } from 'react-router-dom'
 import { currentWeatherLine, gossipLines, replyTo, type GossipLine } from '../../lib/gossip.ts'
-import { gossipSpot } from '../../lib/gossipSchedule.ts'
+import { useGossipSpot } from '../../lib/gossipSchedule.ts'
 import { load, save } from '../../lib/storage.ts'
 import { cachedWeather, fetchWeather } from '../../lib/weather.ts'
 import { useGossipStore } from '../../store/gossipStore.ts'
@@ -26,7 +26,7 @@ interface Talk {
 
 /**
   The two named gossip tomatoes. They sit together on one tab, move to
-  another 5 times a day, and whisper about the user when tapped (and once
+  another every 4 hours, and whisper about the user when tapped (and once
   on their own each time they move).
 */
 export default function GossipTomatoes() {
@@ -34,7 +34,7 @@ export default function GossipTomatoes() {
   const permission = useGossipStore((s) => s.weather)
   const setPermission = useGossipStore((s) => s.setWeather)
   const section = useLocation().pathname.split('/')[1]
-  const [spot, setSpot] = useState(() => gossipSpot())
+  const spot = useGossipSpot()
   const [talk, setTalk] = useState<Talk | null>(null)
   const timers = useRef<number[]>([])
   const lastText = useRef('')
@@ -44,12 +44,6 @@ export default function GossipTomatoes() {
     timers.current = []
   }
   useEffect(() => clearTimers, [])
-
-  // Moves when the time slot changes.
-  useEffect(() => {
-    const id = window.setInterval(() => setSpot((s) => (gossipSpot().key === s.key ? s : gossipSpot())), 30_000)
-    return () => window.clearInterval(id)
-  }, [])
 
   // Weather is allowed but stale: refresh quietly so it's ready when they talk.
   useEffect(() => {
