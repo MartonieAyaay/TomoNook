@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { today } from '@tomonook/shared'
 import Avatar from '../components/avatar/Avatar.tsx'
 import TomatoFill from '../components/TomatoFill.tsx'
+import { gossipLines } from '../lib/gossip.ts'
+import { pronounTag } from '../lib/pronouns.ts'
 import { quoteOfTheDay } from '../lib/quotes.ts'
 import { useMoodStore } from '../store/moodStore.ts'
 import { useProfileStore } from '../store/profileStore.ts'
@@ -16,9 +18,17 @@ import './ProfileHome.css'
 
 const QUOTE_MS = 6000
 const YUM_MS = 2600
+const GOSSIP_MS = 4500
 
-/** What the avatar is showing above its head. */
-type Bubble = { kind: 'thought' } | { kind: 'quote'; key: number } | { kind: 'yum'; key: number }
+/** Which pair of corner tomatoes is talking. */
+type Corner = 'top' | 'bottom'
+
+/** What's being said on the stage: the avatar's bubble, or a corner tomato's gossip. */
+type Bubble =
+  | { kind: 'thought' }
+  | { kind: 'quote'; key: number }
+  | { kind: 'yum'; key: number }
+  | { kind: 'gossip'; key: number; text: string; from: Corner }
 
 /**
   Profile home (Figma 18:2): the blinking avatar with a thought bubble for
@@ -27,6 +37,7 @@ type Bubble = { kind: 'thought' } | { kind: 'quote'; key: number } | { kind: 'yu
 export default function ProfileHome() {
   const name = useProfileStore((s) => s.name)
   const avatar = useProfileStore((s) => s.avatar)
+  const tag = useProfileStore((s) => pronounTag(s.info.pronouns))
   const [bubble, setBubble] = useState<Bubble>({ kind: 'thought' })
   const [feeding, setFeeding] = useState(false)
   const [eating, setEating] = useState<{ food: Food | null; key: number } | null>(null)
@@ -35,9 +46,9 @@ export default function ProfileHome() {
   const [reaction, setReaction] = useState<{ likes: boolean; key: number } | null>(null)
 
   // Each bubble goes back to the thought bubble after a while; pressing again restarts the wait.
-  const show = (kind: 'quote' | 'yum', ms: number) => {
+  const show = (next: Exclude<Bubble, { kind: 'thought' }>, ms: number) => {
     window.clearTimeout(timer.current)
-    setBubble({ kind, key: Date.now() })
+    setBubble(next)
     timer.current = window.setTimeout(() => {
       setBubble({ kind: 'thought' })
       setEating(null)
@@ -47,8 +58,20 @@ export default function ProfileHome() {
 
   const feed = (food: Food | null) => {
     setEating({ food, key: Date.now() })
-    show('yum', YUM_MS)
+    show({ kind: 'yum', key: Date.now() }, YUM_MS)
   }
+
+  // A corner tomato whispers something about the user, not the same line twice in a row.
+  const lastGossip = useRef('')
+  const gossip = (from: Corner) => {
+    const lines = gossipLines()
+    const fresh = lines.filter((l) => l !== lastGossip.current)
+    const text = (fresh.length ? fresh : lines)[Math.floor(Math.random() * (fresh.length || lines.length))]
+    lastGossip.current = text
+    show({ kind: 'gossip', key: Date.now(), text, from }, GOSSIP_MS)
+  }
+  const topGossip = bubble.kind === 'gossip' && bubble.from === 'top'
+  const showThought = bubble.kind === 'thought' || (bubble.kind === 'gossip' && !topGossip)
 
   return (
     <div className="profile-home">
@@ -65,22 +88,41 @@ export default function ProfileHome() {
             )}
           </div>
 
-          <div className={`profile-bubble-spot${bubble.kind === 'thought' ? '' : ' is-speaking'}`} aria-live="polite">
-            {bubble.kind === 'thought' ? (
+          <div className={`profile-bubble-spot${showThought ? '' : ' is-speaking'}`} aria-live="polite">
+            {showThought ? (
               <ThoughtBubble />
             ) : (
-              <p key={bubble.key} className={`speech-bubble${bubble.kind === 'yum' ? ' is-yum' : ''}`}>
-                <span className="speech-text">{bubble.kind === 'yum' ? 'Yum!' : quoteOfTheDay()}</span>
+              <p key={bubble.key} className={`speech-bubble is-${bubble.kind}`}>
+                <span className="speech-text">
+                  {bubble.kind === 'yum' ? 'Yum!' : bubble.kind === 'gossip' ? bubble.text : quoteOfTheDay()}
+                </span>
               </p>
             )}
           </div>
+          {bubble.kind === 'gossip' && !topGossip && (
+            <p key={bubble.key} className="gossip-bubble" aria-live="polite">
+              <span className="speech-text">{bubble.text}</span>
+            </p>
+          )}
 
-          <img className="profile-deco profile-deco-1" src={tomato} alt="" />
-          <img className="profile-deco profile-deco-2" src={tomato} alt="" />
-          <img className="profile-deco profile-deco-3" src={tomato} alt="" />
-          <img className="profile-deco profile-deco-4" src={tomato} alt="" />
+          {([1, 2, 3, 4] as const).map((n) => (
+            <button
+              key={n}
+              type="button"
+              className={`profile-deco profile-deco-${n} gossip-tomato`}
+              onClick={() => gossip(n <= 2 ? 'top' : 'bottom')}
+              aria-label="Listen to the tomatoes gossip"
+              title="Psst..."
+            >
+              <img src={tomato} alt="" />
+            </button>
+          ))}
 
-          <h2 className={`profile-home-name${name ? '' : ' is-placeholder'}`}><span>{name || 'Name'}</span>
+          <h2 className={`profile-home-name${name ? '' : ' is-placeholder'}`}>
+            <span className="profile-name-text">
+              {name || 'Name'}
+              {tag && <span className="profile-pronoun-tag">{tag}</span>}
+            </span>
           </h2>
 
           <div className="profile-actions">
@@ -94,7 +136,7 @@ export default function ProfileHome() {
               <img src={buttonTomato} alt="" />
               <span>Feed</span>
             </button>
-            <button type="button" className="tomato-button" onClick={() => show('quote', QUOTE_MS)}>
+            <button type="button" className="tomato-button" onClick={() => show({ kind: 'quote', key: Date.now() }, QUOTE_MS)}>
               <img src={buttonTomato} alt="" />
               <span>
                 Daily

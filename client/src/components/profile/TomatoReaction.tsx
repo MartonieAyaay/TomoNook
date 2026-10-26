@@ -2,10 +2,13 @@ import { useEffect, useRef } from 'react'
 import happyTomato from '../../assets/tomato/tomato-face.png'
 import angryTomato from '../../assets/tomato/tomato-angry.png'
 import splatter from '../../assets/tomato/splatter.png'
+import splatSound from '../../assets/sounds/splat.mp3'
 import './TomatoReaction.css'
 
 const YAY_MS = 2600
 const NAY_MS = 5400
+/** When the launched tomato hits the screen (matches the CSS). */
+const SPLAT_AT_MS = 2600
 
 /**
   After the info is saved. Likes tomatoes: a happy tomato sparkles in and out.
@@ -19,7 +22,16 @@ export default function TomatoReaction({ likes, onDone }: { likes: boolean; onDo
 
   useEffect(() => {
     const t = window.setTimeout(() => done.current(), likes ? YAY_MS : NAY_MS)
-    return () => window.clearTimeout(t)
+    if (likes) return () => window.clearTimeout(t)
+    // Loaded now so it plays right on impact.
+    const sound = new Audio(splatSound)
+    sound.preload = 'auto'
+    const hit = window.setTimeout(() => void sound.play().catch(() => {}), SPLAT_AT_MS)
+    return () => {
+      window.clearTimeout(t)
+      window.clearTimeout(hit)
+      sound.pause()
+    }
   }, [likes])
 
   if (likes) {
