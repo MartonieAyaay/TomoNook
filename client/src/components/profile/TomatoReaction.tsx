@@ -2,13 +2,26 @@ import { useEffect, useRef } from 'react'
 import happyTomato from '../../assets/tomato/tomato-face.png'
 import angryTomato from '../../assets/tomato/tomato-angry.png'
 import splatter from '../../assets/tomato/splatter.png'
+import chargeSound from '../../assets/sounds/charging-up.mp3'
 import splatSound from '../../assets/sounds/splat.mp3'
+import sadSound from '../../assets/sounds/sad.mp3'
+import sparkleSound from '../../assets/sounds/sparkle.mp3'
 import './TomatoReaction.css'
 
 const YAY_MS = 2600
 const NAY_MS = 5400
-/** When the launched tomato hits the screen (matches the CSS). */
-const SPLAT_AT_MS = 2600
+/** Sound effects for each reaction: when they start (ms, matching the CSS) and how loud. */
+const SOUNDS = {
+  yay: [{ src: sparkleSound, at: 0, volume: 1 }],
+  nay: [
+    // While it shakes and swells.
+    { src: chargeSound, at: 300, volume: 0.5 },
+    // It hits the screen.
+    { src: splatSound, at: 2600, volume: 1 },
+    // Once the splat has died down.
+    { src: sadSound, at: 3300, volume: 1 },
+  ],
+}
 
 /**
   After the info is saved. Likes tomatoes: a happy tomato sparkles in and out.
@@ -22,15 +35,19 @@ export default function TomatoReaction({ likes, onDone }: { likes: boolean; onDo
 
   useEffect(() => {
     const t = window.setTimeout(() => done.current(), likes ? YAY_MS : NAY_MS)
-    if (likes) return () => window.clearTimeout(t)
-    // Loaded now so it plays right on impact.
-    const sound = new Audio(splatSound)
-    sound.preload = 'auto'
-    const hit = window.setTimeout(() => void sound.play().catch(() => {}), SPLAT_AT_MS)
+    // Loaded up front so each one plays right on its moment.
+    const sounds = SOUNDS[likes ? 'yay' : 'nay'].map(({ src, at, volume }) => {
+      const audio = new Audio(src)
+      audio.preload = 'auto'
+      audio.volume = volume
+      return { audio, timer: window.setTimeout(() => void audio.play().catch(() => {}), at) }
+    })
     return () => {
       window.clearTimeout(t)
-      window.clearTimeout(hit)
-      sound.pause()
+      for (const { audio, timer } of sounds) {
+        window.clearTimeout(timer)
+        audio.pause()
+      }
     }
   }, [likes])
 
