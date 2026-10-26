@@ -21,8 +21,6 @@ export interface Settings {
   companionChat: Chattiness
   // Splats and streaks
   streakSplat: boolean
-  /** Days in a row that count as a streak. */
-  streakDays: number
   /** Softer reactions instead of angry tomatoes and splats. */
   gentle: boolean
   // Motion and look
@@ -36,9 +34,6 @@ export interface Settings {
   timerAutoStart: boolean
 }
 
-export const STREAK_DAYS_MIN = 2
-export const STREAK_DAYS_MAX = 7
-
 export const DEFAULT_SETTINGS: Settings = {
   volume: 0.8,
   muted: false,
@@ -48,7 +43,6 @@ export const DEFAULT_SETTINGS: Settings = {
   companion: true,
   companionChat: 'all',
   streakSplat: true,
-  streakDays: 3,
   gentle: false,
   reduceMotion: false,
   uiSize: 'normal',
@@ -83,7 +77,6 @@ useSettingsStore.subscribe((s) => {
     companion: s.companion,
     companionChat: s.companionChat,
     streakSplat: s.streakSplat,
-    streakDays: s.streakDays,
     gentle: s.gentle,
     reduceMotion: s.reduceMotion,
     uiSize: s.uiSize,

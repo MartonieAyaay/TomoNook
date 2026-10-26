@@ -6,8 +6,6 @@ import { chime, unlockChime } from '../lib/chime.ts'
 import { fetchWeather } from '../lib/weather.ts'
 import { TOMATO_NAME_MAX, useGossipStore } from '../store/gossipStore.ts'
 import {
-  STREAK_DAYS_MAX,
-  STREAK_DAYS_MIN,
   useSettingsStore,
   type Chattiness,
   type ChimeStyle,
@@ -21,14 +19,19 @@ export default function SettingsPage() {
   return (
     <div className="settings-page">
       <h1 className="page-title">Settings !!</h1>
+      {/* Two columns that stack their cards independently, so every gap is the same. */}
       <div className="settings-grid">
-        <SoundSettings />
-        <GossipSettings />
-        <CompanionSettings />
-        <StreakSettings />
-        <LookSettings />
-        <TimerSettings />
-        <DataSettings />
+        <div className="settings-column">
+          <SoundSettings />
+          <CompanionSettings />
+          <LookSettings />
+          <DataSettings />
+        </div>
+        <div className="settings-column">
+          <GossipSettings />
+          <StreakSettings />
+          <TimerSettings />
+        </div>
       </div>
     </div>
   )
@@ -271,16 +274,9 @@ function CompanionSettings() {
 
 function StreakSettings() {
   const s = useSettingsStore()
-  const days = Array.from({ length: STREAK_DAYS_MAX - STREAK_DAYS_MIN + 1 }, (_, i) => STREAK_DAYS_MIN + i)
   return (
     <Section title="Splats & streaks">
       <Switch label="Splat when a mood streak breaks" on={s.streakSplat} onChange={(streakSplat) => s.update({ streakSplat })} />
-      <Choices<number>
-        label="Days in a row for a streak"
-        value={s.streakDays}
-        options={days.map((d) => ({ value: d, label: String(d) }))}
-        onChange={(streakDays) => s.update({ streakDays })}
-      />
       <Switch
         label="Gentle mode"
         note="No angry tomatoes or splats, just a soft welcome back."
