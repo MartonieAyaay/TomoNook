@@ -3,7 +3,8 @@
   --gossip-x: 0.3;
   position: fixed;
   z-index: 35;
-  bottom: 0;
+  /* A little off the bottom edge, so they sit on the page rather than fall off it. */
+  bottom: 1.6rem;
   left: calc(15.1rem + 4rem + (100vw - 15.1rem - 46rem) * var(--gossip-x));
   display: flex;
   flex-direction: column;
@@ -169,7 +170,7 @@
 @media (max-width: 720px) {
   .gossip-pair {
     /* Above the tab bar, clear of the companion on the right. */
-    bottom: 64px;
+    bottom: 72px;
     left: calc(10px + (100vw - 190px) * var(--gossip-x));
   }
 
@@ -186,7 +187,7 @@
     position: fixed;
     left: 12px;
     right: 12px;
-    bottom: 136px;
+    bottom: 144px;
     width: auto;
     max-width: none;
     margin: 0;
