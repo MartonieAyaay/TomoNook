@@ -1,12 +1,16 @@
 import { useState, type FormEvent } from 'react'
 import { PROFILE_NAME_MAX } from '@tomonook/shared'
-import { AGE_MAX, AGE_MIN, INFO_TEXT_MAX, useProfileStore } from '../../store/profileStore.ts'
-import happyTomato from '../../assets/tomato/tomato-face.png'
-import angryTomato from '../../assets/tomato/tomato-angry.png'
+import {
+  AGE_MAX,
+  AGE_MIN,
+  GENDERS,
+  PRONOUNS,
+  PRONOUNS_MAX,
+  useProfileStore,
+  type Gender,
+  type Pronoun,
+} from '../../store/profileStore.ts'
 import './ProfileInfoCard.css'
-
-const GENDERS = ['Woman', 'Man', 'Non-binary', 'Prefer not to say']
-const PRONOUNS = ['she/her', 'he/him', 'they/them', 'she/they', 'he/they']
 
 /** Name, age, gender, pronouns, and the important one: do they like tomatoes? */
 export default function ProfileInfoCard({ onSaved }: { onSaved: (likesTomatoes: boolean) => void }) {
@@ -33,8 +37,8 @@ export default function ProfileInfoCard({ onSaved }: { onSaved: (likesTomatoes: 
           <dl className="profile-info-list">
             <Row label="Name" value={name} />
             <Row label="Age" value={info.age === null ? '' : String(info.age)} />
-            <Row label="Gender" value={info.gender} />
-            <Row label="Pronouns" value={info.pronouns} />
+            <Row label="Gender" value={info.gender ?? ''} />
+            <Row label="Pronouns" value={info.pronouns.join('/')} />
             <Row label="Likes tomatoes" value={info.likesTomatoes ? 'Yes!' : 'No...'} />
           </dl>
           <div className="info-actions">
@@ -57,6 +61,56 @@ function Row({ label, value }: { label: string; value: string }) {
   )
 }
 
+/** A row of pill-shaped choices backed by real radios or checkboxes. */
+function Chips<T extends string | boolean>({
+  legend,
+  hint,
+  type,
+  name,
+  options,
+  isOn,
+  isDisabled = () => false,
+  onToggle,
+}: {
+  legend: string
+  hint?: string
+  type: 'radio' | 'checkbox'
+  name: string
+  options: { value: T; label: string }[]
+  isOn: (value: T) => boolean
+  isDisabled?: (value: T) => boolean
+  onToggle: (value: T) => void
+}) {
+  return (
+    <fieldset className="info-group">
+      <legend>
+        {legend}
+        {hint && <span className="info-hint"> {hint}</span>}
+      </legend>
+      <div className="info-chips">
+        {options.map((o) => {
+          const disabled = isDisabled(o.value)
+          return (
+            <label
+              key={o.label}
+              className={`info-chip${isOn(o.value) ? ' is-on' : ''}${disabled ? ' is-disabled' : ''}`}
+            >
+              <input
+                type={type}
+                name={name}
+                checked={isOn(o.value)}
+                disabled={disabled}
+                onChange={() => onToggle(o.value)}
+              />
+              {o.label}
+            </label>
+          )
+        })}
+      </div>
+    </fieldset>
+  )
+}
+
 function InfoForm({
   canCancel,
   onCancel,
@@ -69,8 +123,8 @@ function InfoForm({
   const store = useProfileStore.getState()
   const [name, setName] = useState(store.name)
   const [age, setAge] = useState(store.info.age === null ? '' : String(store.info.age))
-  const [gender, setGender] = useState(store.info.gender)
-  const [pronouns, setPronouns] = useState(store.info.pronouns)
+  const [gender, setGender] = useState<Gender | null>(store.info.gender)
+  const [pronouns, setPronouns] = useState<Pronoun[]>(store.info.pronouns)
   const [likes, setLikes] = useState(store.info.likesTomatoes)
   const [error, setError] = useState('')
 
@@ -86,76 +140,80 @@ function InfoForm({
     onSaved(likes)
   }
 
-  // Each field clears the error as soon as it changes.
-  const change = (setter: (v: string) => void) => (e: { target: { value: string } }) => {
-    setter(e.target.value)
-    setError('')
-  }
+  // Every change clears the error.
+  const changed = () => setError('')
 
   return (
     <form className="info-form" onSubmit={submit} noValidate>
-      <label className="info-field">
-        <span>Name</span>
-        <input value={name} maxLength={PROFILE_NAME_MAX} onChange={change(setName)} />
-      </label>
-      <label className="info-field">
-        <span>Age</span>
-        <input type="number" inputMode="numeric" min={AGE_MIN} max={AGE_MAX} value={age} onChange={change(setAge)} />
-      </label>
-      <label className="info-field">
-        <span>Gender</span>
-        <input
-          list="info-genders"
-          maxLength={INFO_TEXT_MAX}
-          value={gender}
-          onChange={change(setGender)}
-          placeholder="Pick or type"
-        />
-        <datalist id="info-genders">
-          {GENDERS.map((g) => (
-            <option key={g} value={g} />
-          ))}
-        </datalist>
-      </label>
-      <label className="info-field">
-        <span>Pronouns</span>
-        <input
-          list="info-pronouns"
-          maxLength={INFO_TEXT_MAX}
-          value={pronouns}
-          onChange={change(setPronouns)}
-          placeholder="Pick or type"
-        />
-        <datalist id="info-pronouns">
-          {PRONOUNS.map((p) => (
-            <option key={p} value={p} />
-          ))}
-        </datalist>
-      </label>
+      <div className="info-fields">
+        <label className="info-field">
+          <span>Name</span>
+          <input
+            value={name}
+            maxLength={PROFILE_NAME_MAX}
+            onChange={(e) => {
+              setName(e.target.value)
+              changed()
+            }}
+          />
+        </label>
+        <label className="info-field">
+          <span>Age</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={AGE_MIN}
+            max={AGE_MAX}
+            value={age}
+            onChange={(e) => {
+              setAge(e.target.value)
+              changed()
+            }}
+          />
+        </label>
+      </div>
 
-      <fieldset className="info-tomatoes">
-        <legend>Do you like tomatoes?</legend>
-        <div className="info-tomato-options">
-          {[
-            { value: true, label: 'Yes', art: happyTomato },
-            { value: false, label: 'No', art: angryTomato },
-          ].map((o) => (
-            <label key={o.label} className={`info-tomato${likes === o.value ? ' is-on' : ''}`}>
-              <input
-                type="radio"
-                name="likes-tomatoes"
-                checked={likes === o.value}
-                onChange={() => {
-                  setLikes(o.value)
-                  setError('')
-                }}
-              />
-              <img src={o.art} alt="" />
-              <span>{o.label}</span>
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <Chips
+        legend="Gender"
+        type="radio"
+        name="gender"
+        options={GENDERS.map((g) => ({ value: g, label: g }))}
+        isOn={(g) => gender === g}
+        onToggle={(g) => {
+          setGender(g)
+          changed()
+        }}
+      />
+
+      <Chips
+        legend="Pronouns"
+        hint={`(pick up to ${PRONOUNS_MAX})`}
+        type="checkbox"
+        name="pronouns"
+        options={PRONOUNS.map((p) => ({ value: p, label: p }))}
+        isOn={(p) => pronouns.includes(p)}
+        isDisabled={(p) => !pronouns.includes(p) && pronouns.length >= PRONOUNS_MAX}
+        onToggle={(p) => {
+          // Kept in the listed order, so they read as She/They, not They/She.
+          setPronouns((cur) => PRONOUNS.filter((x) => (x === p ? !cur.includes(p) : cur.includes(x))))
+          changed()
+        }}
+      />
+
+      <Chips
+        legend="Do you like tomatoes?"
+        type="radio"
+        name="likes-tomatoes"
+        options={[
+          { value: true, label: 'Yes' },
+          { value: false, label: 'No' },
+        ]}
+        isOn={(v) => likes === v}
+        onToggle={(v) => {
+          setLikes(v)
+          changed()
+        }}
+      />
 
       {error && (
         <p className="info-error" role="alert">

@@ -14,20 +14,37 @@ export const ADJUST_LIMITS = { move: 10, minScale: 0.5, maxScale: 1.6, minSpacin
 /** Parts drawn as a left/right pair, so their spacing can change. */
 export const SPACED_PARTS: AdjustablePart[] = ['eyes', 'brows']
 
+export const GENDERS = ['Man', 'Woman', 'Non-Binary', 'Other', 'Prefer not to say'] as const
+export const PRONOUNS = ['She', 'He', 'They', 'It'] as const
+export const PRONOUNS_MAX = 3
+export type Gender = (typeof GENDERS)[number]
+export type Pronoun = (typeof PRONOUNS)[number]
+
 /** What the user tells us about themselves on the profile page. */
 export interface ProfileInfo {
   age: number | null
-  gender: string
-  pronouns: string
+  gender: Gender | null
+  /** Up to PRONOUNS_MAX, in the order of PRONOUNS. */
+  pronouns: Pronoun[]
   /** null until they've answered. */
   likesTomatoes: boolean | null
 }
 
-export const INFO_TEXT_MAX = 30
 export const AGE_MIN = 1
 export const AGE_MAX = 120
 
-const NO_INFO: ProfileInfo = { age: null, gender: '', pronouns: '', likesTomatoes: null }
+const NO_INFO: ProfileInfo = { age: null, gender: null, pronouns: [], likesTomatoes: null }
+
+/** Keeps only known answers, so older or hand-edited saves can't break the page. */
+function cleanInfo(info: Partial<ProfileInfo>): ProfileInfo {
+  const pronouns = Array.isArray(info.pronouns) ? info.pronouns : []
+  return {
+    ...NO_INFO,
+    ...info,
+    gender: GENDERS.find((g) => g === info.gender) ?? null,
+    pronouns: PRONOUNS.filter((p) => pronouns.includes(p)).slice(0, PRONOUNS_MAX),
+  }
+}
 
 const HISTORY_MAX = 50
 /** Nudges to the same part closer together than this undo as one step. */
@@ -69,19 +86,12 @@ export const useProfileStore = create<ProfileState>((set) => ({
   name: load('name', ''),
   // Merge so avatars saved before a new option existed still get its default.
   avatar: { ...DEFAULT_AVATAR, ...load<Partial<AvatarConfig>>('avatar', {}) },
-  info: { ...NO_INFO, ...load<Partial<ProfileInfo>>('profileInfo', {}) },
+  info: cleanInfo(load<Partial<ProfileInfo>>('profileInfo', {})),
   past: [],
   future: [],
   lastNudge: null,
 
-  setInfo: (info) =>
-    set({
-      info: {
-        ...info,
-        gender: info.gender.trim().slice(0, INFO_TEXT_MAX),
-        pronouns: info.pronouns.trim().slice(0, INFO_TEXT_MAX),
-      },
-    }),
+  setInfo: (info) => set({ info: cleanInfo(info) }),
   setName: (name) => set({ name: name.trim().slice(0, PROFILE_NAME_MAX) }),
   updateAvatar: (patch) => set((s) => commit(s, { ...s.avatar, ...patch })),
 
