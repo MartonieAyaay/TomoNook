@@ -1,0 +1,156 @@
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useLocation } from 'react-router-dom'
+import { currentWeatherLine, gossipLines, replyTo, type GossipLine } from '../../lib/gossip.ts'
+import { gossipSpot } from '../../lib/gossipSchedule.ts'
+import { load, save } from '../../lib/storage.ts'
+import { cachedWeather, fetchWeather } from '../../lib/weather.ts'
+import { useGossipStore } from '../../store/gossipStore.ts'
+import tallTomato from '../../assets/tomato/gossip-tall.png'
+import roundTomato from '../../assets/tomato/gossip-round.png'
+import './GossipTomatoes.css'
+
+const REPLY_AFTER_MS = 1500
+const TALK_MS = 7000
+/** Longer when they're waiting for a yes/no about the weather. */
+const ASK_MS = 15000
+
+type Who = 0 | 1
+
+interface Talk {
+  key: number
+  first: Who
+  line: GossipLine
+  reply: string
+  replied: boolean
+}
+
+/**
+  The two named gossip tomatoes. They sit together on one tab, move to
+  another 5 times a day, and whisper about the user when tapped (and once
+  on their own each time they move).
+*/
+export default function GossipTomatoes() {
+  const names = useGossipStore((s) => s.names)
+  const permission = useGossipStore((s) => s.weather)
+  const setPermission = useGossipStore((s) => s.setWeather)
+  const section = useLocation().pathname.split('/')[1]
+  const [spot, setSpot] = useState(() => gossipSpot())
+  const [talk, setTalk] = useState<Talk | null>(null)
+  const timers = useRef<number[]>([])
+  const lastText = useRef('')
+
+  const clearTimers = () => {
+    timers.current.forEach((t) => window.clearTimeout(t))
+    timers.current = []
+  }
+  useEffect(() => clearTimers, [])
+
+  // Moves when the time slot changes.
+  useEffect(() => {
+    const id = window.setInterval(() => setSpot((s) => (gossipSpot().key === s.key ? s : gossipSpot())), 30_000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  // Weather is allowed but stale: refresh quietly so it's ready when they talk.
+  useEffect(() => {
+    if (permission === 'allowed' && !cachedWeather()) fetchWeather().catch(() => {})
+  }, [permission, spot.key])
+
+  /** One tomato says a line, the other answers a moment later. */
+  const say = useCallback((first: Who, line: GossipLine, reply: string) => {
+    clearTimers()
+    lastText.current = line.text
+    setTalk({ key: Date.now(), first, line, reply, replied: false })
+    timers.current.push(window.setTimeout(() => setTalk((t) => t && { ...t, replied: true }), REPLY_AFTER_MS))
+    timers.current.push(window.setTimeout(() => setTalk(null), line.askWeather ? ASK_MS : TALK_MS))
+  }, [])
+
+  const chat = useCallback(
+    (first: Who) => {
+      const lines = gossipLines()
+      const fresh = lines.filter((l) => l.text !== lastText.current)
+      const line = (fresh.length ? fresh : lines)[Math.floor(Math.random() * (fresh.length || lines.length))]
+      say(first, line, replyTo(line))
+    },
+    [say],
+  )
+
+  const here = names !== null && section === spot.tab
+
+  // The first time they're seen after moving, they start chatting by themselves.
+  useEffect(() => {
+    if (!here || load('gossipHeard', '') === spot.key) return
+    const t = window.setTimeout(() => {
+      save('gossipHeard', spot.key)
+      chat(Math.random() < 0.5 ? 0 : 1)
+    }, 1200)
+    return () => window.clearTimeout(t)
+  }, [here, spot.key, chat])
+
+  if (!here || !names) return null
+
+  const answerWeather = async (allow: boolean) => {
+    const first = talk?.first ?? 0
+    if (!allow) {
+      setPermission('denied')
+      say(first, { text: "Okay, no peeking. We'll stick to gossip!", tone: 'meh' }, 'Our lips are sealed.')
+      return
+    }
+    say(first, { text: 'Checking the sky...', tone: 'meh' }, '')
+    try {
+      await fetchWeather()
+      setPermission('allowed')
+      const line = currentWeatherLine()
+      if (line) say(first, line, replyTo(line))
+    } catch (e) {
+      // Said no to location: don't ask again. Anything else (offline): try another day.
+      if (e instanceof GeolocationPositionError && e.code === e.PERMISSION_DENIED) setPermission('denied')
+      say(first, { text: "Hmm, I can't see the sky right now.", tone: 'meh' }, 'Maybe later!')
+    }
+  }
+
+  const second: Who = talk?.first === 0 ? 1 : 0
+  const art = [tallTomato, roundTomato]
+  const side = ['tall', 'round']
+
+  return (
+    <div className="gossip-pair" style={{ '--gossip-x': spot.x } as CSSProperties}>
+      <div className="gossip-talk" aria-live="polite">
+        {talk && (
+          <p key={`${talk.key}a`} className={`gossip-say from-${side[talk.first]}`}>
+            <strong>{names[talk.first]}:</strong> {talk.line.text}
+            {talk.line.askWeather && talk.replied && (
+              <span className="gossip-ask">
+                <button type="button" onClick={() => answerWeather(true)}>
+                  Let them check
+                </button>
+                <button type="button" className="is-secondary" onClick={() => answerWeather(false)}>
+                  No thanks
+                </button>
+              </span>
+            )}
+          </p>
+        )}
+        {talk?.replied && talk.reply && (
+          <p key={`${talk.key}b`} className={`gossip-say from-${side[second]}`}>
+            <strong>{names[second]}:</strong> {talk.reply}
+          </p>
+        )}
+      </div>
+      <div className="gossip-tomatoes">
+        {([0, 1] as const).map((who) => (
+          <button
+            key={who}
+            type="button"
+            className={`gossip-tom is-${side[who]}${talk && (talk.replied ? second : talk.first) === who ? ' is-talking' : ''}`}
+            onClick={() => chat(who)}
+            aria-label={`${names[who]}, a gossip tomato. Tap to hear the gossip.`}
+            title={names[who]}
+          >
+            <img src={art[who]} alt="" />
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}

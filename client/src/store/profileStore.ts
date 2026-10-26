@@ -32,6 +32,14 @@ export interface ProfileInfo {
 export const AGE_MIN = 1
 export const AGE_MAX = 120
 
+/** Every About me field is filled in (all are required). */
+export const isInfoComplete = (name: string, info: ProfileInfo) =>
+  name.trim() !== '' &&
+  info.age !== null &&
+  info.gender !== null &&
+  info.pronouns.length > 0 &&
+  info.likesTomatoes !== null
+
 const NO_INFO: ProfileInfo = { age: null, gender: null, pronouns: [], likesTomatoes: null }
 
 /** Keeps only known answers, so older or hand-edited saves can't break the page. */
