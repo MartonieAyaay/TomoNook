@@ -1,10 +1,11 @@
+import { useEffect, useState } from 'react'
 import { toDayKey } from '@tomonook/shared'
 
 /** The tabs the gossip tomatoes can visit, by the first part of their path. */
 export const GOSSIP_TABS = ['dashboard', 'todo', 'mood', 'timers', 'profile'] as const
 
-/** They move 5 times a day: 12am-4:48am, then every 4h48m until midnight. */
-const SLOTS_PER_DAY = 5
+/** They move every 4 hours: 12am, 4am, 8am, 12pm, 4pm and 8pm. */
+const SLOTS_PER_DAY = 6
 const SLOT_MINUTES = (24 * 60) / SLOTS_PER_DAY
 
 /** A small stable hash, so the same day and slot always give the same spot. */
@@ -23,6 +24,16 @@ export interface GossipSpot {
   x: number
   /** Changes whenever they move. */
   key: string
+}
+
+/** Where the tomatoes are now, updated when they move. */
+export function useGossipSpot() {
+  const [spot, setSpot] = useState(() => gossipSpot())
+  useEffect(() => {
+    const id = window.setInterval(() => setSpot((s) => (gossipSpot().key === s.key ? s : gossipSpot())), 30_000)
+    return () => window.clearInterval(id)
+  }, [])
+  return spot
 }
 
 /** Where the tomatoes are right now. Same answer on every reload; never the same tab twice in a row. */
