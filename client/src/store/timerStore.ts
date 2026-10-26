@@ -7,6 +7,7 @@ import {
   type TimerPreset,
 } from '@tomonook/shared'
 import { load, save } from '../lib/storage.ts'
+import { useSettingsStore } from './settingsStore.ts'
 
 const MIN = 60_000
 
@@ -132,6 +133,12 @@ export const useTimerStore = create<TimerState>((set, get) => ({
     if (!t) {
       set({ active: null })
       return false
+    }
+    // Without auto-start, the next phase waits, paused, for Resume.
+    if (!useSettingsStore.getState().timerAutoStart) {
+      const next = nextPhase(active, t, now)
+      set({ active: { ...next, endsAt: null, remaining: phaseLength(t, next.phase) } })
+      return true
     }
     // Catch up on phases that ended while the app was closed.
     let a = active

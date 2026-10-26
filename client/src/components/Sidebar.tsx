@@ -6,6 +6,8 @@ import timersIcon from '../assets/icons/nav-timers.png'
 import profileIcon from '../assets/icons/nav-profile.png'
 import { useGossipSpot } from '../lib/gossipSchedule.ts'
 import { useGossipStore } from '../store/gossipStore.ts'
+import { useSettingsStore } from '../store/settingsStore.ts'
+import { today } from '@tomonook/shared'
 import gossipTomato from '../assets/tomato/gossip-round.png'
 import './Sidebar.css'
 
@@ -18,10 +20,11 @@ const tabs = [
 /** `locked`: during first-time setup the tabs can't be used yet. */
 export default function Sidebar({ locked = false }: { locked?: boolean }) {
   const named = useGossipStore((s) => s.names !== null)
+  const hiddenToday = useSettingsStore((s) => s.gossipHiddenOn === today())
   const spot = useGossipSpot()
   // A little tomato on the tab where the gossip tomatoes are right now.
   const badge = (path: string) =>
-    named && path === `/${spot.tab}` ? (
+    named && !hiddenToday && path === `/${spot.tab}` ? (
       <>
         <img className="sidebar-gossip-badge" src={gossipTomato} alt="" />
         <span className="visually-hidden">(the gossip tomatoes are here)</span>
@@ -53,6 +56,26 @@ export default function Sidebar({ locked = false }: { locked?: boolean }) {
         <span className="visually-hidden">Profile</span>
         {badge('/profile')}
       </NavLink>
+      <NavLink to="/settings" className="sidebar-link sidebar-settings" title="Settings">
+        <GearIcon />
+        <span className="visually-hidden">Settings</span>
+      </NavLink>
     </nav>
+  )
+}
+
+/** A cream gear, drawn to match the sidebar's hand-drawn icons. */
+function GearIcon() {
+  const teeth = Array.from({ length: 8 }, (_, i) => i * 45)
+  return (
+    <svg className="sidebar-gear" viewBox="0 0 64 64" aria-hidden>
+      <g fill="#fff4d5" stroke="#871d10" strokeWidth="3" strokeLinejoin="round">
+        {teeth.map((deg) => (
+          <rect key={deg} x="27" y="4" width="10" height="14" rx="3" transform={`rotate(${deg} 32 32)`} />
+        ))}
+        <circle cx="32" cy="32" r="19" />
+      </g>
+      <circle cx="32" cy="32" r="7" fill="#e66b33" stroke="#871d10" strokeWidth="3" />
+    </svg>
   )
 }

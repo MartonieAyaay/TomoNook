@@ -1,7 +1,8 @@
 import { addDays, today, type DayKey } from '@tomonook/shared'
+import { useSettingsStore } from '../store/settingsStore.ts'
 
-/** Days in a row that count as a streak: the happy tomato shows, and losing it splats. */
-export const STREAK_MIN = 3
+/** Days in a row that count as a streak (set in Settings): the happy tomato shows, and losing it splats. */
+export const streakMin = () => useSettingsStore.getState().streakDays
 
 /** How many logged days in a row end on `day`. */
 function runEndingOn(logged: Set<DayKey>, day: DayKey) {
@@ -15,12 +16,12 @@ export function moodStreak(logged: Set<DayKey>, now: DayKey = today()) {
   return runEndingOn(logged, logged.has(now) ? now : addDays(now, -1))
 }
 
-/** A streak of at least STREAK_MIN days that ended with a whole missed day, or null. */
+/** A streak of at least streakMin() days that ended with a whole missed day, or null. */
 export function brokenStreak(logged: Set<DayKey>, now: DayKey = today()) {
   if (logged.has(now) || logged.has(addDays(now, -1))) return null
   const past = [...logged].filter((d) => d < now).sort()
   const lastDay = past[past.length - 1]
   if (!lastDay) return null
   const length = runEndingOn(logged, lastDay)
-  return length >= STREAK_MIN ? { lastDay, length } : null
+  return length >= streakMin() ? { lastDay, length } : null
 }

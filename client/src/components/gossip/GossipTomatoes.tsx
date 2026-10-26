@@ -6,6 +6,8 @@ import { useGossipSpot } from '../../lib/gossipSchedule.ts'
 import { load, save } from '../../lib/storage.ts'
 import { cachedWeather, fetchWeather } from '../../lib/weather.ts'
 import { useGossipStore } from '../../store/gossipStore.ts'
+import { useSettingsStore } from '../../store/settingsStore.ts'
+import { today } from '@tomonook/shared'
 import tallTomato from '../../assets/tomato/gossip-tall.png'
 import roundTomato from '../../assets/tomato/gossip-round.png'
 import './GossipTomatoes.css'
@@ -38,6 +40,8 @@ export default function GossipTomatoes() {
   const permission = useGossipStore((s) => s.weather)
   const setPermission = useGossipStore((s) => s.setWeather)
   const section = useLocation().pathname.split('/')[1]
+  const autoChat = useSettingsStore((s) => s.gossipAutoChat)
+  const hiddenToday = useSettingsStore((s) => s.gossipHiddenOn === today())
   const spot = useGossipSpot()
   const [talk, setTalk] = useState<Talk | null>(null)
   const timers = useRef<number[]>([])
@@ -86,7 +90,7 @@ export default function GossipTomatoes() {
     [say],
   )
 
-  const here = names !== null && section === spot.tab
+  const here = names !== null && !hiddenToday && section === spot.tab
 
   // Switching to another tab, or the tomatoes moving away, hushes them mid-sentence.
   useEffect(() => {
@@ -97,13 +101,13 @@ export default function GossipTomatoes() {
 
   // The first time they're seen after moving, they start chatting by themselves.
   useEffect(() => {
-    if (!here || load('gossipHeard', '') === spot.key) return
+    if (!here || !autoChat || load('gossipHeard', '') === spot.key) return
     const t = window.setTimeout(() => {
       save('gossipHeard', spot.key)
       chat(Math.random() < 0.5 ? 0 : 1)
     }, 1200)
     return () => window.clearTimeout(t)
-  }, [here, spot.key, chat])
+  }, [here, autoChat, spot.key, chat])
 
   if (!here || !names) return null
 

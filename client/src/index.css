@@ -45,7 +45,7 @@
     so a 95px heading in Figma is 9.5rem here and the layout scales with
     the window.
   */
-  font-size: clamp(6px, calc(100vw / 198), 10px);
+  font-size: calc(clamp(6px, calc(100vw / 198), 10px) * var(--ui-scale, 1));
   color: var(--brown);
   background: var(--cream);
 }
@@ -143,11 +143,34 @@ button {
   transform-origin: 50% 0;
 }
 
+/* Settings > Text and button size scales everything measured in rem. */
+:root[data-size='small'] {
+  --ui-scale: 0.9;
+}
+
+:root[data-size='large'] {
+  --ui-scale: 1.12;
+}
+
+/*
+  Animations finish instantly. Looping ones run once and stop at their
+  resting frame, so nothing flickers. Settings > Reduce animations does
+  the same as the device setting.
+*/
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+:root.reduce-motion *,
+:root.reduce-motion *::before,
+:root.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
 }
