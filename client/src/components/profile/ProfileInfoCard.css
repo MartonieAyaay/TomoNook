@@ -145,12 +145,6 @@
   color: var(--cream-text);
 }
 
-.info-chip.is-disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
-}
-
 /* The real input stays for keyboards and screen readers, over the chip. */
 .info-chip input {
   position: absolute;
