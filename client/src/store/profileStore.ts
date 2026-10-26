@@ -16,7 +16,6 @@ export const SPACED_PARTS: AdjustablePart[] = ['eyes', 'brows']
 
 export const GENDERS = ['Man', 'Woman', 'Non-Binary', 'Other', 'Prefer not to say'] as const
 export const PRONOUNS = ['She', 'He', 'They', 'It'] as const
-export const PRONOUNS_MAX = 3
 export type Gender = (typeof GENDERS)[number]
 export type Pronoun = (typeof PRONOUNS)[number]
 
@@ -24,7 +23,7 @@ export type Pronoun = (typeof PRONOUNS)[number]
 export interface ProfileInfo {
   age: number | null
   gender: Gender | null
-  /** Up to PRONOUNS_MAX, in the order of PRONOUNS. */
+  /** Any number, in the order of PRONOUNS. */
   pronouns: Pronoun[]
   /** null until they've answered. */
   likesTomatoes: boolean | null
@@ -42,7 +41,7 @@ function cleanInfo(info: Partial<ProfileInfo>): ProfileInfo {
     ...NO_INFO,
     ...info,
     gender: GENDERS.find((g) => g === info.gender) ?? null,
-    pronouns: PRONOUNS.filter((p) => pronouns.includes(p)).slice(0, PRONOUNS_MAX),
+    pronouns: PRONOUNS.filter((p) => pronouns.includes(p)),
   }
 }
 

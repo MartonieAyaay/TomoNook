@@ -5,7 +5,6 @@ import {
   AGE_MIN,
   GENDERS,
   PRONOUNS,
-  PRONOUNS_MAX,
   useProfileStore,
   type Gender,
   type Pronoun,
@@ -69,7 +68,6 @@ function Chips<T extends string | boolean>({
   name,
   options,
   isOn,
-  isDisabled = () => false,
   onToggle,
 }: {
   legend: string
@@ -78,7 +76,6 @@ function Chips<T extends string | boolean>({
   name: string
   options: { value: T; label: string }[]
   isOn: (value: T) => boolean
-  isDisabled?: (value: T) => boolean
   onToggle: (value: T) => void
 }) {
   return (
@@ -88,24 +85,12 @@ function Chips<T extends string | boolean>({
         {hint && <span className="info-hint"> {hint}</span>}
       </legend>
       <div className="info-chips">
-        {options.map((o) => {
-          const disabled = isDisabled(o.value)
-          return (
-            <label
-              key={o.label}
-              className={`info-chip${isOn(o.value) ? ' is-on' : ''}${disabled ? ' is-disabled' : ''}`}
-            >
-              <input
-                type={type}
-                name={name}
-                checked={isOn(o.value)}
-                disabled={disabled}
-                onChange={() => onToggle(o.value)}
-              />
-              {o.label}
-            </label>
-          )
-        })}
+        {options.map((o) => (
+          <label key={o.label} className={`info-chip${isOn(o.value) ? ' is-on' : ''}`}>
+            <input type={type} name={name} checked={isOn(o.value)} onChange={() => onToggle(o.value)} />
+            {o.label}
+          </label>
+        ))}
       </div>
     </fieldset>
   )
@@ -187,12 +172,11 @@ function InfoForm({
 
       <Chips
         legend="Pronouns"
-        hint={`(pick up to ${PRONOUNS_MAX})`}
+        hint="(pick all that fit)"
         type="checkbox"
         name="pronouns"
         options={PRONOUNS.map((p) => ({ value: p, label: p }))}
         isOn={(p) => pronouns.includes(p)}
-        isDisabled={(p) => !pronouns.includes(p) && pronouns.length >= PRONOUNS_MAX}
         onToggle={(p) => {
           // Kept in the listed order, so they read as She/They, not They/She.
           setPronouns((cur) => PRONOUNS.filter((x) => (x === p ? !cur.includes(p) : cur.includes(x))))
