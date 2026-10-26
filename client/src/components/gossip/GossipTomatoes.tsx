@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useLocation } from 'react-router-dom'
 import { currentWeatherLine, gossipLines, replyTo, type GossipLine } from '../../lib/gossip.ts'
+import { speak, stopSpeaking } from '../../lib/gibberish.ts'
 import { useGossipSpot } from '../../lib/gossipSchedule.ts'
 import { load, save } from '../../lib/storage.ts'
 import { cachedWeather, fetchWeather } from '../../lib/weather.ts'
@@ -9,8 +10,11 @@ import tallTomato from '../../assets/tomato/gossip-tall.png'
 import roundTomato from '../../assets/tomato/gossip-round.png'
 import './GossipTomatoes.css'
 
-const REPLY_AFTER_MS = 1500
-const TALK_MS = 7000
+/** The answer waits for the first voice line to finish, within these limits. */
+const REPLY_MIN_MS = 1500
+const REPLY_MAX_MS = 3500
+/** How long the answer stays up. */
+const TALK_MS = 5000
 /** Longer when they're waiting for a yes/no about the weather. */
 const ASK_MS = 15000
 
@@ -43,7 +47,14 @@ export default function GossipTomatoes() {
     timers.current.forEach((t) => window.clearTimeout(t))
     timers.current = []
   }
-  useEffect(() => clearTimers, [])
+  // Leaving the tab (or the tomatoes moving away) hushes them.
+  useEffect(
+    () => () => {
+      clearTimers()
+      stopSpeaking()
+    },
+    [],
+  )
 
   // Weather is allowed but stale: refresh quietly so it's ready when they talk.
   useEffect(() => {
@@ -55,8 +66,14 @@ export default function GossipTomatoes() {
     clearTimers()
     lastText.current = line.text
     setTalk({ key: Date.now(), first, line, reply, replied: false })
-    timers.current.push(window.setTimeout(() => setTalk((t) => t && { ...t, replied: true }), REPLY_AFTER_MS))
-    timers.current.push(window.setTimeout(() => setTalk(null), line.askWeather ? ASK_MS : TALK_MS))
+    const replyAt = Math.min(REPLY_MAX_MS, Math.max(REPLY_MIN_MS, speak(first) + 200))
+    timers.current.push(
+      window.setTimeout(() => {
+        setTalk((t) => t && { ...t, replied: true })
+        if (reply) speak(first === 0 ? 1 : 0)
+      }, replyAt),
+    )
+    timers.current.push(window.setTimeout(() => setTalk(null), line.askWeather ? ASK_MS : replyAt + TALK_MS))
   }, [])
 
   const chat = useCallback(
@@ -70,6 +87,13 @@ export default function GossipTomatoes() {
   )
 
   const here = names !== null && section === spot.tab
+
+  // Switching to another tab, or the tomatoes moving away, hushes them mid-sentence.
+  useEffect(() => {
+    if (here) return
+    clearTimers()
+    stopSpeaking()
+  }, [here])
 
   // The first time they're seen after moving, they start chatting by themselves.
   useEffect(() => {
