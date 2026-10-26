@@ -40,9 +40,35 @@
   color: #767676;
 }
 
-.naming-art {
-  height: 12rem;
-  animation: boing 420ms ease-out 200ms backwards;
+/* The reveal: both tomatoes with the names the user just typed. */
+.naming-reveal-tomatoes {
+  display: flex;
+  align-items: flex-end;
+  gap: 4rem;
+}
+
+.naming-tomato {
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+  margin: 0;
+  animation: pop-in 420ms var(--ease-pop) backwards;
+}
+
+.naming-tomato + .naming-tomato {
+  animation-delay: 160ms;
+}
+
+.naming-tomato img {
+  height: 14rem;
+}
+
+.naming-tomato figcaption {
+  max-width: 20rem;
+  overflow-wrap: anywhere;
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  color: var(--forest);
 }
 
 .naming-field {
@@ -131,8 +157,12 @@
     font-size: 14px;
   }
 
-  .naming-art {
-    height: 72px;
+  .naming-tomato img {
+    height: 80px;
+  }
+
+  .naming-tomato figcaption {
+    font-size: 18px;
   }
 
   .naming-question {
