@@ -5,6 +5,16 @@
   display: grid;
   place-items: center;
   overflow: hidden;
+  /* Undoes the browser's popover box (it's a popover only for the top layer). */
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
 }
 
 .reaction-caption {

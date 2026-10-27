@@ -13,6 +13,7 @@ import { fetchAccount } from './lib/auth.ts'
 import { useAccountStore } from './store/accountStore.ts'
 import StreakSplat from './components/splatter/StreakSplat.tsx'
 import TimerTicker from './components/TimerTicker.tsx'
+import AllDoneCelebration from './components/todo/AllDoneCelebration.tsx'
 import TodoPage from './pages/TodoPage.tsx'
 import MoodPage from './pages/MoodPage.tsx'
 import TimersPage from './pages/TimersPage.tsx'
@@ -68,6 +69,7 @@ export default function App() {
       {/* After the loading screen, so the splat is seen. */}
       {!showSplash && !settingUp && <StreakSplat />}
       <TimerTicker />
+      {!showSplash && <AllDoneCelebration />}
       {!showSplash && <Companion />}
       {!showSplash && <GossipTomatoes />}
       <Sidebar locked={settingUp} />
