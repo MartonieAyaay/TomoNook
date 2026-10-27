@@ -11,6 +11,8 @@ export function playSound(src: string, kind: SoundKind, volume = 1): HTMLAudioEl
   const audio = new Audio(src)
   audio.volume = Math.min(1, level)
   // Browsers block sound until the user has clicked somewhere; then it's just silent.
-  void audio.play().catch(() => {})
+  void audio.play().catch((err: Error) => {
+    if (err.name !== 'AbortError') console.warn(`Couldn't play ${src}:`, err.name, err.message)
+  })
   return audio
 }
