@@ -192,24 +192,25 @@
   text-shadow: 0.05em 0.05em 0 rgb(0 0 0 / 25%);
 }
 
-/* Takes the thought bubble's place for the quote and for "Yum!". */
+/* Takes the thought bubble's place for the quote and for "Yum!". The art's
+   tail (bottom left, pointing at the avatar) is the bottom 15%, so the
+   text is kept above it. */
 .speech-bubble {
   position: absolute;
   left: 11em;
-  top: 7em;
-  width: 38em;
-  min-height: 18em;
+  top: 5em;
+  width: 40em;
+  aspect-ratio: 1000 / 807;
   display: grid;
   place-items: center;
   margin: 0;
-  padding: 3em 3.6em;
-  border: 0.6em solid var(--orange);
-  border-radius: 5em;
-  background: #fffbec;
+  padding: 2.4em 4.4em 6.8em;
+  background: url('../assets/tomato/speech-bubble.png') center / 100% 100% no-repeat;
   font-family: var(--font-hand);
   font-size: 1em;
   text-align: center;
   color: var(--brown);
+  transform-origin: 20% 100%;
   animation: bubble-pop 300ms cubic-bezier(0.3, 1.6, 0.5, 1);
 }
 
@@ -219,34 +220,10 @@
   line-height: 1.25;
 }
 
-/* The tail, pointing down-left toward the avatar's head. */
-.speech-bubble::after {
-  content: '';
-  position: absolute;
-  left: 2em;
-  bottom: -5.2em;
-  width: 7em;
-  height: 6em;
-  background: var(--orange);
-  clip-path: polygon(40% 0, 100% 0, 0 100%);
-}
-
-.speech-bubble::before {
-  content: '';
-  position: absolute;
-  z-index: 1;
-  left: 3em;
-  bottom: -3.4em;
-  width: 5.4em;
-  height: 4.4em;
-  background: #fffbec;
-  clip-path: polygon(40% 0, 100% 0, 0 100%);
-}
-
 .speech-bubble.is-yum {
   left: 10em;
-  width: 28em;
-  min-height: 14em;
+  width: 30em;
+  padding-bottom: 6.6em;
 }
 
 .speech-bubble.is-yum .speech-text {
