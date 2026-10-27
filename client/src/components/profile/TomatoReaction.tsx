@@ -15,7 +15,8 @@ const NAY_MS = 5400
 const GENTLE_MS = 2800
 /** Sound effects for each reaction: when they start (ms, matching the CSS) and how loud. */
 const SOUNDS = {
-  yay: [{ src: sparkleSound, at: 0, volume: 1 }],
+  // A quiet recording (peaks at about 20%), so it's boosted 1.3x.
+  yay: [{ src: sparkleSound, at: 0, volume: 1.3 }],
   nay: [
     // While it shakes and swells.
     { src: chargeSound, at: 300, volume: 0.5 },
