@@ -5,6 +5,7 @@ import { logOut } from '../lib/auth.ts'
 import { useAccountStore } from '../store/accountStore.ts'
 import { exportBackup, readBackup, resetEverything, restoreBackup } from '../lib/backup.ts'
 import { chime, unlockChime } from '../lib/chime.ts'
+import { CUSTOM_CHIME_MAX_SECONDS, readCustomChime, useCustomChimeStore } from '../lib/customChime.ts'
 import { cityLabel, fetchWeather, type City } from '../lib/weather.ts'
 import CityPicker from '../components/CityPicker.tsx'
 import { TOMATO_NAME_MAX, useGossipStore } from '../store/gossipStore.ts'
@@ -334,22 +335,81 @@ function LookSettings() {
 
 function TimerSettings() {
   const s = useSettingsStore()
+  const custom = useCustomChimeStore((c) => c.sound)
+  const setCustom = useCustomChimeStore((c) => c.setSound)
+  const removeCustom = useCustomChimeStore((c) => c.removeSound)
+  const [soundError, setSoundError] = useState('')
+  const [reading, setReading] = useState(false)
+
+  const pickStyle = (chimeStyle: ChimeStyle) => {
+    s.update({ chimeStyle })
+    unlockChime()
+    chime(chimeStyle)
+  }
+
   return (
     <Section title="Timers">
       <Choices<ChimeStyle>
         label="Chime sound"
-        value={s.chimeStyle}
+        value={s.chimeStyle === 'custom' && !custom ? 'chime' : s.chimeStyle}
         options={[
           { value: 'chime', label: 'Chime' },
           { value: 'bell', label: 'Bell' },
           { value: 'soft', label: 'Soft' },
+          ...(custom ? [{ value: 'custom' as const, label: 'Yours' }] : []),
         ]}
-        onChange={(chimeStyle) => {
-          s.update({ chimeStyle })
-          unlockChime()
-          chime(chimeStyle)
-        }}
+        onChange={pickStyle}
       />
+      <Row
+        label="Your own alarm sound"
+        note={
+          soundError ? (
+            <span className="settings-note-error">{soundError}</span>
+          ) : (custom
+            ? `${custom.name} · ${(Math.floor(custom.seconds * 10) / 10).toFixed(1)} s`
+            : `Any sound file under ${CUSTOM_CHIME_MAX_SECONDS} seconds (up to 1 MB).`)
+        }
+      >
+        <div className="settings-buttons">
+          {custom && (
+            <button
+              type="button"
+              className="settings-btn is-secondary"
+              onClick={() => {
+                removeCustom()
+                setSoundError('')
+                if (s.chimeStyle === 'custom') s.update({ chimeStyle: 'chime' })
+              }}
+            >
+              Remove
+            </button>
+          )}
+          <label className={`settings-btn${custom ? ' is-secondary' : ''} settings-file`} aria-disabled={reading}>
+            {reading ? 'Checking...' : custom ? 'Replace' : 'Upload'}
+            <input
+              type="file"
+              accept="audio/*"
+              disabled={reading}
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ''
+                if (!file) return
+                setSoundError('')
+                setReading(true)
+                try {
+                  setCustom(await readCustomChime(file))
+                  // Uploading means they want it: pick it and play it once.
+                  pickStyle('custom')
+                } catch (err) {
+                  setSoundError((err as Error).message)
+                } finally {
+                  setReading(false)
+                }
+              }}
+            />
+          </label>
+        </div>
+      </Row>
       <Slider label="Chime volume" value={s.chimeVolume} onChange={(chimeVolume) => s.update({ chimeVolume })} />
       <div className="settings-row settings-row-end">
         <button
