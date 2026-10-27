@@ -42,61 +42,49 @@
 }
 
 .mo-title {
-  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1.2rem;
+}
+
+/* Month and year dropdowns, styled as the title with a little caret. */
+.mo-select {
+  appearance: none;
+  /* Fits the chosen month instead of the longest one. */
+  field-sizing: content;
+  min-height: 44px;
+  padding: 0.4rem 4.4rem 0 1.2rem;
+  border: 0.25rem solid transparent;
+  border-radius: 1.6rem;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23871d10' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    right 1.4rem center / 1.8rem no-repeat;
   font-family: var(--font-hand);
-  font-weight: 400;
   font-size: max(5.6rem, 30px);
   line-height: 1.1;
   color: var(--tomato-dark);
   text-shadow: 0.2rem 0.2rem 0 rgb(170 91 34 / 25%);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    border-color 150ms ease-out;
 }
 
-.mo-title span {
+.mo-select.is-year {
   color: var(--orange);
 }
 
-.mo-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
+.mo-select:hover {
+  border-color: rgb(230 107 51 / 45%);
+  background-color: #fff;
 }
 
-.mo-arrow {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: none;
-  transition: background-color 150ms ease-out;
-}
-
-.mo-arrow:hover {
-  background: rgb(230 107 51 / 12%);
-}
-
-/* The arrow art points up, like on the small calendar. */
-.mo-arrow img {
-  width: 2.4rem;
-  min-width: 16px;
-  rotate: -90deg;
-}
-
-.mo-arrow.is-next img {
-  rotate: 90deg;
-}
-
-.mo-today {
-  min-height: 40px;
-  padding: 0.5rem 2rem 0.1rem;
-  border: 0.25rem solid var(--orange);
-  border-radius: 999px;
-  background: #fff;
-  font-family: var(--font-heading);
-  font-size: max(2.2rem, 15px);
-  color: var(--orange);
+/* The open list uses a plain, readable font. */
+.mo-select option {
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 16px;
+  text-shadow: none;
+  color: var(--brown);
 }
 
 .mo-progress {

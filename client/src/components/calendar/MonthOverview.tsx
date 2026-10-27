@@ -2,10 +2,12 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { fromDayKey, toDayKey, today, type DayKey, type Todo } from '@tomonook/shared'
 import TomatoFill from '../TomatoFill.tsx'
 import { priorityOf, useTodoStore } from '../../store/todoStore.ts'
-import arrow from '../../assets/icons/arrow.svg'
 import './MonthOverview.css'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const MONTHS = Array.from({ length: 12 }, (_, i) => new Date(2000, i, 1).toLocaleString('en-US', { month: 'long' }))
+/** Years in the dropdown on each side of this year (stretched to fit any tasks). */
+const YEARS_AROUND = 5
 /** Chips per day before "+N more". */
 const CHIPS_PER_DAY = 3
 
@@ -73,7 +75,12 @@ export default function MonthOverview({
     onPickDay(day)
     onClose()
   }
-  const shift = (delta: number) => setMonth(new Date(year, monthIndex + delta, 1))
+  // This year ± a few, widened to include every year that has tasks.
+  const thisYear = new Date().getFullYear()
+  const taskYears = todos.map((t) => Number(t.day.slice(0, 4)))
+  const firstYear = Math.min(thisYear - YEARS_AROUND, year, ...taskYears)
+  const lastYear = Math.max(thisYear + YEARS_AROUND, year, ...taskYears)
+  const years = Array.from({ length: lastYear - firstYear + 1 }, (_, i) => firstYear + i)
   const shortDate = (day: DayKey) => fromDayKey(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   return (
@@ -85,23 +92,34 @@ export default function MonthOverview({
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <header className="mo-header">
-        <h2 id="month-overview-title" className="mo-title">
-          {month.toLocaleString('en-US', { month: 'long' })} <span>{year}</span>
+        <h2 id="month-overview-title" className="visually-hidden">
+          {MONTHS[monthIndex]} {year}
         </h2>
-        <div className="mo-nav">
-          <button type="button" className="mo-arrow" onClick={() => shift(-1)} aria-label="Previous month">
-            <img src={arrow} alt="" />
-          </button>
-          <button
-            type="button"
-            className="mo-today"
-            onClick={() => setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1))}
+        <div className="mo-title">
+          <select
+            className="mo-select"
+            value={monthIndex}
+            onChange={(e) => setMonth(new Date(year, Number(e.target.value), 1))}
+            aria-label="Month"
           >
-            Today
-          </button>
-          <button type="button" className="mo-arrow is-next" onClick={() => shift(1)} aria-label="Next month">
-            <img src={arrow} alt="" />
-          </button>
+            {MONTHS.map((name, i) => (
+              <option key={name} value={i}>
+                {name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="mo-select is-year"
+            value={year}
+            onChange={(e) => setMonth(new Date(Number(e.target.value), monthIndex, 1))}
+            aria-label="Year"
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
         </div>
         <p className="mo-progress">
           {monthTotal === 0 ? 'No tasks this month yet' : `${monthDone} of ${monthTotal} tasks done`}
