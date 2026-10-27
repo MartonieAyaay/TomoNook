@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { SESSION_DAYS, forgotPassword, login, logout, me, resetPassword, signup, type Result } from "./auth";
-import { database } from "./db";
+import { DatabaseNotSetUp, database } from "./db";
 
 /*
   Turns an HTTP request into a call to auth.ts. Used by the Vercel
@@ -106,6 +106,9 @@ export async function handleAuth(action: string, req: Req, res: ServerResponse) 
   } catch (e) {
     // Details stay in the server log; the browser gets a plain message.
     console.error("Auth error:", e);
+    if (e instanceof DatabaseNotSetUp) {
+      return send(res, fail(503, "Accounts aren’t available right now: TomoNook’s database isn’t connected yet."));
+    }
     send(res, fail(500, "Something went wrong on our side. Please try again."));
   }
 }
