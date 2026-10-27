@@ -17,6 +17,7 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { today, type DayKey, type Todo } from '@tomonook/shared'
 import Calendar from '../components/calendar/Calendar.tsx'
+import MonthOverview from '../components/calendar/MonthOverview.tsx'
 import CategoryManager from '../components/CategoryManager.tsx'
 import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import TomatoFill from '../components/TomatoFill.tsx'
@@ -54,6 +55,8 @@ interface PendingMove {
 export default function TodoPage() {
   const [selected, setSelected] = useState<DayKey>(today)
   const [managing, setManaging] = useState(false)
+  /** The month shown in the overview, while it's open. */
+  const [overview, setOverview] = useState<Date | null>(null)
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null)
   const [overCategoryId, setOverCategoryId] = useState<string | null>(null)
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null)
@@ -134,7 +137,14 @@ export default function TodoPage() {
         </div>
       </header>
 
-      <Calendar selected={selected} onSelect={setSelected} renderTomato={renderTomato} />
+      <Calendar selected={selected} onSelect={setSelected} renderTomato={renderTomato} onMonthClick={setOverview} />
+      <MonthOverview
+        open={overview !== null}
+        month={overview ?? new Date()}
+        selected={selected}
+        onPickDay={setSelected}
+        onClose={() => setOverview(null)}
+      />
 
       <DndContext
         sensors={sensors}

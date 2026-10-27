@@ -34,6 +34,26 @@
   text-shadow: 0.23cqw 0.23cqw 0 rgb(170 91 34 / 25%);
 }
 
+/* The month name opens the month overview (to-do list only). */
+.calendar-month-btn {
+  padding: 0 0.4em;
+  border: 0;
+  border-radius: 0.3em;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    transform 220ms var(--ease-bubbly);
+}
+
+.calendar-month-btn:hover {
+  background: rgb(230 107 51 / 12%);
+  transform: scale(1.03);
+}
+
 .calendar-arrow {
   display: grid;
   place-items: center;

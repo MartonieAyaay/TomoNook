@@ -11,13 +11,23 @@ interface CalendarProps {
   onSelect: (day: DayKey) => void
   /** What sits behind each day number. Defaults to the gray tomato silhouette. */
   renderTomato?: (day: DayKey) => ReactNode
+  /** Makes the month name a button (the to-do list opens its month overview). */
+  onMonthClick?: (month: Date) => void
 }
 
-export default function Calendar({ selected, onSelect, renderTomato }: CalendarProps) {
-  const [month, setMonth] = useState(() => {
-    const d = fromDayKey(selected)
-    return new Date(d.getFullYear(), d.getMonth(), 1)
-  })
+const monthOf = (day: DayKey) => {
+  const d = fromDayKey(day)
+  return new Date(d.getFullYear(), d.getMonth(), 1)
+}
+
+export default function Calendar({ selected, onSelect, renderTomato, onMonthClick }: CalendarProps) {
+  const [month, setMonth] = useState(() => monthOf(selected))
+  // A day picked from elsewhere (the month overview) brings its month into view.
+  const [shownFor, setShownFor] = useState(selected)
+  if (shownFor !== selected) {
+    setShownFor(selected)
+    setMonth(monthOf(selected))
+  }
 
   const year = month.getFullYear()
   const monthIndex = month.getMonth()
@@ -41,7 +51,20 @@ export default function Calendar({ selected, onSelect, renderTomato }: CalendarP
             <img src={arrow} alt="" />
           </button>
           <h2 className="calendar-month">
-            {month.toLocaleString('en-US', { month: 'long' })} {year}
+            {onMonthClick ? (
+              <button
+                type="button"
+                className="calendar-month-btn"
+                onClick={() => onMonthClick(month)}
+                title="See the whole month"
+              >
+                {month.toLocaleString('en-US', { month: 'long' })} {year}
+              </button>
+            ) : (
+              <>
+                {month.toLocaleString('en-US', { month: 'long' })} {year}
+              </>
+            )}
           </h2>
           <button
             type="button"
