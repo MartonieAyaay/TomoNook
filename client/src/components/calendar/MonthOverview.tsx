@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { fromDayKey, toDayKey, today, type DayKey, type Todo } from '@tomonook/shared'
 import TomatoFill from '../TomatoFill.tsx'
+import { load, save } from '../../lib/storage.ts'
 import { priorityOf, useTodoStore } from '../../store/todoStore.ts'
 import './MonthOverview.css'
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const MONTHS = Array.from({ length: 12 }, (_, i) => new Date(2000, i, 1).toLocaleString('en-US', { month: 'long' }))
+type ColorBy = 'category' | 'priority'
+
 /** Years in the dropdown on each side of this year (stretched to fit any tasks). */
 const YEARS_AROUND = 5
 /** Chips per day before "+N more". */
@@ -36,6 +39,12 @@ export default function MonthOverview({
   const todos = useTodoStore((s) => s.todos)
   const priorities = useTodoStore((s) => s.priorities)
   const toggleTodo = useTodoStore((s) => s.toggleTodo)
+  // What the task highlights are colored by; remembered for next time.
+  const [colorBy, setColorBy] = useState<ColorBy>(() => load<ColorBy>('overviewColorBy', 'category'))
+  const changeColorBy = (next: ColorBy) => {
+    setColorBy(next)
+    save('overviewColorBy', next)
+  }
 
   useEffect(() => {
     const dialog = ref.current
@@ -62,7 +71,10 @@ export default function MonthOverview({
 
   const byDay = new Map<DayKey, Todo[]>()
   for (const t of todos) byDay.set(t.day, [...(byDay.get(t.day) ?? []), t])
-  const colorOf = (t: Todo) => categories.find((c) => c.id === t.categoryId)?.color
+  const colorOf = (t: Todo) =>
+    colorBy === 'priority'
+      ? priorityOf(priorities, t.priority).color
+      : categories.find((c) => c.id === t.categoryId)?.color
 
   // The side list: this month's unfinished tasks, by priority, soonest first.
   const open_ = todos
@@ -124,6 +136,13 @@ export default function MonthOverview({
         <p className="mo-progress">
           {monthTotal === 0 ? 'No tasks this month yet' : `${monthDone} of ${monthTotal} tasks done`}
         </p>
+        <label className="mo-color-by">
+          <span>Color by:</span>
+          <select value={colorBy} onChange={(e) => changeColorBy(e.target.value as ColorBy)}>
+            <option value="category">Category</option>
+            <option value="priority">Priority</option>
+          </select>
+        </label>
         <button type="button" className="mo-close" onClick={onClose} aria-label="Close" title="Close">
           ×
         </button>
