@@ -12,6 +12,7 @@ A cozy, tomato-themed productivity app. Plan your day, track your mood, focus wi
 - **Profile** – an About me card, a Daily Quote, and a Feed button to give your tomato a cookie or foods you add with your own pictures.
 - **Gossip tomatoes** – two tomatoes you name during setup. They move to a different tab every 4 hours and chat about you, in gibberish voices.
 - **Weather** – today's weather for the city you pick (°F, °C or K), from [Open-Meteo](https://open-meteo.com/). No account or API key needed.
+- **Accounts** – log in or sign up (with the Terms and Conditions) before using the app; log out from Settings.
 - **Settings** – sound and volume, gossip tomato and avatar options, a gentle mode with no splats, reduced motion, text size, timer chime style, and backup / restore / reset of your data.
 
 ## Tech stack
@@ -19,10 +20,18 @@ A cozy, tomato-themed productivity app. Plan your day, track your mood, focus wi
 | Part | What it uses |
 |---|---|
 | `client/` | React 19, TypeScript, Vite, React Router, Zustand, dnd-kit |
-| `server/` | Node, Express 5 (run with `tsx`) |
+| `api/` | Account API: Vercel functions, PostgreSQL (`pg`), Argon2id, Zod |
+| `server/` | Node, Express 5 for local development (runs the same `api/` code) |
 | `shared/` | Types and date helpers used by both |
 
-It's an npm workspaces monorepo. For now, all app data is saved in the browser's `localStorage` (see `client/src/lib/storage.ts`). The server only has a health check so far, and is ready for the app's data to move there later.
+It's an npm workspaces monorepo. Accounts live in PostgreSQL. The app's own data (tasks, moods, avatar...) is still saved in the browser's `localStorage` (see `client/src/lib/storage.ts`).
+
+### Accounts and security
+
+- Passwords are hashed with **Argon2id**; sessions are random tokens in an **HttpOnly, Secure, SameSite=Lax** cookie, stored only as hashes.
+- Every input is checked with **Zod**, and every query uses **parameters**.
+- Logins are **rate limited** (5 wrong passwords per account and IP, 20 per IP, per 15 minutes; 5 sign-ups per IP per hour).
+- Secrets come from **environment variables** (see `.env.example`), never from the code.
 
 ## Getting started
 
@@ -35,7 +44,9 @@ npm install
 npm run dev
 ```
 
-Then open **http://localhost:5173**. The first visit walks you through setting up your profile and naming the gossip tomatoes.
+Then open **http://localhost:5173**, sign up, and the first visit walks you through setting up your profile and naming the gossip tomatoes.
+
+Locally you don't need a database: without `DATABASE_URL`, accounts are kept in a built-in Postgres (PGlite) in `server/data/`. To use a real one, copy `.env.example` to `.env` and set `DATABASE_URL`.
 
 `npm run dev` starts both the client (port 5173) and the server (port 3001). To start only one:
 
@@ -43,6 +54,11 @@ Then open **http://localhost:5173**. The first visit walks you through setting u
 npm run dev:client
 npm run dev:server
 ```
+
+## Deploying to Vercel
+
+1. In your Vercel project, open **Storage** and add a **Neon** (Postgres) database. Vercel sets `DATABASE_URL` for you.
+2. Deploy. The tables are created on the first request.
 
 ## Scripts
 
@@ -53,7 +69,7 @@ Run from the project root:
 | `npm run dev` | Client and server together, with live reload |
 | `npm run build` | Type-checks and builds the client into `client/dist` |
 | `npm run typecheck` | Type-checks every package |
-| `npm test` | Runs the shared package's tests |
+| `npm test` | Runs the shared package's tests and the account API tests |
 
 ## Project layout
 

@@ -1,0 +1,70 @@
+import { Pool } from "pg";
+
+/*
+  The database the auth code talks to. Every query goes through query(),
+  always with $1-style parameters, never with values pasted into the SQL.
+
+  On Vercel this is PostgreSQL from DATABASE_URL. The local dev server can
+  swap in an embedded Postgres instead (see server/src/devDb.ts), so the
+  app runs without setting up a database.
+*/
+
+export interface Db {
+  query<T = Record<string, unknown>>(text: string, params?: unknown[]): Promise<{ rows: T[] }>;
+}
+
+let db: Db | null = null;
+let ready: Promise<void> | null = null;
+
+export function setDb(next: Db) {
+  db = next;
+  ready = null;
+}
+
+function getDb(): Db {
+  if (db) return db;
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL is not set");
+  const pool = new Pool({ connectionString: url, max: 3 });
+  db = { query: (text, params) => pool.query(text, params) as never };
+  return db;
+}
+
+/** The database, with its tables created on first use. */
+export async function database(): Promise<Db> {
+  const d = getDb();
+  ready ??= createTables(d).catch((e) => {
+    ready = null;
+    throw e;
+  });
+  await ready;
+  return d;
+}
+
+async function createTables(d: Db) {
+  await d.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      email             text NOT NULL UNIQUE,
+      username          text NOT NULL,
+      username_key      text NOT NULL UNIQUE,
+      password_hash     text NOT NULL,
+      terms_version     text NOT NULL,
+      terms_accepted_at timestamptz NOT NULL,
+      created_at        timestamptz NOT NULL DEFAULT now()
+    )`);
+  // Only a hash of each session token is stored, so a leaked table can't be used to log in.
+  await d.query(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      token_hash text PRIMARY KEY,
+      user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      expires_at timestamptz NOT NULL
+    )`);
+  await d.query(`
+    CREATE TABLE IF NOT EXISTS auth_attempts (
+      key text NOT NULL,
+      at  timestamptz NOT NULL DEFAULT now()
+    )`);
+  await d.query(`CREATE INDEX IF NOT EXISTS auth_attempts_key_at ON auth_attempts (key, at)`);
+}

@@ -8,6 +8,9 @@ import SettingsPage from './pages/SettingsPage.tsx'
 import Sidebar from './components/Sidebar.tsx'
 import Companion from './components/companion/Companion.tsx'
 import SplashScreen from './components/SplashScreen.tsx'
+import AuthDialog from './components/auth/AuthDialog.tsx'
+import { fetchAccount } from './lib/auth.ts'
+import { useAccountStore } from './store/accountStore.ts'
 import StreakSplat from './components/splatter/StreakSplat.tsx'
 import TimerTicker from './components/TimerTicker.tsx'
 import TodoPage from './pages/TodoPage.tsx'
@@ -22,10 +25,15 @@ import { useProfileStore } from './store/profileStore.ts'
 import './App.css'
 
 export default function App() {
-  // In dev, add ?nosplash to the URL to skip the loading screen.
-  const [showSplash, setShowSplash] = useState(
-    () => !(import.meta.env.DEV && location.search.includes('nosplash')),
-  )
+  // In dev, add ?nosplash to the URL to skip the loading bar.
+  const [skipBar] = useState(() => import.meta.env.DEV && location.search.includes('nosplash'))
+  const [showSplash, setShowSplash] = useState(true)
+  // Signed in? Asked while the loading bar fills; signed out keeps the title page up with the login window.
+  const account = useAccountStore((s) => s.account)
+  const setAccount = useAccountStore((s) => s.setAccount)
+  useEffect(() => {
+    void fetchAccount().then(setAccount)
+  }, [setAccount])
 
   useEffect(() => startCompanionReactions(), [])
   useEffect(() => startFocusLog(), [])
@@ -52,7 +60,11 @@ export default function App() {
 
   return (
     <div className="app">
-      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+      {showSplash && (
+        <SplashScreen ready={!!account} skipBar={skipBar} onDone={() => setShowSplash(false)}>
+          {account === null && <AuthDialog onSignedIn={setAccount} />}
+        </SplashScreen>
+      )}
       {/* After the loading screen, so the splat is seen. */}
       {!showSplash && !settingUp && <StreakSplat />}
       <TimerTicker />

@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { today } from '@tomonook/shared'
 import ConfirmDialog from '../components/ConfirmDialog.tsx'
+import { logOut } from '../lib/auth.ts'
+import { useAccountStore } from '../store/accountStore.ts'
 import { exportBackup, readBackup, resetEverything, restoreBackup } from '../lib/backup.ts'
 import { chime, unlockChime } from '../lib/chime.ts'
 import { cityLabel, fetchWeather, type City } from '../lib/weather.ts'
@@ -32,6 +34,7 @@ export default function SettingsPage() {
           <GossipSettings />
           <StreakSettings />
           <TimerSettings />
+          <AccountSettings />
         </div>
       </div>
     </div>
@@ -366,6 +369,35 @@ function TimerSettings() {
         on={s.timerAutoStart}
         onChange={(timerAutoStart) => s.update({ timerAutoStart })}
       />
+    </Section>
+  )
+}
+
+function AccountSettings() {
+  const account = useAccountStore((s) => s.account)
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
+
+  const signOut = async () => {
+    setBusy(true)
+    setNote('')
+    try {
+      await logOut()
+      // Start fresh: the loading screen and the login window come back.
+      window.location.assign('/')
+    } catch {
+      setNote('Couldn’t log out right now. Check your internet and try again.')
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Section title="Account">
+      <Row label={account ? `Signed in as ${account.username}` : 'Signed in'} note={note || account?.email}>
+        <button type="button" className="settings-btn is-secondary" onClick={signOut} disabled={busy}>
+          {busy ? 'Logging out...' : 'Log out'}
+        </button>
+      </Row>
     </Section>
   )
 }

@@ -116,3 +116,14 @@
     scale: 0.75;
   }
 }
+
+/* ---------- Title page (signed out) ---------- */
+
+/* The bar fades away but keeps its space, so the logo doesn't jump. */
+.splash.is-title .splash-bar {
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 250ms ease-out,
+    visibility 0s 250ms;
+}
