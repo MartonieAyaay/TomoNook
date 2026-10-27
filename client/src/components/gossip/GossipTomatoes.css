@@ -209,3 +209,15 @@
     font-size: 15px;
   }
 }
+
+/* "Where do you live?": the city search, in a bubble under the question. */
+.gossip-city {
+  width: min(40rem, calc(100vw - 32px));
+  padding: 1.2rem 1.6rem 1.4rem;
+  border: 0.4rem solid var(--orange);
+  border-radius: 2.4rem;
+  background: #fffbec;
+  box-shadow: var(--card-shadow);
+  pointer-events: auto;
+  animation: pop-in 260ms var(--ease-pop);
+}

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { load, save } from '../lib/storage.ts'
-import type { TempUnit } from '../lib/weather.ts'
+import type { City, TempUnit } from '../lib/weather.ts'
 
 export type SoundKind = 'gossip' | 'reactions' | 'chime'
 export type Chattiness = 'all' | 'big' | 'off'
@@ -36,6 +36,8 @@ export interface Settings {
   // Weather
   /** Picked on the dashboard; null until then (uses the browser's region). */
   tempUnit: TempUnit | null
+  /** Where the weather is for; asked before the first forecast. */
+  weatherCity: City | null
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -54,6 +56,7 @@ export const DEFAULT_SETTINGS: Settings = {
   chimeVolume: 1,
   timerAutoStart: true,
   tempUnit: null,
+  weatherCity: null,
 }
 
 interface SettingsState extends Settings {
@@ -89,6 +92,7 @@ useSettingsStore.subscribe((s) => {
     chimeVolume: s.chimeVolume,
     timerAutoStart: s.timerAutoStart,
     tempUnit: s.tempUnit,
+    weatherCity: s.weatherCity,
   }
   save('settings', settings)
 })

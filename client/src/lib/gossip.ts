@@ -26,6 +26,8 @@ export interface GossipLine {
   tone: Tone
   /** The tomatoes want to check the weather and need the user's okay. */
   askWeather?: boolean
+  /** They need the user's city first; stays up until one is picked. */
+  askCity?: boolean
 }
 
 /** Words that mean a post is about something, and what the tomatoes say about it. */
@@ -155,7 +157,8 @@ function timeLine(now: Date): GossipLine {
 function weatherLine(): GossipLine | null {
   const permission = useGossipStore.getState().weather
   if (permission === 'denied') return null
-  if (permission === 'unasked') return { text: "I wonder what the weather's like outside...", tone: 'meh', askWeather: true }
+  // Not asked yet, or allowed before they asked for a city: ask (again).
+  if (permission === 'unasked' || !useSettingsStore.getState().weatherCity) return { text: "I wonder what the weather's like outside...", tone: 'meh', askWeather: true }
   const w = cachedWeather()
   if (!w) return null
   const desc = describeWeather(w.code, w.isDay)
@@ -249,6 +252,6 @@ export function currentWeatherLine(): GossipLine | null {
 export function replyTo(line: GossipLine) {
   const { name: rawName, info } = useProfileStore.getState()
   const name = rawName || 'our human'
-  if (line.askWeather) return 'Let’s peek outside! (We need your location for that.)'
+  if (line.askWeather) return 'Let’s peek outside! (We just need to know your city.)'
   return fill(pick(REPLIES[line.tone]), name, pickForms(info.pronouns, name))
 }

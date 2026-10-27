@@ -1,10 +1,49 @@
 import { load, save } from './storage.ts'
+import { useSettingsStore } from '../store/settingsStore.ts'
 
 /*
   Weather for the dashboard and the gossip tomatoes, from Open-Meteo (free,
-  no account). Only used after the user allows it, since it needs their
-  location and the internet. Kept for an hour so it isn't fetched often.
+  no account). Based on the city the user picks, and only fetched once they
+  have. Kept for an hour so it isn't fetched often.
 */
+
+/** A place from the city search. */
+export interface City {
+  name: string
+  /** State or province, when there is one. */
+  region?: string
+  country: string
+  lat: number
+  lon: number
+}
+
+/** "Manila, Metro Manila, Philippines" */
+export const cityLabel = (c: City) => [c.name, c.region, c.country].filter((x, i, all) => x && all.indexOf(x) === i).join(', ')
+
+/** Thrown by fetchWeather() when no city has been picked yet. */
+export class NoCityError extends Error {
+  constructor() {
+    super('No city picked yet')
+  }
+}
+
+/** Up to five places matching what the user typed. */
+export async function searchCities(query: string): Promise<City[]> {
+  const res = await fetch(
+    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query.trim())}&count=5&language=en&format=json`,
+  )
+  if (!res.ok) throw new Error(`City search failed: ${res.status}`)
+  const data = (await res.json()) as {
+    results?: { name: string; admin1?: string; country?: string; latitude: number; longitude: number }[]
+  }
+  return (data.results ?? []).map((r) => ({
+    name: r.name,
+    region: r.admin1,
+    country: r.country ?? '',
+    lat: r.latitude,
+    lon: r.longitude,
+  }))
+}
 
 export interface Weather {
   /** Now, in `unit` (always °C for new fetches; shown in the user's unit). */
@@ -19,6 +58,8 @@ export interface Weather {
   code: number
   isDay: boolean
   unit: 'C' | 'F'
+  /** The city it's for, as cityLabel() writes it. */
+  place: string
   at: number
 }
 
@@ -38,28 +79,20 @@ export function defaultTempUnit(): TempUnit {
   return region && FAHRENHEIT.has(region) ? 'F' : 'C'
 }
 
-/** The saved weather if it's still fresh (and from this version of the app). */
+/** The saved weather if it's still fresh and for the city picked now. */
 export function cachedWeather(): Weather | null {
+  const city = useSettingsStore.getState().weatherCity
   const w = load<Partial<Weather> | null>('weather', null)
-  return w && typeof w.high === 'number' && Date.now() - (w.at ?? 0) < FRESH_MS ? (w as Weather) : null
+  return city && w && w.place === cityLabel(city) && Date.now() - (w.at ?? 0) < FRESH_MS ? (w as Weather) : null
 }
 
-function position(): Promise<GeolocationPosition> {
-  return new Promise((resolve, reject) =>
-    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10_000, maximumAge: 3 * 60 * 60_000 }),
-  )
-}
-
-/** True when the error means the user (or browser) said no to location. */
-export const isLocationDenied = (e: unknown) =>
-  e instanceof GeolocationPositionError && e.code === e.PERMISSION_DENIED
-
-/** Asks for the location if needed, then fetches. Throws if the user says no or it can't be reached. */
+/** Fetches the weather for the picked city. Throws NoCityError if there isn't one, or if it can't be reached. */
 export async function fetchWeather(): Promise<Weather> {
-  const { coords } = await position()
+  const city = useSettingsStore.getState().weatherCity
+  if (!city) throw new NoCityError()
   const url =
     'https://api.open-meteo.com/v1/forecast' +
-    `?latitude=${coords.latitude.toFixed(2)}&longitude=${coords.longitude.toFixed(2)}` +
+    `?latitude=${city.lat.toFixed(2)}&longitude=${city.lon.toFixed(2)}` +
     '&current=temperature_2m,apparent_temperature,weather_code,is_day' +
     '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
     '&timezone=auto&forecast_days=1'
@@ -80,6 +113,7 @@ export async function fetchWeather(): Promise<Weather> {
     code: data.current.weather_code,
     isDay: data.current.is_day === 1,
     unit: 'C',
+    place: cityLabel(city),
     at: Date.now(),
   }
   save('weather', w)

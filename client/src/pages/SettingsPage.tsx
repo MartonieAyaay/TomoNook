@@ -3,7 +3,8 @@ import { today } from '@tomonook/shared'
 import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import { exportBackup, readBackup, resetEverything, restoreBackup } from '../lib/backup.ts'
 import { chime, unlockChime } from '../lib/chime.ts'
-import { fetchWeather } from '../lib/weather.ts'
+import { cityLabel, fetchWeather, type City } from '../lib/weather.ts'
+import CityPicker from '../components/CityPicker.tsx'
 import { TOMATO_NAME_MAX, useGossipStore } from '../store/gossipStore.ts'
 import {
   useSettingsStore,
@@ -176,24 +177,29 @@ function GossipSettings() {
   const [nameNote, setNameNote] = useState('')
   const [weatherNote, setWeatherNote] = useState('')
   const [checking, setChecking] = useState(false)
+  const [pickingCity, setPickingCity] = useState(false)
   const changed = names !== null && (draft[0].trim() !== names[0] || draft[1].trim() !== names[1])
 
   const toggleWeather = async (on: boolean) => {
     setWeatherNote('')
     if (!on) return setWeather('denied')
+    // The weather is for the user's city, so that comes first.
+    if (!s.weatherCity) return setPickingCity(true)
     setChecking(true)
     try {
       await fetchWeather()
       setWeather('allowed')
-    } catch (e) {
-      if (e instanceof GeolocationPositionError && e.code === e.PERMISSION_DENIED) {
-        setWeatherNote('Location is blocked for this site. Allow it in your browser’s site settings, then try again.')
-      } else {
-        setWeatherNote('Couldn’t reach the weather right now. Check your internet and try again.')
-      }
+    } catch {
+      setWeatherNote('Couldn’t reach the weather right now. Check your internet and try again.')
     } finally {
       setChecking(false)
     }
+  }
+
+  const pickCity = (weatherCity: City) => {
+    s.update({ weatherCity })
+    setPickingCity(false)
+    void toggleWeather(true)
   }
 
   return (
@@ -238,11 +244,23 @@ function GossipSettings() {
       <Switch label="Chat on their own when you find them" on={s.gossipAutoChat} onChange={(gossipAutoChat) => s.update({ gossipAutoChat })} />
       <Switch
         label="Talk about the weather"
-        note={weatherNote || 'Uses your location and the internet.'}
+        note={weatherNote || 'Uses your city and the internet.'}
         on={weather === 'allowed'}
         onChange={toggleWeather}
         disabled={checking}
       />
+      <Row label="Weather city" note={s.weatherCity ? cityLabel(s.weatherCity) : 'Not picked yet'}>
+        {!pickingCity && (
+          <button type="button" className="settings-btn is-secondary" onClick={() => setPickingCity(true)}>
+            {s.weatherCity ? 'Change' : 'Pick city'}
+          </button>
+        )}
+      </Row>
+      {pickingCity && (
+        <div className="settings-city">
+          <CityPicker onPick={pickCity} onCancel={() => setPickingCity(false)} />
+        </div>
+      )}
       <Switch
         label="Hide them for today"
         on={s.gossipHiddenOn === today()}

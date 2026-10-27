@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { today } from '@tomonook/shared'
 import MoodPicker from '../components/mood/MoodPicker.tsx'
 import WeatherIcon from '../components/WeatherIcon.tsx'
+import CityPicker from '../components/CityPicker.tsx'
 import {
   TEMP_UNITS,
   cachedWeather,
@@ -10,9 +11,10 @@ import {
   describeWeather,
   fetchWeather,
   formatTemp,
-  isLocationDenied,
+  cityLabel,
   skyOf,
   weatherTip,
+  type City,
   type Weather,
 } from '../lib/weather.ts'
 import { useGossipStore } from '../store/gossipStore.ts'
@@ -218,7 +220,9 @@ function WeatherCard() {
   const [note, setNote] = useState('')
   // °F → °C → K, remembered until changed.
   const unit = useSettingsStore((s) => s.tempUnit) ?? defaultTempUnit()
-  const setUnit = useSettingsStore((s) => s.update)
+  const update = useSettingsStore((s) => s.update)
+  const city = useSettingsStore((s) => s.weatherCity)
+  const [changingCity, setChangingCity] = useState(false)
   const nextUnit = TEMP_UNITS[(TEMP_UNITS.indexOf(unit) + 1) % TEMP_UNITS.length]
   const unitLabel = (u: string) => (u === 'K' ? 'K' : `°${u}`)
 
@@ -228,13 +232,8 @@ function WeatherCard() {
     try {
       setWeather(await fetchWeather())
       setPermission('allowed')
-    } catch (e) {
-      if (isLocationDenied(e)) {
-        setPermission('denied')
-        setNote('Location is blocked for this site. Allow it in your browser’s site settings to see the weather.')
-      } else {
-        setNote('Couldn’t reach the weather right now. Check your internet and try again.')
-      }
+    } catch {
+      setNote('Couldn’t reach the weather right now. Check your internet and try again.')
     } finally {
       setLoading(false)
     }
@@ -242,10 +241,17 @@ function WeatherCard() {
 
   // Already allowed: refresh quietly when what's saved is over an hour old.
   useEffect(() => {
-    if (permission === 'allowed' && !cachedWeather()) void check()
-  }, [permission, check])
+    if (permission === 'allowed' && city && !cachedWeather()) void check()
+  }, [permission, city, check])
 
-  const shown = permission === 'allowed' ? weather : null
+  const pickCity = (c: City) => {
+    update({ weatherCity: c })
+    setChangingCity(false)
+    setWeather(null)
+    void check()
+  }
+
+  const shown = permission === 'allowed' && city && !changingCity && weather?.place === cityLabel(city) ? weather : null
   const desc = shown ? describeWeather(shown.code, shown.isDay) : ''
 
   return (
@@ -257,7 +263,7 @@ function WeatherCard() {
             <button
               type="button"
               className="weather-unit"
-              onClick={() => setUnit({ tempUnit: nextUnit })}
+              onClick={() => update({ tempUnit: nextUnit })}
               aria-label={`Showing ${unitLabel(unit)}. Switch to ${unitLabel(nextUnit)}`}
               title={`Switch to ${unitLabel(nextUnit)}`}
             >
@@ -298,19 +304,33 @@ function WeatherCard() {
           </ul>
           <p className="weather-tip">{weatherTip(shown)}</p>
           <p className="weather-updated">
-            Updated {new Date(shown.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+            {shown.place} · Updated {new Date(shown.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+            {' · '}
+            <button type="button" className="weather-change" onClick={() => setChangingCity(true)}>
+              Change city
+            </button>
           </p>
+        </div>
+      ) : loading ? (
+        <p className="dash-empty">Checking the sky...</p>
+      ) : !city || changingCity ? (
+        <div className="weather-ask">
+          {!changingCity && <p className="dash-empty">Tell us your city and we’ll show today’s weather there.</p>}
+          <CityPicker onPick={pickCity} onCancel={changingCity ? () => setChangingCity(false) : undefined} />
         </div>
       ) : (
         <div className="weather-ask">
-          <p className="dash-empty">
-            {loading ? 'Checking the sky...' : 'See today’s weather here. It uses your location and the internet.'}
-          </p>
-          {!loading && (
-            <button type="button" className="dash-btn" onClick={check}>
-              {permission === 'allowed' ? 'Try again' : 'Show the weather'}
-            </button>
-          )}
+          <p className="dash-empty">See today’s weather in {cityLabel(city)}.</p>
+          <button
+            type="button"
+            className="dash-btn"
+            onClick={() => {
+              setPermission('allowed')
+              void check()
+            }}
+          >
+            {permission === 'allowed' ? 'Try again' : 'Show the weather'}
+          </button>
         </div>
       )}
       {note && (
