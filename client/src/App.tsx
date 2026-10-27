@@ -32,6 +32,13 @@ export default function App() {
   // Signed in? Asked while the loading bar fills; signed out keeps the title page up with the login window.
   const account = useAccountStore((s) => s.account)
   const setAccount = useAccountStore((s) => s.setAccount)
+  // A "reset your password" email link: ?reset=<token>. Taken out of the
+  // address bar right away so it isn't left in history or shared by accident.
+  const [resetToken, setResetToken] = useState(() => {
+    const token = new URLSearchParams(location.search).get('reset') ?? undefined
+    if (token) history.replaceState(null, '', location.pathname)
+    return token
+  })
   useEffect(() => {
     void fetchAccount().then(setAccount)
   }, [setAccount])
@@ -62,8 +69,16 @@ export default function App() {
   return (
     <div className="app">
       {showSplash && (
-        <SplashScreen ready={!!account} skipBar={skipBar} onDone={() => setShowSplash(false)}>
-          {account === null && <AuthDialog onSignedIn={setAccount} />}
+        <SplashScreen ready={!!account && !resetToken} skipBar={skipBar} onDone={() => setShowSplash(false)}>
+          {(account === null || (account && resetToken)) && (
+            <AuthDialog
+              resetToken={resetToken}
+              onSignedIn={(a) => {
+                setResetToken(undefined)
+                setAccount(a)
+              }}
+            />
+          )}
         </SplashScreen>
       )}
       {/* After the loading screen, so the splat is seen. */}

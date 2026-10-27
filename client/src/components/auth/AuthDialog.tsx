@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { logIn, signUp, type Account, type AuthError } from '../../lib/auth.ts'
+import { logIn, requestReset, resetPassword, signUp, type Account, type AuthError } from '../../lib/auth.ts'
 import TermsDialog from './TermsDialog.tsx'
 import './AuthDialog.css'
 
@@ -7,16 +7,25 @@ import './AuthDialog.css'
   The Login and Sign Up windows from Figma (frames 26 and 27), over the
   dimmed title page. Login comes first; "Sign up!" swaps to Sign Up and
   "Sign in!" swaps back. It can't be closed: TomoNook needs an account.
+  "Forgot password?" asks for an email link; that link opens this window
+  again on "Choose a new password" (with `resetToken`).
 
   The rules here (lengths, characters) only help the user early. The
   server checks everything again (api/_lib/validation.ts).
 */
 
-type Mode = 'login' | 'signup'
+type Mode = 'login' | 'signup' | 'forgot' | 'reset'
 
-export default function AuthDialog({ onSignedIn }: { onSignedIn: (account: Account) => void }) {
+export default function AuthDialog({
+  resetToken,
+  onSignedIn,
+}: {
+  /** From a "reset your password" email link. */
+  resetToken?: string
+  onSignedIn: (account: Account) => void
+}) {
   const ref = useRef<HTMLDialogElement>(null)
-  const [mode, setMode] = useState<Mode>('login')
+  const [mode, setMode] = useState<Mode>(resetToken ? 'reset' : 'login')
   const [termsOpen, setTermsOpen] = useState(false)
   // Kept when switching, so a typed username isn't lost.
   const [username, setUsername] = useState('')
@@ -34,13 +43,18 @@ export default function AuthDialog({ onSignedIn }: { onSignedIn: (account: Accou
       // Escape doesn't close it: there's nothing behind it to go back to.
       onCancel={(e) => e.preventDefault()}
     >
-      {mode === 'login' ? (
+      {mode === 'reset' && resetToken ? (
+        <ResetForm key="reset" token={resetToken} onSignedIn={onSignedIn} onForgot={() => setMode('forgot')} />
+      ) : mode === 'forgot' ? (
+        <ForgotForm key="forgot" onBack={() => setMode('login')} />
+      ) : mode === 'login' ? (
         <LoginForm
           key="login"
           username={username}
           setUsername={setUsername}
           onSignedIn={onSignedIn}
           onSwitch={() => setMode('signup')}
+          onForgot={() => setMode('forgot')}
         />
       ) : (
         <SignUpForm
@@ -64,7 +78,7 @@ interface FormProps {
   onSwitch: () => void
 }
 
-function LoginForm({ username, setUsername, onSignedIn, onSwitch }: FormProps) {
+function LoginForm({ username, setUsername, onSignedIn, onSwitch, onForgot }: FormProps & { onForgot: () => void }) {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AuthError | null>(null)
@@ -121,6 +135,9 @@ function LoginForm({ username, setUsername, onSignedIn, onSwitch }: FormProps) {
           />
         )}
       </Field>
+      <button type="button" className="auth-forgot" onClick={onForgot}>
+        Forgot password?
+      </button>
       <button type="submit" className="auth-submit" disabled={busy}>
         {busy ? 'Logging in...' : 'Login'}
       </button>
@@ -250,6 +267,135 @@ function SignUpForm({ username, setUsername, onSignedIn, onSwitch, onShowTerms }
       </button>
       <button type="button" className="auth-switch" onClick={onSwitch}>
         Already have an account? Sign in!
+      </button>
+    </form>
+  )
+}
+
+/** "Forgot password?": asks for the account's email and sends a reset link. */
+function ForgotForm({ onBack }: { onBack: () => void }) {
+  const [email, setEmail] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<AuthError | null>(null)
+  const [sent, setSent] = useState('')
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      setSent(await requestReset(email))
+    } catch (err) {
+      setError(err as AuthError)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form className="auth-form" onSubmit={submit} noValidate>
+      <h2 id="auth-title" className="auth-title">
+        Forgot password?
+      </h2>
+      {sent ? (
+        <p className="auth-done" role="status">
+          {sent}
+        </p>
+      ) : (
+        <>
+          <p className="auth-intro">Type the email you signed up with, and we’ll send you a link to choose a new password.</p>
+          <FormError error={error} />
+          <Field label="Email" error={error?.fields.email}>
+            {(id, describedBy) => (
+              <input
+                id={id}
+                className="auth-input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                maxLength={254}
+                required
+                autoFocus
+                aria-describedby={describedBy}
+              />
+            )}
+          </Field>
+          <button type="submit" className="auth-submit" disabled={busy}>
+            {busy ? 'Sending...' : 'Send link'}
+          </button>
+        </>
+      )}
+      <button type="button" className="auth-switch" onClick={onBack}>
+        Back to login
+      </button>
+    </form>
+  )
+}
+
+/** Opened from the emailed link: choose a new password, then you're signed in. */
+function ResetForm({ token, onSignedIn, onForgot }: { token: string; onSignedIn: (account: Account) => void; onForgot: () => void }) {
+  const [password, setPassword] = useState('')
+  const [retypePassword, setRetypePassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<AuthError | null>(null)
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      onSignedIn(await resetPassword(token, password, retypePassword))
+    } catch (err) {
+      setError(err as AuthError)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <form className="auth-form" onSubmit={submit} noValidate>
+      <h2 id="auth-title" className="auth-title">
+        New password
+      </h2>
+      <FormError error={error} />
+      <Field label="New password" note="At least 8 characters" error={error?.fields.password}>
+        {(id, describedBy) => (
+          <input
+            id={id}
+            className="auth-input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            minLength={8}
+            maxLength={128}
+            required
+            autoFocus
+            aria-describedby={describedBy}
+          />
+        )}
+      </Field>
+      <Field label="Re-Type Password" error={error?.fields.retypePassword}>
+        {(id, describedBy) => (
+          <input
+            id={id}
+            className="auth-input"
+            type="password"
+            value={retypePassword}
+            onChange={(e) => setRetypePassword(e.target.value)}
+            autoComplete="new-password"
+            maxLength={128}
+            required
+            aria-describedby={describedBy}
+          />
+        )}
+      </Field>
+      <button type="submit" className="auth-submit" disabled={busy}>
+        {busy ? 'Saving...' : 'Save'}
+      </button>
+      <button type="button" className="auth-switch" onClick={onForgot}>
+        Link not working? Get a new one
       </button>
     </form>
   )

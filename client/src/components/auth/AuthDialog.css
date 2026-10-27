@@ -163,6 +163,38 @@
   text-underline-position: from-font;
 }
 
+/* "Forgot password?" under the password box, on the right. */
+.auth-forgot {
+  align-self: flex-end;
+  min-height: 32px;
+  margin: -0.8rem 0 0.4rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: Kedebideri, Khula, system-ui, sans-serif;
+  font-size: max(2.4rem, 14px);
+  color: var(--orange);
+  text-decoration: underline;
+  text-underline-position: from-font;
+}
+
+.auth-intro,
+.auth-done {
+  margin: 0 0 2rem;
+  font-family: Khula, system-ui, sans-serif;
+  font-size: max(2.6rem, 15px);
+  line-height: 1.4;
+  text-align: center;
+  color: var(--brown);
+}
+
+.auth-done {
+  padding: 1.6rem 2rem 1.2rem;
+  border-radius: 1.6rem;
+  background: rgb(160 187 59 / 22%);
+  color: var(--forest);
+}
+
 .auth-submit {
   width: 31.1rem;
   max-width: 100%;

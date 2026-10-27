@@ -1,6 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { beforeEach, describe, expect, it } from "vitest";
-import { currentUser, login, logout, me, signup } from "./auth";
+import { currentUser, forgotPassword, login, logout, me, resetPassword, signup } from "./auth";
+import { setMailer, type Email } from "./mail";
 import { database, setDb, type Db } from "./db";
 
 let db: Db;
@@ -102,5 +103,62 @@ describe("sessions", () => {
     const { session } = await signup(db, "1.1.1.1", form);
     await db.query("UPDATE sessions SET expires_at = now() - interval '1 minute'");
     expect(await currentUser(db, session)).toBeNull();
+  });
+});
+
+describe("forgot / reset password", () => {
+  let sent: Email[];
+  const linkToken = (email: Email) => /[?&]reset=([\w-]+)/.exec(email.text)![1]!;
+
+  beforeEach(async () => {
+    sent = [];
+    setMailer(async (e) => void sent.push(e));
+    await signup(db, "9.9.9.9", form);
+  });
+
+  it("emails a one-time link, and gives the same reply for unknown emails", async () => {
+    const known = await forgotPassword(db, "1.1.1.1", { email: "TOMATO@example.com" });
+    const unknown = await forgotPassword(db, "1.1.1.1", { email: "nobody@example.com" });
+    expect(known).toEqual(unknown);
+    expect(sent).toHaveLength(1);
+    expect(sent[0]!.to).toBe("tomato@example.com");
+    const stored = await db.query<{ token_hash: string }>("SELECT token_hash FROM password_resets");
+    expect(stored.rows[0]!.token_hash).not.toBe(linkToken(sent[0]!));
+  });
+
+  it("resets the password, logs out other devices, and the link works once", async () => {
+    const old = await login(db, "1.1.1.1", { username: "tomato_fan", password: form.password });
+    await forgotPassword(db, "1.1.1.1", { email: form.email });
+    const token = linkToken(sent[0]!);
+    const res = await resetPassword(db, "1.1.1.1", { token, password: "brand new pass", retypePassword: "brand new pass" });
+    expect(res.status).toBe(200);
+    expect(res.session).toBeTruthy();
+    expect(await currentUser(db, old.session)).toBeNull();
+    expect((await login(db, "1.1.1.1", { username: "tomato_fan", password: form.password })).status).toBe(401);
+    expect((await login(db, "1.1.1.1", { username: "tomato_fan", password: "brand new pass" })).status).toBe(200);
+    const again = await resetPassword(db, "1.1.1.1", { token, password: "another pass 1", retypePassword: "another pass 1" });
+    expect(again.status).toBe(400);
+  });
+
+  it("rejects expired and made-up links", async () => {
+    await forgotPassword(db, "1.1.1.1", { email: form.email });
+    const token = linkToken(sent[0]!);
+    await db.query("UPDATE password_resets SET expires_at = now() - interval '1 minute'");
+    expect((await resetPassword(db, "1.1.1.1", { token, password: "brand new pass", retypePassword: "brand new pass" })).status).toBe(400);
+    expect((await resetPassword(db, "1.1.1.1", { token: "x".repeat(43), password: "brand new pass", retypePassword: "brand new pass" })).status).toBe(400);
+  });
+
+  it("limits requests per email so an inbox can't be flooded", async () => {
+    for (let i = 0; i < 3; i++) await forgotPassword(db, `5.5.5.${i}`, { email: form.email });
+    expect((await forgotPassword(db, "5.5.5.9", { email: form.email })).status).toBe(429);
+    expect(sent).toHaveLength(3);
+  });
+
+  it("only the newest link works", async () => {
+    await forgotPassword(db, "1.1.1.1", { email: form.email });
+    await forgotPassword(db, "1.1.1.1", { email: form.email });
+    const [first, second] = sent.map(linkToken);
+    expect((await resetPassword(db, "1.1.1.1", { token: first, password: "brand new pass", retypePassword: "brand new pass" })).status).toBe(400);
+    expect((await resetPassword(db, "1.1.1.1", { token: second, password: "brand new pass", retypePassword: "brand new pass" })).status).toBe(200);
   });
 });
