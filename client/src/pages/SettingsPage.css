@@ -314,3 +314,8 @@
     font-size: 16px;
   }
 }
+
+/* The city search, opened under "Weather city". */
+.settings-city {
+  padding: 0 0 1.6rem;
+}

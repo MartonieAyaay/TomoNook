@@ -477,3 +477,14 @@
     border-radius: 12px;
   }
 }
+
+/* "Change city", sitting in the small print under the weather. */
+.weather-change {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--forest);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}

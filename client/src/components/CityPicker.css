@@ -1,0 +1,103 @@
+/* Sizes are in em, so the picker scales with where it's placed. */
+.city-picker {
+  font-size: 2.2rem;
+  color: var(--brown);
+}
+
+.city-picker.is-compact {
+  font-size: 1.6rem;
+}
+
+.city-label {
+  display: block;
+  margin-bottom: 0.4em;
+  font-family: var(--font-heading);
+  color: var(--forest);
+}
+
+.city-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+
+.city-input {
+  flex: 1 1 10em;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0.35em 0.6em 0.2em;
+  border: 0.12em solid var(--orange);
+  border-radius: 0.65em;
+  background: var(--cream-light);
+  font-family: var(--font-heading);
+  font-size: 1em;
+  color: var(--brown);
+}
+
+.city-btn {
+  min-height: 40px;
+  padding: 0.3em 1em;
+  border: 0;
+  border-radius: 0.65em;
+  background: var(--forest);
+  box-shadow: 0 0.18em 0.1em rgb(0 0 0 / 25%);
+  font-family: var(--font-display);
+  font-size: 1em;
+  color: var(--cream-text);
+  transition: transform 220ms var(--ease-bubbly);
+}
+
+.city-btn.is-secondary {
+  background: var(--cream-light);
+  color: var(--forest);
+}
+
+.city-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.city-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.city-error {
+  margin: 0.5em 0 0;
+  font-family: Khula, system-ui, sans-serif;
+  font-size: 0.85em;
+  color: var(--tomato);
+}
+
+.city-results {
+  display: grid;
+  gap: 0.35em;
+  margin: 0.6em 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.city-result {
+  width: 100%;
+  min-height: 40px;
+  padding: 0.35em 0.7em 0.2em;
+  border: 0.1em solid var(--orange);
+  border-radius: 0.65em;
+  background: var(--cream-light);
+  font-family: var(--font-heading);
+  font-size: 0.9em;
+  text-align: start;
+  color: var(--brown);
+  transition: transform 220ms var(--ease-bubbly);
+}
+
+.city-result:hover {
+  transform: translateX(0.2em);
+  background: var(--butter-bright);
+}
+
+@media (max-width: 720px) {
+  .city-picker,
+  .city-picker.is-compact {
+    font-size: 16px;
+  }
+}

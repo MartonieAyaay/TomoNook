@@ -4,7 +4,8 @@ import { currentWeatherLine, gossipLines, replyTo, type GossipLine } from '../..
 import { speak, stopSpeaking } from '../../lib/gibberish.ts'
 import { useGossipSpot } from '../../lib/gossipSchedule.ts'
 import { load, save } from '../../lib/storage.ts'
-import { cachedWeather, fetchWeather } from '../../lib/weather.ts'
+import { cachedWeather, fetchWeather, type City } from '../../lib/weather.ts'
+import CityPicker from '../CityPicker.tsx'
 import { useGossipStore } from '../../store/gossipStore.ts'
 import { useSettingsStore } from '../../store/settingsStore.ts'
 import { today } from '@tomonook/shared'
@@ -41,6 +42,7 @@ export default function GossipTomatoes() {
   const setPermission = useGossipStore((s) => s.setWeather)
   const section = useLocation().pathname.split('/')[1]
   const autoChat = useSettingsStore((s) => s.gossipAutoChat)
+  const updateSettings = useSettingsStore((s) => s.update)
   const hiddenToday = useSettingsStore((s) => s.gossipHiddenOn === today())
   const spot = useGossipSpot()
   const [talk, setTalk] = useState<Talk | null>(null)
@@ -77,7 +79,10 @@ export default function GossipTomatoes() {
         if (reply) speak(first === 0 ? 1 : 0)
       }, replyAt),
     )
-    timers.current.push(window.setTimeout(() => setTalk(null), line.askWeather ? ASK_MS : replyAt + TALK_MS))
+    // Asking for the city: stays up until one is picked (or they're tapped).
+    if (!line.askCity) {
+      timers.current.push(window.setTimeout(() => setTalk(null), line.askWeather ? ASK_MS : replyAt + TALK_MS))
+    }
   }, [])
 
   const chat = useCallback(
@@ -118,15 +123,28 @@ export default function GossipTomatoes() {
       say(first, { text: "Okay, no peeking. We'll stick to gossip!", tone: 'meh' }, 'Our lips are sealed.')
       return
     }
+    // The weather is for the user's city, so ask for it first.
+    if (!useSettingsStore.getState().weatherCity) {
+      say(first, { text: 'Ooh, where do you live? We’ll peek at the sky there!', tone: 'meh', askCity: true }, '')
+      return
+    }
+    await checkSky(first)
+  }
+
+  const pickCity = (city: City) => {
+    updateSettings({ weatherCity: city })
+    void checkSky(talk?.first ?? 0)
+  }
+
+  const checkSky = async (first: Who) => {
     say(first, { text: 'Checking the sky...', tone: 'meh' }, '')
     try {
       await fetchWeather()
       setPermission('allowed')
       const line = currentWeatherLine()
       if (line) say(first, line, replyTo(line))
-    } catch (e) {
-      // Said no to location: don't ask again. Anything else (offline): try another day.
-      if (e instanceof GeolocationPositionError && e.code === e.PERMISSION_DENIED) setPermission('denied')
+    } catch {
+      // Offline, most likely: try another day.
       say(first, { text: "Hmm, I can't see the sky right now.", tone: 'meh' }, 'Maybe later!')
     }
   }
@@ -152,6 +170,11 @@ export default function GossipTomatoes() {
               </span>
             )}
           </p>
+        )}
+        {talk?.line.askCity && (
+          <div key={`${talk.key}c`} className="gossip-city">
+            <CityPicker compact onPick={pickCity} />
+          </div>
         )}
         {talk?.replied && talk.reply && (
           <p key={`${talk.key}b`} className={`gossip-say from-${side[second]}`}>
