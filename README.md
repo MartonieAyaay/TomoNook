@@ -1,0 +1,74 @@
+# TomoNook 🍅
+
+A cozy, tomato-themed productivity app. Plan your day, track your mood, focus with timers, and look after a little tomato friend who reacts to how you're doing.
+
+## Features
+
+- **Dashboard** – today's tasks, mood, timers and weather at a glance.
+- **To-do list** – tasks with categories and High / Medium / Low priorities (add, remove and reorder levels). Edit, delete and drag tasks; a tomato fills up as you finish them.
+- **Mood tracker** – pick today's mood from up to 8 custom moods, write in a mood diary, and keep a mood streak going (miss a day and the tomato goes *splat*).
+- **Timers** – a stopwatch with history, timer cards, and a pomodoro loop of lock-in and chill phases with a chime between them.
+- **Avatar** – build your own tomato from layered, recolorable art: eyes, brows, nose, mouth, hair and more, each movable and resizable, with undo/redo and a color picker. Your avatar blinks, keeps you company in the corner, and reacts to what you do.
+- **Profile** – an About me card, a Daily Quote, and a Feed button to give your tomato a cookie or foods you add with your own pictures.
+- **Gossip tomatoes** – two tomatoes you name during setup. They move to a different tab every 4 hours and chat about you, in gibberish voices.
+- **Weather** – today's weather for the city you pick (°F, °C or K), from [Open-Meteo](https://open-meteo.com/). No account or API key needed.
+- **Settings** – sound and volume, gossip tomato and avatar options, a gentle mode with no splats, reduced motion, text size, timer chime style, and backup / restore / reset of your data.
+
+## Tech stack
+
+| Part | What it uses |
+|---|---|
+| `client/` | React 19, TypeScript, Vite, React Router, Zustand, dnd-kit |
+| `server/` | Node, Express 5 (run with `tsx`) |
+| `shared/` | Types and date helpers used by both |
+
+It's an npm workspaces monorepo. For now, all app data is saved in the browser's `localStorage` (see `client/src/lib/storage.ts`). The server only has a health check so far, and is ready for the app's data to move there later.
+
+## Getting started
+
+You need [Node.js](https://nodejs.org/) 22 or newer.
+
+```bash
+git clone https://github.com/MartonieAyaay/TomoNook.git
+cd TomoNook
+npm install
+npm run dev
+```
+
+Then open **http://localhost:5173**. The first visit walks you through setting up your profile and naming the gossip tomatoes.
+
+`npm run dev` starts both the client (port 5173) and the server (port 3001). To start only one:
+
+```bash
+npm run dev:client
+npm run dev:server
+```
+
+## Scripts
+
+Run from the project root:
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Client and server together, with live reload |
+| `npm run build` | Type-checks and builds the client into `client/dist` |
+| `npm run typecheck` | Type-checks every package |
+| `npm test` | Runs the shared package's tests |
+
+## Project layout
+
+```
+client/src/
+  pages/        One file per screen (Dashboard, To-do, Mood, Timers, Profile, Settings)
+  components/   Avatar, gossip tomatoes, sidebar, city picker and more
+  store/        Zustand stores, one per feature, saved to localStorage
+  lib/          Weather, sounds, chime, gossip lines, storage helpers
+  assets/       Hand-drawn art, icons and sound effects
+server/src/     Express server (health route; uploads folder for later)
+shared/src/     Shared types and date helpers
+```
+
+## Credits
+
+- Weather data and city search by [Open-Meteo](https://open-meteo.com/) (CC BY 4.0).
+- Fonts from Google Fonts: Poetsen One, Lalezar, Khula, Patrick Hand, Podkova.
