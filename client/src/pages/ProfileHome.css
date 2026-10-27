@@ -415,15 +415,41 @@
 
 /* ---------- Feed panel ---------- */
 
+/* Takes the About me card's place (it shares the .profile-info card look). */
 .feed-panel {
-  width: 59.6rem;
-  margin: 1.6rem 0 4rem;
-  padding: 2rem 2.4rem;
-  border: 0.5rem solid var(--orange);
-  border-radius: 3rem;
-  background: var(--butter);
   animation: pop-in 240ms var(--ease-bubbly);
-  transform-origin: 15% 0;
+  transform-origin: 50% 0;
+}
+
+.feed-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.6rem;
+}
+
+.feed-header .profile-info-title {
+  flex: 1;
+}
+
+.feed-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 5.2rem;
+  height: 5.2rem;
+  padding: 0;
+  border: 0.3rem solid var(--cream-light);
+  border-radius: 50%;
+  background: var(--tomato);
+  font-size: 3.6rem;
+  line-height: 1;
+  color: var(--cream-light);
+  box-shadow: 0 0.3rem 0.3rem rgb(0 0 0 / 20%);
+  transition: transform 220ms var(--ease-bubbly);
+}
+
+.feed-close:hover {
+  transform: scale(1.08);
 }
 
 .feed-list {
@@ -643,11 +669,10 @@
     font-size: calc((100vw - 32px) / 102.5);
   }
 
-  .feed-panel {
-    width: 100%;
-    padding: 12px;
-    border-width: 3px;
-    border-radius: 16px;
+  .feed-close {
+    width: 40px;
+    height: 40px;
+    font-size: 26px;
   }
 
   .feed-list {
