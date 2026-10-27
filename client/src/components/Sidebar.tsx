@@ -4,6 +4,7 @@ import todoIcon from '../assets/icons/nav-todo.png'
 import moodIcon from '../assets/icons/nav-mood.png'
 import timersIcon from '../assets/icons/nav-timers.png'
 import profileIcon from '../assets/icons/nav-profile.png'
+import settingsIcon from '../assets/icons/nav-settings.png'
 import { useGossipSpot } from '../lib/gossipSchedule.ts'
 import { useGossipStore } from '../store/gossipStore.ts'
 import { useSettingsStore } from '../store/settingsStore.ts'
@@ -57,25 +58,10 @@ export default function Sidebar({ locked = false }: { locked?: boolean }) {
         {badge('/profile')}
       </NavLink>
       <NavLink to="/settings" className="sidebar-link sidebar-settings" title="Settings">
-        <GearIcon />
+        <img className="sidebar-gear" src={settingsIcon} alt="" />
         <span className="visually-hidden">Settings</span>
       </NavLink>
     </nav>
   )
 }
 
-/** A cream gear, drawn to match the sidebar's hand-drawn icons. */
-function GearIcon() {
-  const teeth = Array.from({ length: 8 }, (_, i) => i * 45)
-  return (
-    <svg className="sidebar-gear" viewBox="0 0 64 64" aria-hidden>
-      <g fill="#fff4d5" stroke="#871d10" strokeWidth="3" strokeLinejoin="round">
-        {teeth.map((deg) => (
-          <rect key={deg} x="27" y="4" width="10" height="14" rx="3" transform={`rotate(${deg} 32 32)`} />
-        ))}
-        <circle cx="32" cy="32" r="19" />
-      </g>
-      <circle cx="32" cy="32" r="7" fill="#e66b33" stroke="#871d10" strokeWidth="3" />
-    </svg>
-  )
-}
