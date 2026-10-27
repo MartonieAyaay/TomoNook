@@ -4,7 +4,8 @@ import type { City, TempUnit } from '../lib/weather.ts'
 
 export type SoundKind = 'gossip' | 'reactions' | 'chime'
 export type Chattiness = 'all' | 'big' | 'off'
-export type ChimeStyle = 'chime' | 'bell' | 'soft'
+/** 'custom' is the user's own uploaded sound (lib/customChime.ts). */
+export type ChimeStyle = 'chime' | 'bell' | 'soft' | 'custom'
 export type UiSize = 'small' | 'normal' | 'large'
 
 export interface Settings {

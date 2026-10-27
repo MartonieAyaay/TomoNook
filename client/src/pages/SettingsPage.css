@@ -320,3 +320,8 @@
 .settings-city {
   padding: 0 0 1.6rem;
 }
+
+/* A problem with something the user just did, in place of the row's note. */
+.settings-note-error {
+  color: var(--tomato);
+}

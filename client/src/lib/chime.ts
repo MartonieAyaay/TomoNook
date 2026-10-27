@@ -3,6 +3,7 @@
 // the first click anywhere in the app (see main.tsx) and from the timer buttons.
 
 import { soundLevel, useSettingsStore, type ChimeStyle } from '../store/settingsStore.ts'
+import { useCustomChimeStore } from './customChime.ts'
 
 let ctx: AudioContext | null = null
 
@@ -16,7 +17,7 @@ export function unlockChime() {
 }
 
 /** The tones for each chime style: [frequency, start, length] in Hz and seconds. */
-const STYLES: Record<ChimeStyle, { wave: OscillatorType; notes: [number, number, number][] }> = {
+const STYLES: Record<Exclude<ChimeStyle, 'custom'>, { wave: OscillatorType; notes: [number, number, number][] }> = {
   chime: { wave: 'sine', notes: [[660, 0, 0.5], [880, 0.22, 0.5]] },
   bell: { wave: 'triangle', notes: [[784, 0, 1.2], [988, 0.18, 1.2], [1175, 0.36, 1.4]] },
   soft: { wave: 'sine', notes: [[440, 0, 0.9]] },
@@ -35,7 +36,29 @@ export function chime(style: ChimeStyle = useSettingsStore.getState().chimeStyle
   play(ctx, style, level)
 }
 
+// The uploaded sound, decoded once and reused.
+let custom: { data: string; buffer: Promise<AudioBuffer> } | null = null
+
+async function playCustom(ctx: AudioContext, data: string, level: number) {
+  if (custom?.data !== data) {
+    const bytes = await (await fetch(data)).arrayBuffer()
+    custom = { data, buffer: ctx.decodeAudioData(bytes) }
+  }
+  const source = ctx.createBufferSource()
+  source.buffer = await custom.buffer
+  const gain = ctx.createGain()
+  gain.gain.value = level
+  source.connect(gain).connect(ctx.destination)
+  source.start()
+}
+
 function play(ctx: AudioContext, style: ChimeStyle, level: number) {
+  if (style === 'custom') {
+    const sound = useCustomChimeStore.getState().sound
+    // Removed since it was picked: the plain chime instead.
+    if (sound) return void playCustom(ctx, sound.data, level).catch(() => play(ctx, 'chime', level))
+    style = 'chime'
+  }
   const start = ctx.currentTime
   const { wave, notes } = STYLES[style]
   for (const [freq, at, length] of notes) {
