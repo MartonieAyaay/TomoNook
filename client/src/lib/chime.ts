@@ -1,6 +1,6 @@
 // A short two-note chime for when a timer switches between lock-in and chill.
 // Browsers only allow sound after a click, so unlockChime() is called from
-// the button that starts a timer.
+// the first click anywhere in the app (see main.tsx) and from the timer buttons.
 
 import { soundLevel, useSettingsStore, type ChimeStyle } from '../store/settingsStore.ts'
 
@@ -25,7 +25,17 @@ const STYLES: Record<ChimeStyle, { wave: OscillatorType; notes: [number, number,
 /** Plays the chosen chime, at the volume the settings allow. */
 export function chime(style: ChimeStyle = useSettingsStore.getState().chimeStyle) {
   const level = soundLevel('chime')
-  if (!ctx || ctx.state !== 'running' || level <= 0) return
+  if (!ctx || level <= 0) return
+  // A new context is still "suspended" for a moment, even right after a click.
+  if (ctx.state !== 'running') {
+    const c = ctx
+    void c.resume().then(() => c.state === 'running' && play(c, style, level), () => {})
+    return
+  }
+  play(ctx, style, level)
+}
+
+function play(ctx: AudioContext, style: ChimeStyle, level: number) {
   const start = ctx.currentTime
   const { wave, notes } = STYLES[style]
   for (const [freq, at, length] of notes) {
