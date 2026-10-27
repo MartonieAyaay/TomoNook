@@ -1,7 +1,7 @@
 import { addDays, today } from '@tomonook/shared'
 import { fill, pickForms } from './pronouns.ts'
 import { moodStreak } from './streak.ts'
-import { cachedWeather, celsius, defaultTempUnit, describeWeather, formatTemp, skyOf } from './weather.ts'
+import { cachedWeather, celsius, defaultTempUnit, describeWeather, formatTemp, rainLikely, skyOf } from './weather.ts'
 import { useSettingsStore } from '../store/settingsStore.ts'
 import { useFocusStore } from '../store/focusStore.ts'
 import { useGossipStore } from '../store/gossipStore.ts'
@@ -165,7 +165,7 @@ function weatherLine(): GossipLine | null {
   const sky = skyOf(w.code)
   const c = celsius(w, w.temp)
   const tip =
-    sky === 'rain' || sky === 'storm' || w.rainChance >= 60
+    sky === 'rain' || sky === 'storm' || rainLikely(w)
       ? '{Name} should grab an umbrella!'
       : c >= 30
         ? 'Stay hydrated, {name}!'

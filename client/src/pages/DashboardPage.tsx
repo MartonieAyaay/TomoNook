@@ -300,7 +300,7 @@ function WeatherCard() {
             <li>
               High {formatTemp(shown, shown.high, unit)} · Low {formatTemp(shown, shown.low, unit)}
             </li>
-            <li>{shown.rainChance}% chance of rain</li>
+            <li>{shown.rainChance}% chance of rain later today</li>
           </ul>
           <p className="weather-tip">{weatherTip(shown)}</p>
           <p className="weather-updated">
