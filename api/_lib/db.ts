@@ -21,10 +21,32 @@ export function setDb(next: Db) {
   ready = null;
 }
 
+/** Thrown when no database address is set, so the API can say so plainly. */
+export class DatabaseNotSetUp extends Error {
+  constructor() {
+    super("No database address: set DATABASE_URL (Vercel → Storage → connect a Neon database to this project)");
+  }
+}
+
+/*
+  The database address. Neon on Vercel sets DATABASE_URL, but a custom
+  prefix in the integration renames it (e.g. STORAGE_DATABASE_URL), so any
+  variable holding a postgres:// address is accepted, pooled ones first.
+*/
+function databaseUrl() {
+  const env = process.env;
+  if (env.DATABASE_URL) return env.DATABASE_URL;
+  if (env.POSTGRES_URL) return env.POSTGRES_URL;
+  const candidates = Object.entries(env)
+    .filter(([, v]) => v && /^postgres(ql)?:\/\//.test(v))
+    .sort(([a], [b]) => Number(/UNPOOLED|NON_POOLING/.test(a)) - Number(/UNPOOLED|NON_POOLING/.test(b)));
+  return candidates[0]?.[1];
+}
+
 function getDb(): Db {
   if (db) return db;
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set");
+  const url = databaseUrl();
+  if (!url) throw new DatabaseNotSetUp();
   const pool = new Pool({ connectionString: url, max: 3 });
   db = { query: (text, params) => pool.query(text, params) as never };
   return db;
