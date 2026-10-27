@@ -5,9 +5,11 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
+    // changeOrigin off: the API checks that Origin matches Host (CSRF protection),
+    // so Host must stay the address the browser used.
     proxy: {
-      '/api': 'http://localhost:3001',
-      '/uploads': 'http://localhost:3001',
+      '/api': { target: 'http://localhost:3001', changeOrigin: false },
+      '/uploads': { target: 'http://localhost:3001', changeOrigin: false },
     },
   },
 })
