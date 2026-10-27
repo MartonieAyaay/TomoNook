@@ -14,9 +14,12 @@ import './ProfileInfoCard.css'
 
 /** Name, age, gender, pronouns, and the important one: do they like tomatoes? */
 export default function ProfileInfoCard({
+  hidden = false,
   settingUp,
   onSaved,
 }: {
+  /** The feed panel is showing in its place. */
+  hidden?: boolean
   /** First visit: the card is the only thing on the page that can be used. */
   settingUp: boolean
   onSaved: (likesTomatoes: boolean) => void
@@ -27,7 +30,7 @@ export default function ProfileInfoCard({
   const [editing, setEditing] = useState(!complete)
 
   return (
-    <section className={`profile-info${settingUp ? ' is-setup' : ''}`} aria-labelledby="profile-info-title">
+    <section className={`profile-info${settingUp ? ' is-setup' : ''}`} hidden={hidden} aria-labelledby="profile-info-title">
       <h2 id="profile-info-title" className="profile-info-title">
         {settingUp ? 'Welcome to TomoNook!' : 'About me'}
       </h2>

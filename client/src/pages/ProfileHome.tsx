@@ -35,6 +35,7 @@ export default function ProfileHome() {
   const [feeding, setFeeding] = useState(false)
   const [eating, setEating] = useState<{ food: Food | null; key: number } | null>(null)
   const timer = useRef<number>(undefined)
+  const feedButton = useRef<HTMLButtonElement>(null)
   // The tomato's reaction to whether the user likes tomatoes.
   const [reaction, setReaction] = useState<{ likes: boolean; key: number } | null>(null)
   // First visit: the About me card must be filled in, then the gossip tomatoes named.
@@ -98,6 +99,7 @@ export default function ProfileHome() {
 
           <div className="profile-actions">
             <button
+              ref={feedButton}
               type="button"
               className="tomato-button"
               aria-expanded={feeding}
@@ -121,13 +123,26 @@ export default function ProfileHome() {
             </Link>
           </div>
         </div>
-
-        {feeding && <FeedPanel onFeed={feed} />}
       </div>
 
       {/* During setup everything but the card is dimmed and can't be used. */}
       {settingUp && <div className="setup-backdrop" aria-hidden />}
-      <ProfileInfoCard settingUp={settingUp} onSaved={(likes) => setReaction({ likes, key: Date.now() })} />
+      {/* The food choices take the About me card's place until Feed or × is pressed again. */}
+      {feeding && (
+        <FeedPanel
+          onFeed={feed}
+          onClose={() => {
+            setFeeding(false)
+            feedButton.current?.focus()
+          }}
+        />
+      )}
+      {/* Hidden rather than removed, so a half-edited form survives a snack. */}
+      <ProfileInfoCard
+        hidden={feeding}
+        settingUp={settingUp}
+        onSaved={(likes) => setReaction({ likes, key: Date.now() })}
+      />
       {reaction && <TomatoReaction key={reaction.key} likes={reaction.likes} onDone={() => setReaction(null)} />}
       {/* After the card (and the tomato's reaction to it), name the gossip tomatoes. */}
       {settingUp && infoDone && !reaction && <NamingDialog />}
@@ -167,13 +182,21 @@ function ThoughtBubble() {
   )
 }
 
-function FeedPanel({ onFeed }: { onFeed: (food: Food | null) => void }) {
+function FeedPanel({ onFeed, onClose }: { onFeed: (food: Food | null) => void; onClose: () => void }) {
   const foods = useFoodStore((s) => s.foods)
   const deleteFood = useFoodStore((s) => s.deleteFood)
   const [adding, setAdding] = useState(false)
 
   return (
-    <section id="feed-panel" className="feed-panel" aria-label="Feed your tomato">
+    <section id="feed-panel" className="profile-info feed-panel" aria-labelledby="feed-title">
+      <div className="feed-header">
+        <h2 id="feed-title" className="profile-info-title">
+          Feed your tomato
+        </h2>
+        <button type="button" className="feed-close" onClick={onClose} aria-label="Close" title="Close">
+          ×
+        </button>
+      </div>
       <ul className="feed-list">
         <li>
           <button type="button" className="feed-food" onClick={() => onFeed(null)}>
