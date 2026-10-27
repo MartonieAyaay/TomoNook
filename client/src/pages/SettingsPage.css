@@ -201,7 +201,7 @@
 }
 
 .settings-btn.is-secondary {
-  background: none;
+  background: #fff;
   box-shadow: inset 0 0 0 0.25rem var(--forest);
   color: var(--forest);
 }
@@ -255,7 +255,8 @@
   min-width: 0;
   flex: 1;
   min-height: 44px;
-  padding: 0.6rem 1.4rem;
+  /* Khula draws its letters high in the line; extra top padding centers them. */
+  padding: 1.1rem 1.4rem 0.1rem;
   border: 0.3rem solid var(--forest);
   border-radius: 1.4rem;
   background: var(--cream-light);
