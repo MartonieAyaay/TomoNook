@@ -61,6 +61,13 @@ async function createTables(d: Db) {
       created_at timestamptz NOT NULL DEFAULT now(),
       expires_at timestamptz NOT NULL
     )`);
+  // Password reset links: only the token's hash is stored, and each works once.
+  await d.query(`
+    CREATE TABLE IF NOT EXISTS password_resets (
+      token_hash text PRIMARY KEY,
+      user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at timestamptz NOT NULL
+    )`);
   await d.query(`
     CREATE TABLE IF NOT EXISTS auth_attempts (
       key text NOT NULL,

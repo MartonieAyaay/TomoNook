@@ -1,7 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import { hash, verify } from "@node-rs/argon2";
 import type { Db } from "./db";
-import { TERMS_VERSION, fieldErrors, loginSchema, signupSchema } from "./validation";
+import { canSendEmail, sendEmail } from "./mail";
+import { TERMS_VERSION, fieldErrors, forgotSchema, loginSchema, resetSchema, signupSchema } from "./validation";
 
 /*
   Accounts and sessions. Each function takes the request's parts and
@@ -23,7 +24,15 @@ const LIMITS = {
   /** Wrong passwords from one IP, across all accounts. */
   loginPerIp: { max: 20, minutes: 15 },
   signupPerIp: { max: 5, minutes: 60 },
+  /** "Forgot password?" requests, so it can't be used to flood someone's inbox. */
+  forgotPerIp: { max: 5, minutes: 60 },
+  forgotPerEmail: { max: 3, minutes: 60 },
+  /** Guesses at reset links. */
+  resetPerIp: { max: 10, minutes: 15 },
 };
+
+/** How long a reset link works. */
+export const RESET_MINUTES = 30;
 
 export interface User {
   id: string;
@@ -175,4 +184,106 @@ export async function me(db: Db, token: string | undefined): Promise<Result> {
   const user = await currentUser(db, token);
   // A cookie that no longer matches a session is cleared.
   return user ? { status: 200, body: { user } } : { status: 401, body: { user: null }, session: token ? "" : undefined };
+}
+
+// ---------- Forgot / reset password ----------
+
+/** The site's address for links in emails. Never taken from the request, which could be forged. */
+function appUrl() {
+  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return "http://localhost:5173";
+}
+
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+function resetEmail(username: string, link: string) {
+  const name = escapeHtml(username);
+  return {
+    subject: "Reset your TomoNook password",
+    text: `Hi ${username},\n\nSomeone asked to reset the password for your TomoNook account. To choose a new one, open this link within ${RESET_MINUTES} minutes:\n\n${link}\n\nIf it wasn't you, you can ignore this email. Your password stays the same.\n\nTomoNook`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;background:#fff6de;border:6px solid #e66b33;border-radius:20px;color:#6e3f39">
+  <h1 style="margin:0 0 12px;color:#29512f;font-size:26px">Reset your password</h1>
+  <p>Hi ${name},</p>
+  <p>Someone asked to reset the password for your TomoNook account. To choose a new one, press the button within ${RESET_MINUTES} minutes:</p>
+  <p style="text-align:center;margin:24px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:12px 28px;background:#e66b33;color:#fff6de;border-radius:12px;text-decoration:none;font-weight:bold;font-size:18px">Choose a new password</a></p>
+  <p style="font-size:13px">If the button doesn't work, copy this link into your browser:<br><span style="word-break:break-all">${escapeHtml(link)}</span></p>
+  <p style="font-size:13px">If it wasn't you, you can ignore this email. Your password stays the same.</p>
+</div>`,
+  };
+}
+
+const FORGOT_REPLY =
+  "If an account uses that email, we’ve sent it a link to reset the password. Check your inbox (and spam). The link works for 30 minutes.";
+
+export async function forgotPassword(db: Db, ip: string, input: unknown): Promise<Result> {
+  const parsed = forgotSchema.safeParse(input);
+  if (!parsed.success) return { status: 400, body: { error: "Please check the form.", fields: fieldErrors(parsed.error) } };
+  const { email } = parsed.data;
+  if (!canSendEmail()) return { status: 503, body: { error: "Password reset isn’t available right now. Please try again later." } };
+
+  const { forgotPerIp: perIp, forgotPerEmail: perEmail } = LIMITS;
+  if (
+    (await attempts(db, `forgot:${ip}`, perIp.minutes)) >= perIp.max ||
+    (await attempts(db, `forgot:${email}`, perEmail.minutes)) >= perEmail.max
+  ) {
+    return tooMany(perIp.minutes);
+  }
+  await recordAttempt(db, `forgot:${ip}`);
+  await recordAttempt(db, `forgot:${email}`);
+
+  const { rows } = await db.query<{ id: string; username: string }>("SELECT id, username FROM users WHERE email = $1", [email]);
+  const user = rows[0];
+  if (user) {
+    // Only the newest link works.
+    await db.query("DELETE FROM password_resets WHERE user_id = $1", [user.id]);
+    const token = randomBytes(32).toString("base64url");
+    await db.query(
+      "INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES ($1, $2, now() + make_interval(mins => $3))",
+      [tokenHash(token), user.id, RESET_MINUTES],
+    );
+    try {
+      await sendEmail({ to: email, ...resetEmail(user.username, `${appUrl()}/?reset=${token}`) });
+    } catch (e) {
+      // Logged for us; the reply stays the same so it doesn't reveal that the account exists.
+      console.error("Couldn't send reset email:", e);
+    }
+  }
+  // The same answer whether or not the email has an account.
+  return { status: 200, body: { message: FORGOT_REPLY } };
+}
+
+export async function resetPassword(db: Db, ip: string, input: unknown): Promise<Result> {
+  const limit = LIMITS.resetPerIp;
+  if ((await attempts(db, `reset:${ip}`, limit.minutes)) >= limit.max) return tooMany(limit.minutes);
+
+  const parsed = resetSchema.safeParse(input);
+  if (!parsed.success) {
+    const fields = fieldErrors(parsed.error);
+    if (fields.token) return { status: 400, body: { error: "This reset link isn’t valid. Ask for a new one." } };
+    return { status: 400, body: { error: "Please check the form.", fields } };
+  }
+  const { token, password } = parsed.data;
+
+  const { rows } = await db.query<User>(
+    `SELECT u.id, u.username, u.email FROM password_resets r JOIN users u ON u.id = r.user_id
+     WHERE r.token_hash = $1 AND r.expires_at > now()`,
+    [tokenHash(token)],
+  );
+  const user = rows[0];
+  if (!user) {
+    await recordAttempt(db, `reset:${ip}`);
+    return { status: 400, body: { error: "This reset link has expired or was already used. Ask for a new one." } };
+  }
+  if (password.toLowerCase() === user.username.toLowerCase()) {
+    return { status: 400, body: { error: "Please check the form.", fields: { password: "Your password can’t be your username." } } };
+  }
+
+  await db.query("UPDATE users SET password_hash = $1 WHERE id = $2", [await hash(password, ARGON2), user.id]);
+  // The link is used up, and every device that was logged in is logged out.
+  await db.query("DELETE FROM password_resets WHERE user_id = $1", [user.id]);
+  await db.query("DELETE FROM sessions WHERE user_id = $1", [user.id]);
+  await db.query("DELETE FROM auth_attempts WHERE key LIKE $1", [`login:${user.username.toLowerCase()}:%`]);
+  return { status: 200, body: { user }, session: await startSession(db, user.id) };
 }

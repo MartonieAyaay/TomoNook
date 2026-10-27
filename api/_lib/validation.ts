@@ -57,6 +57,27 @@ function bothStrings(value: unknown, a: string, b: string) {
   return typeof v?.[a] === "string" && typeof v?.[b] === "string";
 }
 
+export const forgotSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(254, "That email is too long.")
+    .pipe(z.email("Enter a valid email address.")),
+});
+
+export const resetSchema = z
+  .object({
+    token: z.string().min(20).max(100),
+    password,
+    retypePassword: z.string().max(PASSWORD_MAX),
+  })
+  .refine((d) => d.password === d.retypePassword, {
+    path: ["retypePassword"],
+    message: "The passwords don’t match.",
+    when: ({ value }) => bothStrings(value, "password", "retypePassword"),
+  });
+
 /* Login only checks the shape: the real check is the password hash. */
 export const loginSchema = z.object({
   username: z.string().trim().min(1, "Enter your username.").max(USERNAME_MAX),

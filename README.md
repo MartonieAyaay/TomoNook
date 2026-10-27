@@ -30,6 +30,7 @@ It's an npm workspaces monorepo. Accounts live in PostgreSQL. The app's own data
 
 - Passwords are hashed with **Argon2id**; sessions are random tokens in an **HttpOnly, Secure, SameSite=Lax** cookie, stored only as hashes.
 - Every input is checked with **Zod**, and every query uses **parameters**.
+- **Forgot password?** emails a one-time link that works for 30 minutes (stored only as a hash); resetting logs out every other device.
 - Logins are **rate limited** (5 wrong passwords per account and IP, 20 per IP, per 15 minutes; 5 sign-ups per IP per hour).
 - Secrets come from **environment variables** (see `.env.example`), never from the code.
 
@@ -58,7 +59,8 @@ npm run dev:server
 ## Deploying to Vercel
 
 1. In your Vercel project, open **Storage** and add a **Neon** (Postgres) database. Vercel sets `DATABASE_URL` for you.
-2. Deploy. The tables are created on the first request.
+2. For "Forgot password?" emails, add `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` and `SMTP_PASS` under **Settings → Environment Variables** (see `.env.example`; a Gmail app password works).
+3. Deploy. The tables are created on the first request.
 
 ## Scripts
 

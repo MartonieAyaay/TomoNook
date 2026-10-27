@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { SESSION_DAYS, login, logout, me, signup, type Result } from "./auth";
+import { SESSION_DAYS, forgotPassword, login, logout, me, resetPassword, signup, type Result } from "./auth";
 import { database } from "./db";
 
 /*
@@ -80,7 +80,7 @@ const fail = (status: number, error: string): Result => ({ status, body: { error
 export async function handleAuth(action: string, req: Req, res: ServerResponse) {
   try {
     const method = action === "me" ? "GET" : "POST";
-    if (!["me", "login", "signup", "logout"].includes(action)) return send(res, fail(404, "Not found."));
+    if (!["me", "login", "signup", "logout", "forgot", "reset"].includes(action)) return send(res, fail(404, "Not found."));
     if (req.method !== method) {
       res.setHeader("Allow", method);
       return send(res, fail(405, "Method not allowed."));
@@ -100,6 +100,8 @@ export async function handleAuth(action: string, req: Req, res: ServerResponse) 
     if (action === "me") return send(res, await me(db, token));
     if (action === "logout") return send(res, await logout(db, token));
     if (action === "login") return send(res, await login(db, clientIp(req), body));
+    if (action === "forgot") return send(res, await forgotPassword(db, clientIp(req), body));
+    if (action === "reset") return send(res, await resetPassword(db, clientIp(req), body));
     return send(res, await signup(db, clientIp(req), body));
   } catch (e) {
     // Details stay in the server log; the browser gets a plain message.

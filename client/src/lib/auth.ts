@@ -54,3 +54,10 @@ export const signUp = (form: {
 }) => call<{ user: Account }>('signup', form).then((d) => d.user)
 
 export const logOut = () => call('logout', {})
+
+/** Asks for a reset link by email. Resolves with the message to show (the same whether or not the email has an account). */
+export const requestReset = (email: string) => call<{ message: string }>('forgot', { email }).then((d) => d.message)
+
+/** Sets a new password from an emailed link; signs in on success. */
+export const resetPassword = (token: string, password: string, retypePassword: string) =>
+  call<{ user: Account }>('reset', { token, password, retypePassword }).then((d) => d.user)
