@@ -32,8 +32,22 @@ const SOUNDS = {
   Doesn't: an angry tomato charges up, launches at the screen and splats
   (or, in gentle mode, just pouts and fades away).
 */
-export default function TomatoReaction({ likes, onDone }: { likes: boolean; onDone: () => void }) {
+export default function TomatoReaction({
+  likes,
+  caption = 'A fellow tomato lover!',
+  onDone,
+}: {
+  likes: boolean
+  /** The happy tomato's words (also used when all of a day's tasks are done). */
+  caption?: string
+  onDone: () => void
+}) {
   const done = useRef(onDone)
+  // Shown in the browser's top layer, so it's seen even over an open dialog.
+  const layer = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    layer.current?.showPopover?.()
+  }, [])
   useEffect(() => {
     done.current = onDone
   })
@@ -62,7 +76,7 @@ export default function TomatoReaction({ likes, onDone }: { likes: boolean; onDo
 
   if (kind === 'gentle') {
     return (
-      <div className="tomato-reaction is-gentle">
+      <div ref={layer} popover="manual" className="tomato-reaction is-gentle">
         <img className="gentle-tomato" src={angryTomato} alt="" />
         <p className="reaction-caption" role="status">
           Aw... more tomatoes for us, then.
@@ -73,7 +87,7 @@ export default function TomatoReaction({ likes, onDone }: { likes: boolean; onDo
 
   if (likes) {
     return (
-      <div className="tomato-reaction is-yay">
+      <div ref={layer} popover="manual" className="tomato-reaction is-yay">
         <div className="yay-tomato" aria-hidden>
           <img src={happyTomato} alt="" />
           {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -81,7 +95,7 @@ export default function TomatoReaction({ likes, onDone }: { likes: boolean; onDo
           ))}
         </div>
         <p className="reaction-caption" role="status">
-          A fellow tomato lover!
+          {caption}
         </p>
       </div>
     )
@@ -89,7 +103,7 @@ export default function TomatoReaction({ likes, onDone }: { likes: boolean; onDo
 
   return (
     // Clicking clears the mess early.
-    <div className="tomato-reaction is-nay" onClick={() => done.current()}>
+    <div ref={layer} popover="manual" className="tomato-reaction is-nay" onClick={() => done.current()}>
       <img className="nay-tomato" src={angryTomato} alt="" />
       <div className="nay-mess">
         <img className="nay-splat nay-splat-main" src={splatter} alt="" />
