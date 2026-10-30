@@ -69,7 +69,7 @@ export default function ProfileHome() {
             <Avatar avatar={avatar} className="profile-home-avatar" blinking sparkle={eating !== null} />
             {eating && (
               <span key={eating.key} className="profile-food" aria-hidden>
-                {eating.food ? <img src={eating.food.image} alt="" /> : <Cookie />}
+                <img src={eating.food?.image ?? tomato} alt="" />
               </span>
             )}
           </div>
@@ -130,6 +130,7 @@ export default function ProfileHome() {
       {/* The food choices take the About me card's place until Feed or × is pressed again. */}
       {feeding && (
         <FeedPanel
+          name={name}
           onFeed={feed}
           onClose={() => {
             setFeeding(false)
@@ -182,7 +183,10 @@ function ThoughtBubble() {
   )
 }
 
-function FeedPanel({ onFeed, onClose }: { onFeed: (food: Food | null) => void; onClose: () => void }) {
+/** The food every tomato has: a plain tomato. */
+const DEFAULT_FOOD = 'Yummy Food'
+
+function FeedPanel({ name, onFeed, onClose }: { name: string; onFeed: (food: Food | null) => void; onClose: () => void }) {
   const foods = useFoodStore((s) => s.foods)
   const deleteFood = useFoodStore((s) => s.deleteFood)
   const [adding, setAdding] = useState(false)
@@ -191,7 +195,7 @@ function FeedPanel({ onFeed, onClose }: { onFeed: (food: Food | null) => void; o
     <section id="feed-panel" className="profile-info feed-panel" aria-labelledby="feed-title">
       <div className="feed-header">
         <h2 id="feed-title" className="profile-info-title">
-          Feed your tomato
+          Feed {name || 'your tomato'}
         </h2>
         <button type="button" className="feed-close" onClick={onClose} aria-label="Close" title="Close">
           ×
@@ -201,9 +205,9 @@ function FeedPanel({ onFeed, onClose }: { onFeed: (food: Food | null) => void; o
         <li>
           <button type="button" className="feed-food" onClick={() => onFeed(null)}>
             <span className="feed-food-art">
-              <Cookie />
+              <img src={tomato} alt="" />
             </span>
-            <span className="feed-food-name">Cookie</span>
+            <span className="feed-food-name">{DEFAULT_FOOD}</span>
           </button>
         </li>
         {foods.map((f) => (
@@ -301,22 +305,5 @@ function AddFood({ onDone }: { onDone: () => void }) {
         </p>
       )}
     </form>
-  )
-}
-
-/** The default food. */
-function Cookie() {
-  return (
-    <svg className="cookie" viewBox="0 0 64 64" aria-hidden>
-      <circle cx="32" cy="32" r="27" fill="#d9a05b" stroke="#8a5a2b" strokeWidth="3" />
-      <path d="M14 26a20 20 0 0 1 14-14" fill="none" stroke="#f0c48a" strokeWidth="3" strokeLinecap="round" />
-      <g fill="#5a3825">
-        <circle cx="24" cy="24" r="4" />
-        <circle cx="40" cy="22" r="3.5" />
-        <circle cx="36" cy="38" r="4.5" />
-        <circle cx="22" cy="40" r="3" />
-        <circle cx="45" cy="34" r="2.5" />
-      </g>
-    </svg>
   )
 }

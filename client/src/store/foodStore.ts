@@ -12,7 +12,7 @@ export interface Food {
 }
 
 interface FoodState {
-  /** The user's own foods. The cookie is always there and isn't stored. */
+  /** The user's own foods. The default tomato is always there and isn't stored. */
   foods: Food[]
   addFood: (name: string, image: string) => void
   deleteFood: (id: string) => void

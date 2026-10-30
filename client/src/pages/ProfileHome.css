@@ -259,8 +259,7 @@
   pointer-events: none;
 }
 
-.profile-food img,
-.profile-food .cookie {
+.profile-food img {
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -479,8 +478,7 @@
   height: 7rem;
 }
 
-.feed-food-art img,
-.feed-food-art .cookie {
+.feed-food-art img {
   width: 100%;
   height: 100%;
   object-fit: contain;
