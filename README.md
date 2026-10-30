@@ -12,7 +12,7 @@ A cozy, tomato-themed productivity app. Plan your day, track your mood, focus wi
 - **Profile** – an About me card, a Daily Quote, and a Feed button to give your tomato a cookie or foods you add with your own pictures.
 - **Gossip tomatoes** – two tomatoes you name during setup. They move to a different tab every 4 hours and chat about you, in gibberish voices.
 - **Weather** – today's weather for the city you pick (°F, °C or K), from [Open-Meteo](https://open-meteo.com/). No account or API key needed.
-- **Accounts** – sign up (confirming your email), log in, and everything you make is saved to your account, so it's there on any device. Change your password, log out other devices, or delete your account in Settings.
+- **Accounts** – sign up (confirming your email), log in with your username or email, and everything you make is saved to your account, so it's there on any device. Change your password, log out other devices, or delete your account in Settings.
 - **Terms and Privacy Policy** – agreed to at sign-up (13 or older), and readable any time from Settings.
 - **Settings** – sound and volume, gossip tomato and avatar options, a gentle mode with no splats, reduced motion, text size, timer chime style, and backup / restore / reset of your data.
 

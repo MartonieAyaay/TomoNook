@@ -237,8 +237,16 @@ async function checkPassword(db: Db, ip: string, input: unknown): Promise<{ user
   if (!parsed.success) {
     return { result: { status: 400, body: { error: "Please check the form.", fields: fieldErrors(parsed.error) } } };
   }
-  const { username, password } = parsed.data;
-  const accountKey = `login:${username.toLowerCase()}:${ip}`;
+  // The username or the email: only emails have an @ (usernames are letters, numbers and _).
+  const { username: login, password } = parsed.data;
+  const key = login.toLowerCase();
+  const { rows } = await db.query<CheckedUser>(
+    `SELECT id, username, email, password_hash, email_verified_at FROM users WHERE ${key.includes("@") ? "email" : "username_key"} = $1`,
+    [key],
+  );
+  const user = rows[0];
+  // Counted per account, so switching between its username and email doesn't give more guesses.
+  const accountKey = `login:${user?.id ?? key}:${ip}`;
 
   const { loginPerAccount: perAccount, loginPerIp: perIp } = LIMITS;
   if (
@@ -248,17 +256,12 @@ async function checkPassword(db: Db, ip: string, input: unknown): Promise<{ user
     return { result: tooMany(perAccount.minutes) };
   }
 
-  const { rows } = await db.query<CheckedUser>(
-    "SELECT id, username, email, password_hash, email_verified_at FROM users WHERE username_key = $1",
-    [username.toLowerCase()],
-  );
-  const user = rows[0];
   const ok = await verify(user?.password_hash ?? (await getDummyHash()), password);
   if (!user || !ok) {
     await recordAttempt(db, accountKey);
     await recordAttempt(db, `login:${ip}`);
-    // The same message either way, so it doesn't reveal which usernames exist.
-    return { result: { status: 401, body: { error: "Wrong username or password." } } };
+    // The same message either way, so it doesn't reveal which usernames or emails exist.
+    return { result: { status: 401, body: { error: "Wrong username, email or password." } } };
   }
   await db.query("DELETE FROM auth_attempts WHERE key = $1", [accountKey]);
   return { user };
@@ -393,7 +396,7 @@ export async function deleteAccount(db: Db, token: string | undefined, input: un
 
   await db.query("DELETE FROM users WHERE id = $1", [user.id]);
   await db.query("DELETE FROM auth_attempts WHERE key LIKE $1 OR key = $2 OR key = $3", [
-    `login:${user.username.toLowerCase()}:%`,
+    `login:${user.id}:%`,
     `confirm:${user.id}`,
     `resend:${user.id}`,
   ]);
@@ -560,6 +563,6 @@ export async function resetPassword(db: Db, ip: string, input: unknown): Promise
   // The link is used up, and every device that was logged in is logged out.
   await db.query("DELETE FROM password_resets WHERE user_id = $1", [user.id]);
   await db.query("DELETE FROM sessions WHERE user_id = $1", [user.id]);
-  await db.query("DELETE FROM auth_attempts WHERE key LIKE $1", [`login:${user.username.toLowerCase()}:%`]);
+  await db.query("DELETE FROM auth_attempts WHERE key LIKE $1", [`login:${user.id}:%`]);
   return { status: 200, body: { user }, session: await startSession(db, user.id) };
 }
