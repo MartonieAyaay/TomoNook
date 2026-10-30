@@ -78,6 +78,24 @@ export const resetSchema = z
     when: ({ value }) => bothStrings(value, "password", "retypePassword"),
   });
 
+/** Changing the password in Settings: the current one, then the new one twice. */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Enter your current password.").max(PASSWORD_MAX),
+    password,
+    retypePassword: z.string().max(PASSWORD_MAX),
+  })
+  .refine((d) => d.password === d.retypePassword, {
+    path: ["retypePassword"],
+    message: "The passwords don’t match.",
+    when: ({ value }) => bothStrings(value, "password", "retypePassword"),
+  });
+
+/** Deleting the account asks for the password once more. */
+export const deleteAccountSchema = z.object({
+  currentPassword: z.string().min(1, "Enter your password.").max(PASSWORD_MAX),
+});
+
 /** A "confirm your email" link. */
 export const verifySchema = z.object({ token: z.string().min(20).max(100) });
 

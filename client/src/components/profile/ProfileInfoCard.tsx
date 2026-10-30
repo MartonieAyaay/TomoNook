@@ -11,6 +11,7 @@ import {
   type Pronoun,
 } from '../../store/profileStore.ts'
 import './ProfileInfoCard.css'
+import { signOut } from '../../lib/signOut.ts'
 
 /** Name, age, gender, pronouns, and the important one: do they like tomatoes? */
 export default function ProfileInfoCard({
@@ -34,7 +35,15 @@ export default function ProfileInfoCard({
       <h2 id="profile-info-title" className="profile-info-title">
         {settingUp ? 'Welcome to TomoNook!' : 'About me'}
       </h2>
-      {settingUp && !complete && <p className="info-welcome">Tell us about yourself to get started.</p>}
+      {settingUp && !complete && (
+        <p className="info-welcome">
+          Tell us about yourself to get started.{' '}
+          {/* Settings can't be opened yet, so logging out is here (a shared computer, the wrong account). */}
+          <button type="button" className="info-logout" onClick={() => void signOut().catch(() => signOut(true)).catch(() => {})}>
+            Not you? Log out
+          </button>
+        </p>
+      )}
       {editing || !complete ? (
         <InfoForm
           canCancel={complete}

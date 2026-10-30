@@ -1,0 +1,47 @@
+/* Password boxes inside the Change password and Delete account dialogs. */
+
+.account-field {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0 0 1.8rem;
+}
+
+.account-field label {
+  font-family: var(--font-heading);
+  font-size: max(2.4rem, 15px);
+  color: var(--forest);
+}
+
+.account-field input {
+  width: 100%;
+  min-height: 44px;
+  height: 6rem;
+  padding: 0.4rem 1.6rem 0;
+  border: 0.25rem solid var(--orange);
+  border-radius: 1.4rem;
+  background: #fefdf8;
+  font-family: Khula, system-ui, sans-serif;
+  font-size: max(2.4rem, 16px);
+  color: var(--brown);
+}
+
+.account-field input:focus-visible {
+  outline: 3px solid var(--forest);
+  outline-offset: 2px;
+}
+
+.account-field input[aria-invalid='true'] {
+  border-color: var(--tomato);
+}
+
+.account-field-error,
+.confirm-body .account-form-error {
+  font-family: Khula, system-ui, sans-serif;
+  font-size: max(2.1rem, 14px);
+  line-height: 1.3;
+  color: var(--tomato);
+}
+
+.confirm-body .account-form-error {
+  margin: 0 0 1.8rem;
+}

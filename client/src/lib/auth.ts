@@ -76,3 +76,13 @@ export const requestReset = (email: string) => call<{ message: string }>('forgot
 /** Sets a new password from an emailed link; signs in on success. */
 export const resetPassword = (token: string, password: string, retypePassword: string) =>
   call<{ user: Account }>('reset', { token, password, retypePassword }).then((d) => d.user)
+
+/** Changes the password (Settings). Other devices are logged out. Resolves with the message to show. */
+export const changePassword = (form: { currentPassword: string; password: string; retypePassword: string }) =>
+  call<{ message: string }>('password', form).then((d) => d.message)
+
+/** Logs out every other device. Resolves with the message to show. */
+export const logOutOthers = () => call<{ message: string }>('logout-others', {}).then((d) => d.message)
+
+/** Deletes the account and everything in it. */
+export const deleteAccount = (currentPassword: string) => call('delete', { currentPassword })
