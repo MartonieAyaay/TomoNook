@@ -6,8 +6,8 @@ import { z } from "zod";
   strips them), and every string has a maximum length.
 */
 
-/** Bump when the terms change, so we know which version each user agreed to. */
-export const TERMS_VERSION = "2026-10-27";
+/** Bump when the Terms or the Privacy Policy change, so we know which version each user agreed to. */
+export const TERMS_VERSION = "2026-10-30";
 
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 20;
@@ -38,7 +38,8 @@ export const signupSchema = z
     username,
     password,
     retypePassword: z.string().max(PASSWORD_MAX),
-    acceptTerms: z.literal(true, "Please agree to the terms and conditions."),
+    acceptTerms: z.literal(true, "Please agree to the terms and conditions and privacy policy."),
+    ageConfirmed: z.literal(true, "You need to be 13 or older to use TomoNook."),
   })
   // `when`: still checked while other fields have errors, so every problem shows at once.
   .refine((d) => d.password === d.retypePassword, {
