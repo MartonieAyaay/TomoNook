@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { hash, verify } from "@node-rs/argon2";
 import type { Db } from "./db";
+import { BREACHED_MESSAGE, isBreached } from "./breached";
 import { canSendEmail, sendEmail, type Email } from "./mail";
 import {
   TERMS_VERSION,
@@ -21,6 +22,7 @@ import {
   - Passwords: Argon2id (OWASP settings: 19 MiB, 2 passes).
   - Sessions: a random 256-bit token in an HttpOnly cookie; the database
     keeps only its SHA-256 hash.
+  - Leaked passwords: new passwords found in data breaches are refused (breached.ts).
   - Brute force: failed logins are counted per username+IP and per IP over
     15 minutes; sign-ups per IP over an hour.
   - Emails: a new account has to open the link sent to its email before it
@@ -93,6 +95,8 @@ async function recordAttempt(db: Db, key: string) {
   await db.query("DELETE FROM auth_attempts WHERE at < now() - interval '1 day'");
 }
 
+const breached: Result = { status: 400, body: { error: "Please check the form.", fields: { password: BREACHED_MESSAGE } } };
+
 const tooMany = (minutes: number): Result => ({
   status: 429,
   body: { error: `Too many tries. Please wait ${minutes} minutes and try again.` },
@@ -134,6 +138,8 @@ export async function signup(db: Db, ip: string, input: unknown): Promise<Result
   if (!parsed.success) return { status: 400, body: { error: "Please check the form.", fields: fieldErrors(parsed.error) } };
   const { email, username, password } = parsed.data;
   if (!canSendEmail()) return { status: 503, body: { error: "Signing up isn’t available right now. Please try again later." } };
+  // Before looking up the email, so this answer is the same whether or not it has an account.
+  if (await isBreached(password)) return breached;
   const perEmail = LIMITS.signupPerEmail;
   if ((await attempts(db, `signup:${email}`, perEmail.minutes)) >= perEmail.max) return tooMany(perEmail.minutes);
 
@@ -331,6 +337,7 @@ export async function changePassword(db: Db, token: string | undefined, input: u
   if (password.toLowerCase() === user.username.toLowerCase()) {
     return { status: 400, body: { error: "Please check the form.", fields: { password: "Your password can’t be your username." } } };
   }
+  if (await isBreached(password)) return breached;
   const wrong = await confirmPassword(db, user, currentPassword);
   if (wrong) return wrong;
 
@@ -522,6 +529,7 @@ export async function resetPassword(db: Db, ip: string, input: unknown): Promise
   if (password.toLowerCase() === user.username.toLowerCase()) {
     return { status: 400, body: { error: "Please check the form.", fields: { password: "Your password can’t be your username." } } };
   }
+  if (await isBreached(password)) return breached;
 
   // The link came to their inbox, so it confirms the email too.
   await db.query("UPDATE users SET password_hash = $1, email_verified_at = COALESCE(email_verified_at, now()) WHERE id = $2", [
