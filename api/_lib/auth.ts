@@ -2,7 +2,17 @@ import { createHash, randomBytes } from "node:crypto";
 import { hash, verify } from "@node-rs/argon2";
 import type { Db } from "./db";
 import { canSendEmail, sendEmail, type Email } from "./mail";
-import { TERMS_VERSION, fieldErrors, forgotSchema, loginSchema, resetSchema, signupSchema, verifySchema } from "./validation";
+import {
+  TERMS_VERSION,
+  changePasswordSchema,
+  deleteAccountSchema,
+  fieldErrors,
+  forgotSchema,
+  loginSchema,
+  resetSchema,
+  signupSchema,
+  verifySchema,
+} from "./validation";
 
 /*
   Accounts and sessions. Each function takes the request's parts and
@@ -293,6 +303,72 @@ async function sendQuietly(email: Email) {
 
 export async function logout(db: Db, token: string | undefined): Promise<Result> {
   if (token && token.length <= 100) await db.query("DELETE FROM sessions WHERE token_hash = $1", [tokenHash(token)]);
+  return { status: 200, body: { ok: true }, session: "" };
+}
+
+// ---------- Account settings (signed in) ----------
+
+const signedOut: Result = { status: 401, body: { error: "Please log in again." } };
+
+/** Checks the signed-in user's password, limiting wrong guesses like logins do. */
+async function confirmPassword(db: Db, user: User, password: string): Promise<Result | null> {
+  const limit = LIMITS.loginPerAccount;
+  const key = `confirm:${user.id}`;
+  if ((await attempts(db, key, limit.minutes)) >= limit.max) return tooMany(limit.minutes);
+  const { rows } = await db.query<{ password_hash: string }>("SELECT password_hash FROM users WHERE id = $1", [user.id]);
+  if (rows[0] && (await verify(rows[0].password_hash, password))) return null;
+  await recordAttempt(db, key);
+  return { status: 400, body: { error: "Please check the form.", fields: { currentPassword: "That isn’t your password." } } };
+}
+
+/** A new password. Every other device is logged out; this one stays. */
+export async function changePassword(db: Db, token: string | undefined, input: unknown): Promise<Result> {
+  const user = await currentUser(db, token);
+  if (!user) return signedOut;
+  const parsed = changePasswordSchema.safeParse(input);
+  if (!parsed.success) return { status: 400, body: { error: "Please check the form.", fields: fieldErrors(parsed.error) } };
+  const { currentPassword, password } = parsed.data;
+  if (password.toLowerCase() === user.username.toLowerCase()) {
+    return { status: 400, body: { error: "Please check the form.", fields: { password: "Your password can’t be your username." } } };
+  }
+  const wrong = await confirmPassword(db, user, currentPassword);
+  if (wrong) return wrong;
+
+  await db.query("UPDATE users SET password_hash = $1 WHERE id = $2", [await hash(password, ARGON2), user.id]);
+  await db.query("DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2", [user.id, tokenHash(token!)]);
+  return { status: 200, body: { message: "Your password is changed. Other devices were logged out." } };
+}
+
+/** "Log out other devices": ends every session but this one. */
+export async function logoutOthers(db: Db, token: string | undefined): Promise<Result> {
+  const user = await currentUser(db, token);
+  if (!user) return signedOut;
+  const { rows } = await db.query<{ token_hash: string }>(
+    "DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2 RETURNING token_hash",
+    [user.id, tokenHash(token!)],
+  );
+  const n = rows.length;
+  return {
+    status: 200,
+    body: { message: n === 0 ? "No other devices were logged in." : `Logged out ${n} other ${n === 1 ? "device" : "devices"}.` },
+  };
+}
+
+/** Deletes the account and everything in it (sessions, links and app data go with it). Needs the password. */
+export async function deleteAccount(db: Db, token: string | undefined, input: unknown): Promise<Result> {
+  const user = await currentUser(db, token);
+  if (!user) return signedOut;
+  const parsed = deleteAccountSchema.safeParse(input);
+  if (!parsed.success) return { status: 400, body: { error: "Please check the form.", fields: fieldErrors(parsed.error) } };
+  const wrong = await confirmPassword(db, user, parsed.data.currentPassword);
+  if (wrong) return wrong;
+
+  await db.query("DELETE FROM users WHERE id = $1", [user.id]);
+  await db.query("DELETE FROM auth_attempts WHERE key LIKE $1 OR key = $2 OR key = $3", [
+    `login:${user.username.toLowerCase()}:%`,
+    `confirm:${user.id}`,
+    `resend:${user.id}`,
+  ]);
   return { status: 200, body: { ok: true }, session: "" };
 }
 

@@ -2,10 +2,13 @@ import { PGlite } from "@electric-sql/pglite";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   VERIFY_HOURS,
+  changePassword,
   currentUser,
+  deleteAccount,
   forgotPassword,
   login,
   logout,
+  logoutOthers,
   me,
   resendVerification,
   resetPassword,
@@ -250,5 +253,52 @@ describe("forgot / reset password", () => {
     const [first, second] = sent.map(resetToken);
     expect((await resetPassword(db, "1.1.1.1", { token: first, password: "brand new pass", retypePassword: "brand new pass" })).status).toBe(400);
     expect((await resetPassword(db, "1.1.1.1", { token: second, password: "brand new pass", retypePassword: "brand new pass" })).status).toBe(200);
+  });
+});
+
+describe("account settings", () => {
+  let session: string;
+  beforeEach(async () => {
+    session = (await signedUp("9.9.9.9")).session!;
+  });
+  const loginAs = (password: string) => login(db, "1.1.1.1", { username: "tomato_fan", password });
+
+  it("changes the password with the current one, logging out other devices only", async () => {
+    const other = (await loginAs(form.password)).session!;
+    const wrong = await changePassword(db, session, { currentPassword: "nope nope", password: "fresh password", retypePassword: "fresh password" });
+    expect(wrong.status).toBe(400);
+    expect(wrong.body.fields).toHaveProperty("currentPassword");
+
+    const ok = await changePassword(db, session, { currentPassword: form.password, password: "fresh password", retypePassword: "fresh password" });
+    expect(ok.status).toBe(200);
+    expect(await currentUser(db, session)).not.toBeNull();
+    expect(await currentUser(db, other)).toBeNull();
+    expect((await loginAs("fresh password")).status).toBe(200);
+    expect((await changePassword(db, "made-up", { currentPassword: "x", password: "fresh password", retypePassword: "fresh password" })).status).toBe(401);
+  });
+
+  it("limits guesses at the current password", async () => {
+    for (let i = 0; i < 5; i++) await deleteAccount(db, session, { currentPassword: "guess " + i });
+    expect((await deleteAccount(db, session, { currentPassword: form.password })).status).toBe(429);
+  });
+
+  it("logs out other devices", async () => {
+    const other = (await loginAs(form.password)).session!;
+    const res = await logoutOthers(db, session);
+    expect(res.body.message).toContain("1 other device");
+    expect(await currentUser(db, other)).toBeNull();
+    expect(await currentUser(db, session)).not.toBeNull();
+  });
+
+  it("deletes the account and everything in it, with the password", async () => {
+    await db.query("INSERT INTO user_data (user_id, key, value) SELECT id, 'todos', '[]' FROM users");
+    expect((await deleteAccount(db, session, { currentPassword: "nope nope" })).status).toBe(400);
+    const res = await deleteAccount(db, session, { currentPassword: form.password });
+    expect(res.status).toBe(200);
+    expect(res.session).toBe("");
+    for (const table of ["users", "sessions", "user_data"]) {
+      expect((await db.query(`SELECT 1 FROM ${table}`)).rows).toHaveLength(0);
+    }
+    expect((await loginAs(form.password)).status).toBe(401);
   });
 });

@@ -1,10 +1,13 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import {
   SESSION_DAYS,
+  changePassword,
   currentUser,
+  deleteAccount,
   forgotPassword,
   login,
   logout,
+  logoutOthers,
   me,
   resendVerification,
   resetPassword,
@@ -99,7 +102,7 @@ function send(res: ServerResponse, result: Result) {
 
 const fail = (status: number, error: string): Result => ({ status, body: { error } });
 
-const ACTIONS = ["me", "login", "signup", "logout", "forgot", "reset", "verify", "resend"];
+const ACTIONS = ["me", "login", "signup", "logout", "forgot", "reset", "verify", "resend", "password", "logout-others", "delete"];
 
 export async function handleAuth(action: string, req: Req, res: ServerResponse) {
   try {
@@ -124,6 +127,9 @@ export async function handleAuth(action: string, req: Req, res: ServerResponse) 
     if (action === "reset") return send(res, await resetPassword(db, clientIp(req), body));
     if (action === "verify") return send(res, await verifyEmail(db, clientIp(req), body));
     if (action === "resend") return send(res, await resendVerification(db, clientIp(req), body));
+    if (action === "password") return send(res, await changePassword(db, token, body));
+    if (action === "logout-others") return send(res, await logoutOthers(db, token));
+    if (action === "delete") return send(res, await deleteAccount(db, token, body));
     return send(res, await signup(db, clientIp(req), body));
   } catch (e) {
     serverError(res, e);

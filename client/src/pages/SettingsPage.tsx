@@ -1,10 +1,12 @@
 import { useState, type ReactNode } from 'react'
 import { today } from '@tomonook/shared'
 import ConfirmDialog from '../components/ConfirmDialog.tsx'
-import { logOut } from '../lib/auth.ts'
+import { logOutOthers, type AuthError } from '../lib/auth.ts'
+import { signOut, UnsavedChangesError } from '../lib/signOut.ts'
+import { ChangePasswordDialog, DeleteAccountDialog } from '../components/settings/AccountDialogs.tsx'
 import { useAccountStore } from '../store/accountStore.ts'
 import { exportBackup, readBackup, resetEverything, restoreBackup } from '../lib/backup.ts'
-import { clearLocalData, flush } from '../lib/sync.ts'
+import { clearLocalData } from '../lib/sync.ts'
 import { chime, unlockChime } from '../lib/chime.ts'
 import { CUSTOM_CHIME_MAX_SECONDS, readCustomChime, useCustomChimeStore } from '../lib/customChime.ts'
 import { cityLabel, fetchWeather, type City } from '../lib/weather.ts'
@@ -440,28 +442,34 @@ function AccountSettings() {
   const [note, setNote] = useState('')
   // Changes that couldn't be sent: asked once, then "Log out anyway" goes ahead.
   const [unsaved, setUnsaved] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [devicesNote, setDevicesNote] = useState('')
+  const [passwordNote, setPasswordNote] = useState('')
 
-  const signOut = async () => {
+  const logOutHere = async () => {
     setBusy(true)
     setNote('')
-    if (!unsaved) {
-      try {
-        await flush()
-      } catch {
+    try {
+      await signOut(unsaved)
+    } catch (err) {
+      if (err instanceof UnsavedChangesError) {
         setUnsaved(true)
         setNote('Your latest changes haven’t reached your account yet. Check your internet and try again, or log out anyway and lose them.')
-        setBusy(false)
-        return
+      } else {
+        setNote('Couldn’t log out right now. Check your internet and try again.')
       }
+      setBusy(false)
     }
+  }
+
+  const logOutOtherDevices = async () => {
+    setBusy(true)
     try {
-      await logOut()
-      // Nothing of theirs stays in this browser for the next person.
-      clearLocalData()
-      // Start fresh: the loading screen and the login window come back.
-      window.location.assign('/')
-    } catch {
-      setNote('Couldn’t log out right now. Check your internet and try again.')
+      setDevicesNote(await logOutOthers())
+    } catch (err) {
+      setDevicesNote((err as AuthError).error)
+    } finally {
       setBusy(false)
     }
   }
@@ -469,10 +477,34 @@ function AccountSettings() {
   return (
     <Section title="Account">
       <Row label={account ? `Signed in as ${account.username}` : 'Signed in'} note={note || account?.email}>
-        <button type="button" className="settings-btn is-secondary" onClick={signOut} disabled={busy}>
-          {busy ? 'Logging out...' : unsaved ? 'Log out anyway' : 'Log out'}
+        <button type="button" className="settings-btn is-secondary" onClick={logOutHere} disabled={busy}>
+          {busy ? 'Working...' : unsaved ? 'Log out anyway' : 'Log out'}
         </button>
       </Row>
+      <Row label="Password" note={passwordNote || 'Logs out your other devices too.'}>
+        <button type="button" className="settings-btn is-secondary" onClick={() => setChangingPassword(true)}>
+          Change password
+        </button>
+      </Row>
+      <Row label="Other devices" note={devicesNote || 'Logged in somewhere you shouldn’t be, like a school computer?'}>
+        <button type="button" className="settings-btn is-secondary" onClick={logOutOtherDevices} disabled={busy}>
+          Log them out
+        </button>
+      </Row>
+      <Row label="Delete account" note="Deletes your account and everything in it, for good.">
+        <button type="button" className="settings-btn is-danger" onClick={() => setDeleting(true)}>
+          Delete account
+        </button>
+      </Row>
+      <ChangePasswordDialog open={changingPassword} onClose={() => setChangingPassword(false)} onDone={setPasswordNote} />
+      <DeleteAccountDialog
+        open={deleting}
+        onClose={() => setDeleting(false)}
+        onDeleted={() => {
+          clearLocalData()
+          window.location.assign('/')
+        }}
+      />
     </Section>
   )
 }
