@@ -40,7 +40,7 @@ export default function AuthDialog({
   const ref = useRef<HTMLDialogElement>(null)
   const [mode, setMode] = useState<Mode>(resetToken ? 'reset' : verifyToken ? 'verify' : 'login')
   const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null)
-  // Kept when switching, so a typed username isn't lost.
+  // Kept when switching, so a typed username isn't lost (login also takes an email here).
   const [username, setUsername] = useState('')
 
   useEffect(() => {
@@ -68,7 +68,11 @@ export default function AuthDialog({
           username={username}
           setUsername={setUsername}
           onSignedIn={onSignedIn}
-          onSwitch={() => setMode('signup')}
+          onSwitch={() => {
+            // An email typed to log in isn't a username.
+            if (username.includes('@')) setUsername('')
+            setMode('signup')
+          }}
           onForgot={() => setMode('forgot')}
         />
       ) : (
@@ -142,7 +146,7 @@ function LoginForm({ username, setUsername, onSignedIn, onSwitch, onForgot }: Fo
           {resent}
         </p>
       )}
-      <Field label="Username" error={error?.fields.username}>
+      <Field label="Username or email" error={error?.fields.username}>
         {(id, describedBy) => (
           <input
             id={id}
@@ -152,7 +156,7 @@ function LoginForm({ username, setUsername, onSignedIn, onSwitch, onForgot }: Fo
             autoComplete="username"
             autoCapitalize="none"
             spellCheck={false}
-            maxLength={20}
+            maxLength={254}
             required
             autoFocus
             aria-describedby={describedBy}

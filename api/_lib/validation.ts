@@ -102,7 +102,8 @@ export const verifySchema = z.object({ token: z.string().min(20).max(100) });
 
 /* Login only checks the shape: the real check is the password hash. */
 export const loginSchema = z.object({
-  username: z.string().trim().min(1, "Enter your username.").max(USERNAME_MAX),
+  /** The username or the email. */
+  username: z.string().trim().min(1, "Enter your username or email.").max(254),
   password: z.string().min(1, "Enter your password.").max(PASSWORD_MAX),
 });
 

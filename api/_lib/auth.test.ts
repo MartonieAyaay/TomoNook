@@ -146,6 +146,21 @@ describe("login", () => {
     expect(res.session).toBeTruthy();
   });
 
+  it("logs in with the email instead of the username, any case", async () => {
+    const res = await login(db, "1.1.1.1", { username: "  TOMATO@example.COM ", password: form.password });
+    expect(res.status).toBe(200);
+    expect(res.body.user).toMatchObject({ username: "tomato_fan" });
+    expect((await login(db, "1.1.1.1", { username: "nobody@example.com", password: form.password })).status).toBe(401);
+  });
+
+  it("counts wrong passwords per account, whether by username or email", async () => {
+    for (let i = 0; i < 5; i++) {
+      await login(db, "1.1.1.1", { username: i % 2 ? "tomato_fan" : form.email, password: "wrong pass" });
+    }
+    expect((await login(db, "1.1.1.1", { username: form.email, password: form.password })).status).toBe(429);
+    expect((await login(db, "1.1.1.1", { username: "tomato_fan", password: form.password })).status).toBe(429);
+  });
+
   it("gives the same answer for a wrong password and an unknown user", async () => {
     const wrong = await login(db, "1.1.1.1", { username: "tomato_fan", password: "nope nope" });
     const unknown = await login(db, "1.1.1.1", { username: "nobody", password: "nope nope" });
