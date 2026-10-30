@@ -1,5 +1,7 @@
-// All reads and writes go through here. Backed by localStorage for now;
-// later these same functions will call the Node API instead.
+import { markChanged } from './sync.ts'
+
+// All reads and writes go through here. The browser keeps a copy in
+// localStorage, and every save is also sent to the account (see sync.ts).
 
 const PREFIX = 'tomonook:'
 
@@ -12,10 +14,14 @@ export function load<T>(key: string, fallback: T): T {
   }
 }
 
-export function save<T>(key: string, value: T): void {
+/** Saves a value. Returns false if the browser had no room for it. */
+export function save<T>(key: string, value: T): boolean {
   try {
     localStorage.setItem(PREFIX + key, JSON.stringify(value))
   } catch {
-    // Storage full or blocked; ignore for now.
+    // Storage full or blocked.
+    return false
   }
+  markChanged(key)
+  return true
 }

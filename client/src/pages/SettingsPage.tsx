@@ -4,6 +4,7 @@ import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import { logOut } from '../lib/auth.ts'
 import { useAccountStore } from '../store/accountStore.ts'
 import { exportBackup, readBackup, resetEverything, restoreBackup } from '../lib/backup.ts'
+import { clearLocalData, flush } from '../lib/sync.ts'
 import { chime, unlockChime } from '../lib/chime.ts'
 import { CUSTOM_CHIME_MAX_SECONDS, readCustomChime, useCustomChimeStore } from '../lib/customChime.ts'
 import { cityLabel, fetchWeather, type City } from '../lib/weather.ts'
@@ -437,12 +438,26 @@ function AccountSettings() {
   const account = useAccountStore((s) => s.account)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
+  // Changes that couldn't be sent: asked once, then "Log out anyway" goes ahead.
+  const [unsaved, setUnsaved] = useState(false)
 
   const signOut = async () => {
     setBusy(true)
     setNote('')
+    if (!unsaved) {
+      try {
+        await flush()
+      } catch {
+        setUnsaved(true)
+        setNote('Your latest changes haven’t reached your account yet. Check your internet and try again, or log out anyway and lose them.')
+        setBusy(false)
+        return
+      }
+    }
     try {
       await logOut()
+      // Nothing of theirs stays in this browser for the next person.
+      clearLocalData()
       // Start fresh: the loading screen and the login window come back.
       window.location.assign('/')
     } catch {
@@ -455,7 +470,7 @@ function AccountSettings() {
     <Section title="Account">
       <Row label={account ? `Signed in as ${account.username}` : 'Signed in'} note={note || account?.email}>
         <button type="button" className="settings-btn is-secondary" onClick={signOut} disabled={busy}>
-          {busy ? 'Logging out...' : 'Log out'}
+          {busy ? 'Logging out...' : unsaved ? 'Log out anyway' : 'Log out'}
         </button>
       </Row>
     </Section>
@@ -466,12 +481,26 @@ function DataSettings() {
   const [importing, setImporting] = useState<Awaited<ReturnType<typeof readBackup>> | null>(null)
   const [resetting, setResetting] = useState(false)
   const [error, setError] = useState('')
+  const [working, setWorking] = useState(false)
+
+  // Restoring and resetting change the account too, so they can fail when offline.
+  const run = async (action: () => Promise<void>, close: () => void) => {
+    setWorking(true)
+    setError('')
+    try {
+      await action()
+    } catch (err) {
+      close()
+      setError((err as Error).message)
+      setWorking(false)
+    }
+  }
 
   return (
     <Section title="Your data">
       <p className="settings-text">
-        Everything is saved only in this browser. Download a backup now and then, so clearing the browser doesn’t lose
-        your diary, moods and tasks.
+        Everything is saved to your account, so it’s there on any device you log in on. You can also download a copy
+        to keep.
       </p>
       <div className="settings-buttons">
         <button type="button" className="settings-btn" onClick={exportBackup}>
@@ -511,7 +540,7 @@ function DataSettings() {
         confirmLabel="Replace with backup"
         danger
         onCancel={() => setImporting(null)}
-        onConfirm={() => importing && restoreBackup(importing)}
+        onConfirm={() => importing && !working && run(() => restoreBackup(importing), () => setImporting(null))}
       >
         Everything in the app now will be replaced by the backup
         {importing ? ` from ${new Date(importing.exportedAt).toLocaleDateString()}` : ''}. This can’t be undone.
@@ -522,7 +551,7 @@ function DataSettings() {
         confirmLabel="Delete everything"
         danger
         onCancel={() => setResetting(false)}
-        onConfirm={resetEverything}
+        onConfirm={() => !working && run(resetEverything, () => setResetting(false))}
       >
         Your profile, diary, moods, tasks, timers and settings will all be deleted, and you’ll start from the
         beginning. This can’t be undone.
