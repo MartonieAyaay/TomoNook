@@ -205,19 +205,17 @@ function SignUpForm({
   const [showPasswords, setShowPasswords] = useState(false)
   const [retypePassword, setRetypePassword] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
-  const [ageConfirmed, setAgeConfirmed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AuthError | null>(null)
   const [sent, setSent] = useState('')
   const termsId = useId()
-  const ageId = useId()
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setBusy(true)
     setError(null)
     try {
-      setSent(await signUp({ email, username, password, retypePassword, acceptTerms, ageConfirmed }))
+      setSent(await signUp({ email, username, password, retypePassword, acceptTerms }))
     } catch (err) {
       setError(err as AuthError)
     } finally {
@@ -338,23 +336,6 @@ function SignUpForm({
       {error?.fields.acceptTerms && (
         <p id={`${termsId}-error`} className="auth-field-error is-centered">
           {error.fields.acceptTerms}
-        </p>
-      )}
-      {/* The Terms: 13 and up; under 18 only with a parent or guardian. */}
-      <div className="auth-terms">
-        <input
-          id={ageId}
-          className="auth-check"
-          type="checkbox"
-          checked={ageConfirmed}
-          onChange={(e) => setAgeConfirmed(e.target.checked)}
-          aria-describedby={error?.fields.ageConfirmed ? `${ageId}-error` : undefined}
-        />
-        <label htmlFor={ageId}>I’m 13 or older (if I’m under 18, a parent or guardian agrees too)</label>
-      </div>
-      {error?.fields.ageConfirmed && (
-        <p id={`${ageId}-error`} className="auth-field-error is-centered">
-          {error.fields.ageConfirmed}
         </p>
       )}
       <button type="submit" className="auth-submit" disabled={busy}>

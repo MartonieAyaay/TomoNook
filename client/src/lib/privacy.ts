@@ -22,7 +22,7 @@ export const PRIVACY: TermsBlock[] = [
     [
       'Your email address and username.',
       'Your password. We never store it as you typed it: only a one-way scrambled form (an Argon2id hash) is kept, so not even we can read it.',
-      'The date you agreed to our Terms and this Privacy Policy, that you confirmed you are at least 13, and when you confirmed your email address.',
+      'The date you agreed to our Terms and this Privacy Policy, and when you confirmed your email address.',
     ],
   ],
   ['h3', 'What you put in TomoNook'],

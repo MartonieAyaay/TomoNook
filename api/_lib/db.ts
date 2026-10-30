@@ -95,7 +95,8 @@ async function createTables(d: Db) {
   // accounts start unconfirmed (null).
   await d.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at timestamptz DEFAULT now()`);
   await d.query(`ALTER TABLE users ALTER COLUMN email_verified_at DROP DEFAULT`);
-  // When they confirmed they're 13 or older (null for accounts made before the question).
+  // When they ticked a separate "13 or older" box. No longer asked (the Terms cover the age),
+  // so null for new accounts; kept for the accounts that did.
   await d.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS age_confirmed_at timestamptz`);
   // "Confirm your email" links: only the token's hash is stored, and each works once.
   await d.query(`

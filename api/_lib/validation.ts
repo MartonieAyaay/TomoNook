@@ -39,7 +39,6 @@ export const signupSchema = z
     password,
     retypePassword: z.string().max(PASSWORD_MAX),
     acceptTerms: z.literal(true, "Please agree to the terms and conditions and privacy policy."),
-    ageConfirmed: z.literal(true, "You need to be 13 or older to use TomoNook."),
   })
   // `when`: still checked while other fields have errors, so every problem shows at once.
   .refine((d) => d.password === d.retypePassword, {

@@ -39,7 +39,6 @@ const form = {
   password: "ripe and juicy",
   retypePassword: "ripe and juicy",
   acceptTerms: true,
-  ageConfirmed: true,
 };
 
 /** The token in an emailed link, e.g. ?verify=... or ?reset=... */
@@ -80,9 +79,9 @@ describe("signup", () => {
   });
 
   it("requires the terms, the age check, matching passwords and a valid email", async () => {
-    const res = await signup(db, "1.1.1.1", { ...form, email: "nope", retypePassword: "x", acceptTerms: false, ageConfirmed: false });
+    const res = await signup(db, "1.1.1.1", { ...form, email: "nope", retypePassword: "x", acceptTerms: false });
     expect(res.status).toBe(400);
-    expect(Object.keys(res.body.fields as object).sort()).toEqual(["acceptTerms", "ageConfirmed", "email", "retypePassword"]);
+    expect(Object.keys(res.body.fields as object).sort()).toEqual(["acceptTerms", "email", "retypePassword"]);
   });
 
   it("rejects a taken username, whatever its case", async () => {

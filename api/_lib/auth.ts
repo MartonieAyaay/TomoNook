@@ -188,8 +188,8 @@ export async function signup(db: Db, ip: string, input: unknown): Promise<Result
   let id: string;
   try {
     const { rows } = await db.query<{ id: string }>(
-      `INSERT INTO users (email, username, username_key, password_hash, terms_version, terms_accepted_at, age_confirmed_at)
-       VALUES ($1, $2, $3, $4, $5, now(), now()) RETURNING id`,
+      `INSERT INTO users (email, username, username_key, password_hash, terms_version, terms_accepted_at)
+       VALUES ($1, $2, $3, $4, $5, now()) RETURNING id`,
       [email, username, username.toLowerCase(), passwordHash, TERMS_VERSION],
     );
     id = rows[0]!.id;
