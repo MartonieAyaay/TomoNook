@@ -207,7 +207,7 @@ function FeedPanel({ name, onFeed, onClose }: { name: string; onFeed: (food: Foo
             <span className="feed-food-art">
               <img src={tomato} alt="" />
             </span>
-            <span className="feed-food-name">{DEFAULT_FOOD}</span>
+            <FoodName name={DEFAULT_FOOD} />
           </button>
         </li>
         {foods.map((f) => (
@@ -216,7 +216,7 @@ function FeedPanel({ name, onFeed, onClose }: { name: string; onFeed: (food: Foo
               <span className="feed-food-art">
                 <img src={f.image} alt="" />
               </span>
-              <span className="feed-food-name">{f.name}</span>
+              <FoodName name={f.name} />
             </button>
             <button
               type="button"
@@ -243,6 +243,11 @@ function FeedPanel({ name, onFeed, onClose }: { name: string; onFeed: (food: Foo
       {adding && <AddFood onDone={() => setAdding(false)} />}
     </section>
   )
+}
+
+/** A food's name: wraps onto more lines, and gets smaller when it's long (up to FOOD_NAME_MAX). */
+function FoodName({ name }: { name: string }) {
+  return <span className={`feed-food-name${name.length > 9 ? ' is-long' : ''}`}>{name}</span>
 }
 
 function AddFood({ onDone }: { onDone: () => void }) {

@@ -449,6 +449,7 @@
   width: 100%;
   padding: 1.2rem 0.8rem 1rem;
   border: 0;
+  height: 100%;
   border-radius: 2rem;
   background: var(--cream-light);
   box-shadow: 0 0.4rem 0.2rem rgb(0 0 0 / 12%);
@@ -492,14 +493,21 @@
   color: var(--orange);
 }
 
+/* Long names wrap instead of being cut off; a word too long for one line breaks. */
 .feed-food-name {
   max-width: 100%;
-  overflow: hidden;
   font-family: var(--font-heading);
   font-size: 2.4rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.1;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  hyphens: auto;
   color: var(--brown);
+}
+
+.feed-food-name.is-long {
+  font-size: 1.9rem;
 }
 
 .feed-delete {
@@ -539,6 +547,7 @@
   min-height: 72px;
   overflow: hidden;
   border: 0.3rem dashed var(--orange);
+  height: 100%;
   border-radius: 2rem;
   background: var(--cream-light);
   font-family: var(--font-heading);
@@ -658,6 +667,10 @@
   .feed-food-art {
     width: 48px;
     height: 48px;
+  }
+
+  .feed-food-name.is-long {
+    font-size: 13px;
   }
 
   .feed-food-name,
