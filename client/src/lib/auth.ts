@@ -59,6 +59,7 @@ export const signUp = (form: {
   password: string
   retypePassword: string
   acceptTerms: boolean
+  ageConfirmed: boolean
 }) => call<{ message: string }>('signup', form).then((d) => d.message)
 
 /** Opened from the "confirm your email" link; signs in on success. */

@@ -4,6 +4,7 @@ import ConfirmDialog from '../components/ConfirmDialog.tsx'
 import { logOutOthers, type AuthError } from '../lib/auth.ts'
 import { signOut, UnsavedChangesError } from '../lib/signOut.ts'
 import { ChangePasswordDialog, DeleteAccountDialog } from '../components/settings/AccountDialogs.tsx'
+import TermsDialog, { type LegalDoc } from '../components/auth/TermsDialog.tsx'
 import { useAccountStore } from '../store/accountStore.ts'
 import { exportBackup, readBackup, resetEverything, restoreBackup } from '../lib/backup.ts'
 import { clearLocalData } from '../lib/sync.ts'
@@ -446,6 +447,7 @@ function AccountSettings() {
   const [deleting, setDeleting] = useState(false)
   const [devicesNote, setDevicesNote] = useState('')
   const [passwordNote, setPasswordNote] = useState('')
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null)
 
   const logOutHere = async () => {
     setBusy(true)
@@ -491,11 +493,22 @@ function AccountSettings() {
           Log them out
         </button>
       </Row>
+      <Row label="Terms and privacy" note="What you agreed to, and what TomoNook does with your data.">
+        <div className="settings-buttons">
+          <button type="button" className="settings-btn is-secondary" onClick={() => setLegalDoc('terms')}>
+            Terms
+          </button>
+          <button type="button" className="settings-btn is-secondary" onClick={() => setLegalDoc('privacy')}>
+            Privacy Policy
+          </button>
+        </div>
+      </Row>
       <Row label="Delete account" note="Deletes your account and everything in it, for good.">
         <button type="button" className="settings-btn is-danger" onClick={() => setDeleting(true)}>
           Delete account
         </button>
       </Row>
+      <TermsDialog doc={legalDoc} onClose={() => setLegalDoc(null)} />
       <ChangePasswordDialog open={changingPassword} onClose={() => setChangingPassword(false)} onDone={setPasswordNote} />
       <DeleteAccountDialog
         open={deleting}

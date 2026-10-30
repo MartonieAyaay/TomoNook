@@ -1,5 +1,5 @@
 // TomoNook Terms and Conditions, from "TomoNook Terms and Conditions.docx".
-// Shown from the sign-up window. Update TERMS_VERSION in api/_lib/validation.ts when this changes.
+// Shown from the sign-up window and Settings. Update TERMS_VERSION in api/_lib/validation.ts when this changes.
 
 export type TermsBlock = ['h2' | 'h3' | 'p', string] | ['ul', string[]]
 

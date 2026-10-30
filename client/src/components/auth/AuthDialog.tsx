@@ -9,7 +9,7 @@ import {
   type Account,
   type AuthError,
 } from '../../lib/auth.ts'
-import TermsDialog from './TermsDialog.tsx'
+import TermsDialog, { type LegalDoc } from './TermsDialog.tsx'
 import './AuthDialog.css'
 
 /*
@@ -39,7 +39,7 @@ export default function AuthDialog({
 }) {
   const ref = useRef<HTMLDialogElement>(null)
   const [mode, setMode] = useState<Mode>(resetToken ? 'reset' : verifyToken ? 'verify' : 'login')
-  const [termsOpen, setTermsOpen] = useState(false)
+  const [legalDoc, setLegalDoc] = useState<LegalDoc | null>(null)
   // Kept when switching, so a typed username isn't lost.
   const [username, setUsername] = useState('')
 
@@ -77,10 +77,10 @@ export default function AuthDialog({
           username={username}
           setUsername={setUsername}
           onSwitch={() => setMode('login')}
-          onShowTerms={() => setTermsOpen(true)}
+          onShowDoc={setLegalDoc}
         />
       )}
-      <TermsDialog open={termsOpen} onClose={() => setTermsOpen(false)} />
+      <TermsDialog doc={legalDoc} onClose={() => setLegalDoc(null)} />
     </dialog>
   )
 }
@@ -191,23 +191,25 @@ function SignUpForm({
   username,
   setUsername,
   onSwitch,
-  onShowTerms,
-}: Omit<FormProps, 'onSignedIn'> & { onShowTerms: () => void }) {
+  onShowDoc,
+}: Omit<FormProps, 'onSignedIn'> & { onShowDoc: (doc: LegalDoc) => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [retypePassword, setRetypePassword] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
+  const [ageConfirmed, setAgeConfirmed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AuthError | null>(null)
   const [sent, setSent] = useState('')
   const termsId = useId()
+  const ageId = useId()
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setBusy(true)
     setError(null)
     try {
-      setSent(await signUp({ email, username, password, retypePassword, acceptTerms }))
+      setSent(await signUp({ email, username, password, retypePassword, acceptTerms, ageConfirmed }))
     } catch (err) {
       setError(err as AuthError)
     } finally {
@@ -314,14 +316,35 @@ function SignUpForm({
         />
         <label htmlFor={termsId}>
           I have read and agree to the{' '}
-          <button type="button" className="auth-terms-link" onClick={onShowTerms}>
+          <button type="button" className="auth-terms-link" onClick={() => onShowDoc('terms')}>
             terms and conditions
+          </button>{' '}
+          and{' '}
+          <button type="button" className="auth-terms-link" onClick={() => onShowDoc('privacy')}>
+            privacy policy
           </button>
         </label>
       </div>
       {error?.fields.acceptTerms && (
         <p id={`${termsId}-error`} className="auth-field-error is-centered">
           {error.fields.acceptTerms}
+        </p>
+      )}
+      {/* The Terms: 13 and up; under 18 only with a parent or guardian. */}
+      <div className="auth-terms">
+        <input
+          id={ageId}
+          className="auth-check"
+          type="checkbox"
+          checked={ageConfirmed}
+          onChange={(e) => setAgeConfirmed(e.target.checked)}
+          aria-describedby={error?.fields.ageConfirmed ? `${ageId}-error` : undefined}
+        />
+        <label htmlFor={ageId}>I’m 13 or older (if I’m under 18, a parent or guardian agrees too)</label>
+      </div>
+      {error?.fields.ageConfirmed && (
+        <p id={`${ageId}-error`} className="auth-field-error is-centered">
+          {error.fields.ageConfirmed}
         </p>
       )}
       <button type="submit" className="auth-submit" disabled={busy}>
