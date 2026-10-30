@@ -91,8 +91,29 @@ async function attempts(db: Db, key: string, minutes: number) {
 
 async function recordAttempt(db: Db, key: string) {
   await db.query("INSERT INTO auth_attempts (key) VALUES ($1)", [key]);
-  // Keeps the table small; nothing older than a day is ever counted.
+  await tidyUp(db);
+}
+
+// ---------- Housekeeping ----------
+
+const TIDY_EVERY_MS = 60 * 60 * 1000;
+let lastTidy = 0;
+
+/**
+  Removes what's no longer needed: expired sessions and links, sign-ups
+  never confirmed, and attempt records older than any limit counts (a day).
+  Runs at most once an hour per server instance, on the next login or sign-up.
+*/
+export async function tidyUp(db: Db, force = false) {
+  if (!force && Date.now() - lastTidy < TIDY_EVERY_MS) return;
+  lastTidy = Date.now();
+  await db.query("DELETE FROM sessions WHERE expires_at < now()");
+  await db.query("DELETE FROM password_resets WHERE expires_at < now()");
+  await db.query("DELETE FROM email_verifications WHERE expires_at < now()");
   await db.query("DELETE FROM auth_attempts WHERE at < now() - interval '1 day'");
+  await db.query("DELETE FROM users WHERE email_verified_at IS NULL AND created_at < now() - make_interval(hours => $1)", [
+    VERIFY_HOURS,
+  ]);
 }
 
 const breached: Result = { status: 400, body: { error: "Please check the form.", fields: { password: BREACHED_MESSAGE } } };
@@ -111,7 +132,7 @@ async function startSession(db: Db, userId: string) {
     "INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, now() + make_interval(days => $3))",
     [tokenHash(token), userId, SESSION_DAYS],
   );
-  await db.query("DELETE FROM sessions WHERE user_id = $1 AND expires_at < now()", [userId]);
+  await tidyUp(db);
   return token;
 }
 
