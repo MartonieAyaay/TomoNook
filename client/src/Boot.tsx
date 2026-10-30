@@ -17,7 +17,8 @@ export default function Boot() {
   // In dev, add ?nosplash to the URL to skip the loading bar.
   const [skipBar] = useState(() => import.meta.env.DEV && location.search.includes('nosplash'))
   const [showSplash, setShowSplash] = useState(true)
-  // Signed in? Asked while the loading bar fills; signed out keeps the title page up with the login window.
+  // Signed in? Asked while the loading bar fills (the bar follows these steps, see `progress` below);
+  // signed out keeps the title page up with the login window.
   const account = useAccountStore((s) => s.account)
   const setAccount = useAccountStore((s) => s.setAccount)
   // A "reset your password" email link: ?reset=<token>. Taken out of the
@@ -70,6 +71,18 @@ export default function Boot() {
     }
   }, [account, emailLink, attempt])
 
+  // The loading bar, from the real steps: asking who's signed in, loading
+  // their data, then loading the app. Waiting on a window (login, an email
+  // link, an error) counts as done, so the bar fills and the window shows.
+  const showWindow = account === null || (!!account && !!emailLink) || !!syncError
+  const [progress, next] = showWindow || appMounted
+    ? [1, 1]
+    : account === undefined
+      ? [0, 0.4]
+      : !dataReady
+        ? [0.4, 0.8]
+        : [0.8, 1]
+
   return (
     <>
       {dataReady && (
@@ -78,7 +91,13 @@ export default function Boot() {
         </Suspense>
       )}
       {showSplash && (
-        <SplashScreen ready={dataReady && appMounted} skipBar={skipBar} onDone={() => setShowSplash(false)}>
+        <SplashScreen
+          progress={progress}
+          next={next}
+          ready={dataReady && appMounted}
+          skipBar={skipBar}
+          onDone={() => setShowSplash(false)}
+        >
           {account === null || (account && emailLink) ? (
             <AuthDialog resetToken={resetToken} verifyToken={verifyToken} onSignedIn={onSignedIn} />
           ) : (
