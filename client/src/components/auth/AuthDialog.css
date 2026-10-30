@@ -163,6 +163,11 @@
   text-underline-position: from-font;
 }
 
+/* "Send the link again", under "Please confirm your email first". */
+.auth-resend {
+  margin: -0.8rem 0 1.6rem;
+}
+
 /* "Forgot password?" under the password box, on the right. */
 .auth-forgot {
   align-self: flex-end;

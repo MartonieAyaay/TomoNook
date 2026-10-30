@@ -1,8 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import { hash, verify } from "@node-rs/argon2";
 import type { Db } from "./db";
-import { canSendEmail, sendEmail } from "./mail";
-import { TERMS_VERSION, fieldErrors, forgotSchema, loginSchema, resetSchema, signupSchema } from "./validation";
+import { canSendEmail, sendEmail, type Email } from "./mail";
+import { TERMS_VERSION, fieldErrors, forgotSchema, loginSchema, resetSchema, signupSchema, verifySchema } from "./validation";
 
 /*
   Accounts and sessions. Each function takes the request's parts and
@@ -13,6 +13,10 @@ import { TERMS_VERSION, fieldErrors, forgotSchema, loginSchema, resetSchema, sig
     keeps only its SHA-256 hash.
   - Brute force: failed logins are counted per username+IP and per IP over
     15 minutes; sign-ups per IP over an hour.
+  - Emails: a new account has to open the link sent to its email before it
+    can log in. Signing up with an email that already has an account gives
+    the same reply on screen (the email's owner is told instead), so the
+    form can't be used to find out who uses TomoNook.
 */
 
 const ARGON2 = { memoryCost: 19456, timeCost: 2, parallelism: 1 };
@@ -24,6 +28,12 @@ const LIMITS = {
   /** Wrong passwords from one IP, across all accounts. */
   loginPerIp: { max: 20, minutes: 15 },
   signupPerIp: { max: 5, minutes: 60 },
+  /** Sign-ups with one email, so it can't be used to flood an inbox. */
+  signupPerEmail: { max: 3, minutes: 60 },
+  /** "Send the link again" for one account. */
+  resendPerAccount: { max: 3, minutes: 60 },
+  /** Guesses at confirm links. */
+  verifyPerIp: { max: 10, minutes: 15 },
   /** "Forgot password?" requests, so it can't be used to flood someone's inbox. */
   forgotPerIp: { max: 5, minutes: 60 },
   forgotPerEmail: { max: 3, minutes: 60 },
@@ -33,6 +43,8 @@ const LIMITS = {
 
 /** How long a reset link works. */
 export const RESET_MINUTES = 30;
+/** How long a "confirm your email" link works. Unconfirmed accounts are removed after this, freeing their name and email. */
+export const VERIFY_HOURS = 24;
 
 export interface User {
   id: string;
@@ -101,6 +113,9 @@ export async function currentUser(db: Db, token: string | undefined): Promise<Us
 
 // ---------- Endpoints ----------
 
+const SIGNUP_REPLY = (email: string) =>
+  `We sent a link to ${email}. Open it within ${VERIFY_HOURS} hours to finish signing up (check spam too).`;
+
 export async function signup(db: Db, ip: string, input: unknown): Promise<Result> {
   const limit = LIMITS.signupPerIp;
   if ((await attempts(db, `signup:${ip}`, limit.minutes)) >= limit.max) return tooMany(limit.minutes);
@@ -108,17 +123,28 @@ export async function signup(db: Db, ip: string, input: unknown): Promise<Result
   const parsed = signupSchema.safeParse(input);
   if (!parsed.success) return { status: 400, body: { error: "Please check the form.", fields: fieldErrors(parsed.error) } };
   const { email, username, password } = parsed.data;
+  if (!canSendEmail()) return { status: 503, body: { error: "Signing up isn’t available right now. Please try again later." } };
+  const perEmail = LIMITS.signupPerEmail;
+  if ((await attempts(db, `signup:${email}`, perEmail.minutes)) >= perEmail.max) return tooMany(perEmail.minutes);
 
   await recordAttempt(db, `signup:${ip}`);
-  const taken = await db.query<{ email: string; username_key: string }>(
-    "SELECT email, username_key FROM users WHERE email = $1 OR username_key = $2",
-    [email, username.toLowerCase()],
-  );
+  await recordAttempt(db, `signup:${email}`);
+  // Sign-ups never confirmed in time give their name and email back.
+  await db.query("DELETE FROM users WHERE email_verified_at IS NULL AND created_at < now() - make_interval(hours => $1)", [
+    VERIFY_HOURS,
+  ]);
+
+  const pending: Result = { status: 202, body: { pending: true, message: SIGNUP_REPLY(email) } };
+  const existing = await db.query<{ username: string }>("SELECT username FROM users WHERE email = $1", [email]);
+  if (existing.rows[0]) {
+    // The same reply as a new sign-up; the email's owner hears about it instead.
+    await sendQuietly({ to: email, ...existingAccountEmail(existing.rows[0].username) });
+    return pending;
+  }
+  // Usernames are shown to the user anyway, so saying one is taken gives nothing away.
+  const taken = await db.query("SELECT 1 FROM users WHERE username_key = $1", [username.toLowerCase()]);
   if (taken.rows.length > 0) {
-    const fields: Record<string, string> = {};
-    if (taken.rows.some((r) => r.username_key === username.toLowerCase())) fields.username = "That username is taken.";
-    if (taken.rows.some((r) => r.email === email)) fields.email = "That email already has an account. Try signing in.";
-    return { status: 409, body: { error: "Please check the form.", fields } };
+    return { status: 409, body: { error: "Please check the form.", fields: { username: "That username is taken." } } };
   }
 
   const passwordHash = await hash(password, ARGON2);
@@ -137,12 +163,43 @@ export async function signup(db: Db, ip: string, input: unknown): Promise<Result
     }
     throw e;
   }
-  return { status: 201, body: { user: { id, username, email } }, session: await startSession(db, id) };
+  try {
+    await sendVerification(db, id, email, username);
+  } catch (e) {
+    // Without the email they could never log in, so the sign-up is undone.
+    console.error("Couldn't send the confirm email:", e);
+    await db.query("DELETE FROM users WHERE id = $1", [id]);
+    return { status: 503, body: { error: "We couldn’t send the email to finish signing up. Please try again later." } };
+  }
+  return pending;
 }
 
 export async function login(db: Db, ip: string, input: unknown): Promise<Result> {
+  const checked = await checkPassword(db, ip, input);
+  if ("result" in checked) return checked.result;
+  const { user } = checked;
+  if (!user.email_verified_at) {
+    // Only said after the right password, so it doesn't reveal anything to a stranger.
+    return {
+      status: 403,
+      body: { error: `Please confirm your email first: open the link we sent to ${user.email}.`, unverified: true },
+    };
+  }
+  return {
+    status: 200,
+    body: { user: { id: user.id, username: user.username, email: user.email } },
+    session: await startSession(db, user.id),
+  };
+}
+
+type CheckedUser = User & { password_hash: string; email_verified_at: Date | null };
+
+/** The username and password check shared by logging in and "Send the link again". */
+async function checkPassword(db: Db, ip: string, input: unknown): Promise<{ user: CheckedUser } | { result: Result }> {
   const parsed = loginSchema.safeParse(input);
-  if (!parsed.success) return { status: 400, body: { error: "Please check the form.", fields: fieldErrors(parsed.error) } };
+  if (!parsed.success) {
+    return { result: { status: 400, body: { error: "Please check the form.", fields: fieldErrors(parsed.error) } } };
+  }
   const { username, password } = parsed.data;
   const accountKey = `login:${username.toLowerCase()}:${ip}`;
 
@@ -151,11 +208,11 @@ export async function login(db: Db, ip: string, input: unknown): Promise<Result>
     (await attempts(db, accountKey, perAccount.minutes)) >= perAccount.max ||
     (await attempts(db, `login:${ip}`, perIp.minutes)) >= perIp.max
   ) {
-    return tooMany(perAccount.minutes);
+    return { result: tooMany(perAccount.minutes) };
   }
 
-  const { rows } = await db.query<User & { password_hash: string }>(
-    "SELECT id, username, email, password_hash FROM users WHERE username_key = $1",
+  const { rows } = await db.query<CheckedUser>(
+    "SELECT id, username, email, password_hash, email_verified_at FROM users WHERE username_key = $1",
     [username.toLowerCase()],
   );
   const user = rows[0];
@@ -164,15 +221,74 @@ export async function login(db: Db, ip: string, input: unknown): Promise<Result>
     await recordAttempt(db, accountKey);
     await recordAttempt(db, `login:${ip}`);
     // The same message either way, so it doesn't reveal which usernames exist.
-    return { status: 401, body: { error: "Wrong username or password." } };
+    return { result: { status: 401, body: { error: "Wrong username or password." } } };
   }
-
   await db.query("DELETE FROM auth_attempts WHERE key = $1", [accountKey]);
-  return {
-    status: 200,
-    body: { user: { id: user.id, username: user.username, email: user.email } },
-    session: await startSession(db, user.id),
+  return { user };
+}
+
+/** "Send the link again", from the login window (it needs the password, so only the account's owner can ask). */
+export async function resendVerification(db: Db, ip: string, input: unknown): Promise<Result> {
+  const checked = await checkPassword(db, ip, input);
+  if ("result" in checked) return checked.result;
+  const { user } = checked;
+  if (user.email_verified_at) return { status: 200, body: { message: "Your email is already confirmed. You can log in." } };
+  const limit = LIMITS.resendPerAccount;
+  if ((await attempts(db, `resend:${user.id}`, limit.minutes)) >= limit.max) return tooMany(limit.minutes);
+  await recordAttempt(db, `resend:${user.id}`);
+  try {
+    await sendVerification(db, user.id, user.email, user.username);
+  } catch (e) {
+    console.error("Couldn't send the confirm email:", e);
+    return { status: 503, body: { error: "We couldn’t send the email right now. Please try again later." } };
+  }
+  return { status: 200, body: { message: `We sent a new link to ${user.email}. Check your inbox (and spam).` } };
+}
+
+/** Opened from the emailed link: the email is confirmed, and they're logged in. */
+export async function verifyEmail(db: Db, ip: string, input: unknown): Promise<Result> {
+  const limit = LIMITS.verifyPerIp;
+  if ((await attempts(db, `verify:${ip}`, limit.minutes)) >= limit.max) return tooMany(limit.minutes);
+  const invalid: Result = {
+    status: 400,
+    body: { error: "This link has expired or was already used. Log in to get a new one." },
   };
+  const parsed = verifySchema.safeParse(input);
+  if (!parsed.success) return invalid;
+
+  const { rows } = await db.query<User>(
+    `SELECT u.id, u.username, u.email FROM email_verifications v JOIN users u ON u.id = v.user_id
+     WHERE v.token_hash = $1 AND v.expires_at > now()`,
+    [tokenHash(parsed.data.token)],
+  );
+  const user = rows[0];
+  if (!user) {
+    await recordAttempt(db, `verify:${ip}`);
+    return invalid;
+  }
+  await db.query("UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = $1", [user.id]);
+  await db.query("DELETE FROM email_verifications WHERE user_id = $1", [user.id]);
+  return { status: 200, body: { user }, session: await startSession(db, user.id) };
+}
+
+async function sendVerification(db: Db, userId: string, email: string, username: string) {
+  // Only the newest link works.
+  await db.query("DELETE FROM email_verifications WHERE user_id = $1", [userId]);
+  const token = randomBytes(32).toString("base64url");
+  await db.query(
+    "INSERT INTO email_verifications (token_hash, user_id, expires_at) VALUES ($1, $2, now() + make_interval(hours => $3))",
+    [tokenHash(token), userId, VERIFY_HOURS],
+  );
+  await sendEmail({ to: email, ...verifyMessage(username, `${appUrl()}/?verify=${token}`) });
+}
+
+/** For emails whose failure mustn't change the reply (so it doesn't reveal that an account exists). */
+async function sendQuietly(email: Email) {
+  try {
+    await sendEmail(email);
+  } catch (e) {
+    console.error("Couldn't send email:", e);
+  }
 }
 
 export async function logout(db: Db, token: string | undefined): Promise<Result> {
@@ -186,7 +302,7 @@ export async function me(db: Db, token: string | undefined): Promise<Result> {
   return user ? { status: 200, body: { user } } : { status: 401, body: { user: null }, session: token ? "" : undefined };
 }
 
-// ---------- Forgot / reset password ----------
+// ---------- Emails ----------
 
 /** The site's address for links in emails. Never taken from the request, which could be forged. */
 function appUrl() {
@@ -198,21 +314,72 @@ function appUrl() {
 const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-function resetEmail(username: string, link: string) {
-  const name = escapeHtml(username);
-  return {
-    subject: "Reset your TomoNook password",
-    text: `Hi ${username},\n\nSomeone asked to reset the password for your TomoNook account. To choose a new one, open this link within ${RESET_MINUTES} minutes:\n\n${link}\n\nIf it wasn't you, you can ignore this email. Your password stays the same.\n\nTomoNook`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;background:#fff6de;border:6px solid #e66b33;border-radius:20px;color:#6e3f39">
-  <h1 style="margin:0 0 12px;color:#29512f;font-size:26px">Reset your password</h1>
-  <p>Hi ${name},</p>
-  <p>Someone asked to reset the password for your TomoNook account. To choose a new one, press the button within ${RESET_MINUTES} minutes:</p>
-  <p style="text-align:center;margin:24px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:12px 28px;background:#e66b33;color:#fff6de;border-radius:12px;text-decoration:none;font-weight:bold;font-size:18px">Choose a new password</a></p>
-  <p style="font-size:13px">If the button doesn't work, copy this link into your browser:<br><span style="word-break:break-all">${escapeHtml(link)}</span></p>
-  <p style="font-size:13px">If it wasn't you, you can ignore this email. Your password stays the same.</p>
-</div>`,
-  };
+/** A TomoNook email: a heading, a few lines, an optional button, and a closing line. Plain-text copy included. */
+function message(m: {
+  subject: string;
+  heading: string;
+  username: string;
+  lines: string[];
+  button?: { label: string; link: string };
+  footer: string;
+}) {
+  const { button } = m;
+  const text = [
+    `Hi ${m.username},`,
+    ...m.lines,
+    ...(button ? [button.link] : []),
+    m.footer,
+    "TomoNook",
+  ].join("\n\n");
+  const link = button && escapeHtml(button.link);
+  const html = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px;background:#fff6de;border:6px solid #e66b33;border-radius:20px;color:#6e3f39">
+  <h1 style="margin:0 0 12px;color:#29512f;font-size:26px">${escapeHtml(m.heading)}</h1>
+  <p>Hi ${escapeHtml(m.username)},</p>
+  ${m.lines.map((l) => `<p>${escapeHtml(l)}</p>`).join("\n  ")}
+  ${
+    button
+      ? `<p style="text-align:center;margin:24px 0"><a href="${link}" style="display:inline-block;padding:12px 28px;background:#e66b33;color:#fff6de;border-radius:12px;text-decoration:none;font-weight:bold;font-size:18px">${escapeHtml(button.label)}</a></p>
+  <p style="font-size:13px">If the button doesn't work, copy this link into your browser:<br><span style="word-break:break-all">${link}</span></p>`
+      : ""
+  }
+  <p style="font-size:13px">${escapeHtml(m.footer)}</p>
+</div>`;
+  return { subject: m.subject, text, html };
 }
+
+const verifyMessage = (username: string, link: string) =>
+  message({
+    subject: "Confirm your TomoNook email",
+    heading: "Welcome to TomoNook!",
+    username,
+    lines: [`To finish signing up, confirm this is your email within ${VERIFY_HOURS} hours:`],
+    button: { label: "Confirm my email", link },
+    footer: "If you didn't sign up for TomoNook, you can ignore this email and the account won't be made.",
+  });
+
+const existingAccountEmail = (username: string) =>
+  message({
+    subject: "Someone tried to sign up with your email",
+    heading: "You already have an account",
+    username,
+    lines: [
+      `Someone just tried to make a new TomoNook account with this email, but it already belongs to your account, "${username}".`,
+      `If that was you, log in at ${appUrl()} instead. Forgot your password? Press "Forgot password?" in the login window.`,
+    ],
+    footer: "If it wasn't you, you can ignore this email. Nothing about your account has changed.",
+  });
+
+const resetEmail = (username: string, link: string) =>
+  message({
+    subject: "Reset your TomoNook password",
+    heading: "Reset your password",
+    username,
+    lines: [`Someone asked to reset the password for your TomoNook account. To choose a new one, press the button within ${RESET_MINUTES} minutes:`],
+    button: { label: "Choose a new password", link },
+    footer: "If it wasn't you, you can ignore this email. Your password stays the same.",
+  });
+
+// ---------- Forgot / reset password ----------
 
 const FORGOT_REPLY =
   "If an account uses that email, we’ve sent it a link to reset the password. Check your inbox (and spam). The link works for 30 minutes.";
@@ -280,7 +447,11 @@ export async function resetPassword(db: Db, ip: string, input: unknown): Promise
     return { status: 400, body: { error: "Please check the form.", fields: { password: "Your password can’t be your username." } } };
   }
 
-  await db.query("UPDATE users SET password_hash = $1 WHERE id = $2", [await hash(password, ARGON2), user.id]);
+  // The link came to their inbox, so it confirms the email too.
+  await db.query("UPDATE users SET password_hash = $1, email_verified_at = COALESCE(email_verified_at, now()) WHERE id = $2", [
+    await hash(password, ARGON2),
+    user.id,
+  ]);
   // The link is used up, and every device that was logged in is logged out.
   await db.query("DELETE FROM password_resets WHERE user_id = $1", [user.id]);
   await db.query("DELETE FROM sessions WHERE user_id = $1", [user.id]);
