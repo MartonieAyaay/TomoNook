@@ -15,6 +15,7 @@ import {
   signup,
   verifyEmail,
 } from "./auth";
+import { setBreachCheck } from "./breached";
 import { setMailer, type Email } from "./mail";
 import { database, setDb, type Db } from "./db";
 
@@ -27,6 +28,8 @@ beforeEach(async () => {
   db = await database();
   sent = [];
   setMailer(async (e) => void sent.push(e));
+  // Only "password123" counts as leaked here, so tests never call the real service.
+  setBreachCheck(async (p) => p === "password123");
 });
 
 const form = {
@@ -301,5 +304,38 @@ describe("account settings", () => {
       expect((await db.query(`SELECT 1 FROM ${table}`)).rows).toHaveLength(0);
     }
     expect((await loginAs(form.password)).status).toBe(401);
+  });
+});
+
+describe("leaked passwords", () => {
+  it("are refused when signing up, resetting and changing the password", async () => {
+    const res = await signup(db, "1.1.1.1", { ...form, password: "password123", retypePassword: "password123" });
+    expect(res.status).toBe(400);
+    expect(res.body.fields).toHaveProperty("password");
+    expect(await userCount()).toBe(0);
+
+    const { session } = await signedUp("1.1.1.1");
+    const change = await changePassword(db, session, { currentPassword: form.password, password: "password123", retypePassword: "password123" });
+    expect(change.body.fields).toHaveProperty("password");
+
+    sent.length = 0;
+    await forgotPassword(db, "1.1.1.1", { email: form.email });
+    const token = linkToken(sent[0]!, "reset");
+    const reset = await resetPassword(db, "1.1.1.1", { token, password: "password123", retypePassword: "password123" });
+    expect(reset.body.fields).toHaveProperty("password");
+  });
+
+  it("an email that already has an account gets the same answer", async () => {
+    await signedUp("1.1.1.1");
+    const fresh = await signup(db, "2.2.2.2", { ...form, email: "new@x.com", username: "new1", password: "password123", retypePassword: "password123" });
+    const taken = await signup(db, "3.3.3.3", { ...form, username: "new2", password: "password123", retypePassword: "password123" });
+    expect(taken).toEqual(fresh);
+  });
+
+  it("are allowed if the check fails", async () => {
+    setBreachCheck(async () => {
+      throw new Error("offline");
+    });
+    expect((await signup(db, "1.1.1.1", form)).status).toBe(202);
   });
 });
