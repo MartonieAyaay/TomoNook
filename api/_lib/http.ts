@@ -1,5 +1,17 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { SESSION_DAYS, currentUser, forgotPassword, login, logout, me, resetPassword, signup, type Result } from "./auth";
+import {
+  SESSION_DAYS,
+  currentUser,
+  forgotPassword,
+  login,
+  logout,
+  me,
+  resendVerification,
+  resetPassword,
+  signup,
+  verifyEmail,
+  type Result,
+} from "./auth";
 import { getData, putData } from "./data";
 import { DatabaseNotSetUp, database } from "./db";
 
@@ -87,10 +99,12 @@ function send(res: ServerResponse, result: Result) {
 
 const fail = (status: number, error: string): Result => ({ status, body: { error } });
 
+const ACTIONS = ["me", "login", "signup", "logout", "forgot", "reset", "verify", "resend"];
+
 export async function handleAuth(action: string, req: Req, res: ServerResponse) {
   try {
     const method = action === "me" ? "GET" : "POST";
-    if (!["me", "login", "signup", "logout", "forgot", "reset"].includes(action)) return send(res, fail(404, "Not found."));
+    if (!ACTIONS.includes(action)) return send(res, fail(404, "Not found."));
     if (req.method !== method) {
       res.setHeader("Allow", method);
       return send(res, fail(405, "Method not allowed."));
@@ -108,6 +122,8 @@ export async function handleAuth(action: string, req: Req, res: ServerResponse) 
     if (action === "login") return send(res, await login(db, clientIp(req), body));
     if (action === "forgot") return send(res, await forgotPassword(db, clientIp(req), body));
     if (action === "reset") return send(res, await resetPassword(db, clientIp(req), body));
+    if (action === "verify") return send(res, await verifyEmail(db, clientIp(req), body));
+    if (action === "resend") return send(res, await resendVerification(db, clientIp(req), body));
     return send(res, await signup(db, clientIp(req), body));
   } catch (e) {
     serverError(res, e);

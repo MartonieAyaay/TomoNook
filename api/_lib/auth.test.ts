@@ -1,15 +1,29 @@
 import { PGlite } from "@electric-sql/pglite";
 import { beforeEach, describe, expect, it } from "vitest";
-import { currentUser, forgotPassword, login, logout, me, resetPassword, signup } from "./auth";
+import {
+  VERIFY_HOURS,
+  currentUser,
+  forgotPassword,
+  login,
+  logout,
+  me,
+  resendVerification,
+  resetPassword,
+  signup,
+  verifyEmail,
+} from "./auth";
 import { setMailer, type Email } from "./mail";
 import { database, setDb, type Db } from "./db";
 
 let db: Db;
+let sent: Email[];
 
 beforeEach(async () => {
   const pg = new PGlite();
   setDb({ query: (text, params) => pg.query(text, params) as never });
   db = await database();
+  sent = [];
+  setMailer(async (e) => void sent.push(e));
 });
 
 const form = {
@@ -20,17 +34,41 @@ const form = {
   acceptTerms: true,
 };
 
+/** The token in an emailed link, e.g. ?verify=... or ?reset=... */
+const linkToken = (email: Email, param: string) => new RegExp(`[?&]${param}=([\\w-]+)`).exec(email.text)![1]!;
+
+/** Signs up and opens the emailed link, as a new user would. */
+async function signedUp(ip: string, f = form) {
+  await signup(db, ip, f);
+  return verifyEmail(db, ip, { token: linkToken(sent.at(-1)!, "verify") });
+}
+
+const userCount = async () => (await db.query("SELECT 1 FROM users")).rows.length;
+
 describe("signup", () => {
-  it("creates an account and a session, storing only hashes", async () => {
+  it("makes an unconfirmed account and emails a link that logs in, storing only hashes", async () => {
     const res = await signup(db, "1.1.1.1", form);
-    expect(res.status).toBe(201);
-    expect(res.session).toMatch(/^[\w-]{43}$/);
-    const { rows } = await db.query<{ email: string; password_hash: string }>("SELECT * FROM users");
+    expect(res.status).toBe(202);
+    expect(res.session).toBeUndefined();
+    const { rows } = await db.query<{ email: string; password_hash: string; email_verified_at: Date | null }>(
+      "SELECT * FROM users",
+    );
     expect(rows[0]!.email).toBe("tomato@example.com");
     expect(rows[0]!.password_hash).toMatch(/^\$argon2id\$/);
+    expect(rows[0]!.email_verified_at).toBeNull();
+    expect(sent[0]!.to).toBe("tomato@example.com");
+
+    const token = linkToken(sent[0]!, "verify");
+    const stored = await db.query<{ token_hash: string }>("SELECT token_hash FROM email_verifications");
+    expect(stored.rows[0]!.token_hash).not.toBe(token);
+    const verified = await verifyEmail(db, "1.1.1.1", { token });
+    expect(verified.status).toBe(200);
+    expect(verified.session).toMatch(/^[\w-]{43}$/);
     const sessions = await db.query<{ token_hash: string }>("SELECT token_hash FROM sessions");
-    expect(sessions.rows[0]!.token_hash).not.toBe(res.session);
-    expect(await currentUser(db, res.session)).toMatchObject({ username: "tomato_fan" });
+    expect(sessions.rows[0]!.token_hash).not.toBe(verified.session);
+    expect(await currentUser(db, verified.session)).toMatchObject({ username: "tomato_fan" });
+    // The link works once.
+    expect((await verifyEmail(db, "1.1.1.1", { token })).status).toBe(400);
   });
 
   it("requires the terms, matching passwords and a valid email", async () => {
@@ -46,6 +84,16 @@ describe("signup", () => {
     expect(res.body.fields).toHaveProperty("username");
   });
 
+  it("gives the same reply for an email that already has an account, and tells its owner", async () => {
+    const first = await signup(db, "1.1.1.1", form);
+    await verifyEmail(db, "1.1.1.1", { token: linkToken(sent[0]!, "verify") });
+    const again = await signup(db, "2.2.2.2", { ...form, username: "someone_else" });
+    expect(again).toEqual(first);
+    expect(await userCount()).toBe(1);
+    expect(sent[1]!.to).toBe("tomato@example.com");
+    expect(sent[1]!.text).toContain("already belongs to your account");
+  });
+
   it("treats SQL in the input as plain text", async () => {
     const res = await signup(db, "1.1.1.1", { ...form, username: "x'; DROP TABLE users;--" });
     expect(res.status).toBe(400);
@@ -54,16 +102,34 @@ describe("signup", () => {
     expect((await db.query("SELECT 1 FROM users")).rows).toBeDefined();
   });
 
-  it("limits sign-ups from one IP", async () => {
+  it("limits sign-ups from one IP, and to one email", async () => {
     for (let i = 0; i < 5; i++) await signup(db, "2.2.2.2", { ...form, email: `a${i}@x.com`, username: `user${i}` });
-    const res = await signup(db, "2.2.2.2", { ...form, email: "late@x.com", username: "late" });
-    expect(res.status).toBe(429);
+    expect((await signup(db, "2.2.2.2", { ...form, email: "late@x.com", username: "late" })).status).toBe(429);
+
+    for (let i = 0; i < 3; i++) await signup(db, `3.3.3.${i}`, { ...form, email: "flood@x.com", username: `flood${i}` });
+    expect((await signup(db, "3.3.3.9", { ...form, email: "flood@x.com", username: "flood9" })).status).toBe(429);
+  });
+
+  it("frees the name and email of a sign-up that was never confirmed", async () => {
+    await signup(db, "1.1.1.1", form);
+    await db.query(`UPDATE users SET created_at = now() - interval '${VERIFY_HOURS + 1} hours'`);
+    expect((await signup(db, "2.2.2.2", form)).status).toBe(202);
+    expect(await userCount()).toBe(1);
+    expect(sent[1]!.subject).toContain("Confirm");
+  });
+
+  it("undoes the sign-up if the email can't be sent", async () => {
+    setMailer(async () => {
+      throw new Error("SMTP down");
+    });
+    expect((await signup(db, "1.1.1.1", form)).status).toBe(503);
+    expect(await userCount()).toBe(0);
   });
 });
 
 describe("login", () => {
   beforeEach(async () => {
-    await signup(db, "9.9.9.9", form);
+    await signedUp("9.9.9.9");
   });
 
   it("logs in with the right password, any username case", async () => {
@@ -87,11 +153,28 @@ describe("login", () => {
     // Another IP isn't blocked by someone else's guesses.
     expect((await login(db, "3.3.3.3", { username: "tomato_fan", password: form.password })).status).toBe(200);
   });
+
+  it("asks an unconfirmed account to confirm, and resends the link only with the password", async () => {
+    const other = { ...form, email: "new@example.com", username: "newbie" };
+    await signup(db, "1.1.1.1", other);
+    const first = linkToken(sent.at(-1)!, "verify");
+    const res = await login(db, "1.1.1.1", { username: "newbie", password: other.password });
+    expect(res.status).toBe(403);
+    expect(res.body.unverified).toBe(true);
+    expect(res.session).toBeUndefined();
+
+    expect((await resendVerification(db, "1.1.1.1", { username: "newbie", password: "wrong pass" })).status).toBe(401);
+    expect((await resendVerification(db, "1.1.1.1", { username: "newbie", password: other.password })).status).toBe(200);
+    // Only the newest link works.
+    expect((await verifyEmail(db, "1.1.1.1", { token: first })).status).toBe(400);
+    expect((await verifyEmail(db, "1.1.1.1", { token: linkToken(sent.at(-1)!, "verify") })).status).toBe(200);
+    expect((await login(db, "1.1.1.1", { username: "newbie", password: other.password })).status).toBe(200);
+  });
 });
 
 describe("sessions", () => {
   it("logout ends the session and clears the cookie", async () => {
-    const { session } = await signup(db, "1.1.1.1", form);
+    const { session } = await signedUp("1.1.1.1");
     expect((await me(db, session)).status).toBe(200);
     const out = await logout(db, session);
     expect(out.session).toBe("");
@@ -100,20 +183,18 @@ describe("sessions", () => {
 
   it("rejects made-up and expired tokens", async () => {
     expect((await me(db, "made-up")).status).toBe(401);
-    const { session } = await signup(db, "1.1.1.1", form);
+    const { session } = await signedUp("1.1.1.1");
     await db.query("UPDATE sessions SET expires_at = now() - interval '1 minute'");
     expect(await currentUser(db, session)).toBeNull();
   });
 });
 
 describe("forgot / reset password", () => {
-  let sent: Email[];
-  const linkToken = (email: Email) => /[?&]reset=([\w-]+)/.exec(email.text)![1]!;
+  const resetToken = (email: Email) => linkToken(email, "reset");
 
   beforeEach(async () => {
-    sent = [];
-    setMailer(async (e) => void sent.push(e));
-    await signup(db, "9.9.9.9", form);
+    await signedUp("9.9.9.9");
+    sent.length = 0;
   });
 
   it("emails a one-time link, and gives the same reply for unknown emails", async () => {
@@ -123,13 +204,13 @@ describe("forgot / reset password", () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]!.to).toBe("tomato@example.com");
     const stored = await db.query<{ token_hash: string }>("SELECT token_hash FROM password_resets");
-    expect(stored.rows[0]!.token_hash).not.toBe(linkToken(sent[0]!));
+    expect(stored.rows[0]!.token_hash).not.toBe(resetToken(sent[0]!));
   });
 
   it("resets the password, logs out other devices, and the link works once", async () => {
     const old = await login(db, "1.1.1.1", { username: "tomato_fan", password: form.password });
     await forgotPassword(db, "1.1.1.1", { email: form.email });
-    const token = linkToken(sent[0]!);
+    const token = resetToken(sent[0]!);
     const res = await resetPassword(db, "1.1.1.1", { token, password: "brand new pass", retypePassword: "brand new pass" });
     expect(res.status).toBe(200);
     expect(res.session).toBeTruthy();
@@ -142,7 +223,7 @@ describe("forgot / reset password", () => {
 
   it("rejects expired and made-up links", async () => {
     await forgotPassword(db, "1.1.1.1", { email: form.email });
-    const token = linkToken(sent[0]!);
+    const token = resetToken(sent[0]!);
     await db.query("UPDATE password_resets SET expires_at = now() - interval '1 minute'");
     expect((await resetPassword(db, "1.1.1.1", { token, password: "brand new pass", retypePassword: "brand new pass" })).status).toBe(400);
     expect((await resetPassword(db, "1.1.1.1", { token: "x".repeat(43), password: "brand new pass", retypePassword: "brand new pass" })).status).toBe(400);
@@ -154,10 +235,19 @@ describe("forgot / reset password", () => {
     expect(sent).toHaveLength(3);
   });
 
+  it("a reset link also confirms the email", async () => {
+    await signup(db, "1.1.1.1", { ...form, email: "new@example.com", username: "newbie" });
+    sent.length = 0;
+    await forgotPassword(db, "1.1.1.1", { email: "new@example.com" });
+    const res = await resetPassword(db, "1.1.1.1", { token: resetToken(sent[0]!), password: "brand new pass", retypePassword: "brand new pass" });
+    expect(res.status).toBe(200);
+    expect((await login(db, "1.1.1.1", { username: "newbie", password: "brand new pass" })).status).toBe(200);
+  });
+
   it("only the newest link works", async () => {
     await forgotPassword(db, "1.1.1.1", { email: form.email });
     await forgotPassword(db, "1.1.1.1", { email: form.email });
-    const [first, second] = sent.map(linkToken);
+    const [first, second] = sent.map(resetToken);
     expect((await resetPassword(db, "1.1.1.1", { token: first, password: "brand new pass", retypePassword: "brand new pass" })).status).toBe(400);
     expect((await resetPassword(db, "1.1.1.1", { token: second, password: "brand new pass", retypePassword: "brand new pass" })).status).toBe(200);
   });

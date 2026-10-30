@@ -90,6 +90,18 @@ async function createTables(d: Db) {
       user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       expires_at timestamptz NOT NULL
     )`);
+  // When the email was confirmed (the sign-up link, or a reset link). Accounts made
+  // before confirming existed count as confirmed, so nobody is locked out; new
+  // accounts start unconfirmed (null).
+  await d.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at timestamptz DEFAULT now()`);
+  await d.query(`ALTER TABLE users ALTER COLUMN email_verified_at DROP DEFAULT`);
+  // "Confirm your email" links: only the token's hash is stored, and each works once.
+  await d.query(`
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      token_hash text PRIMARY KEY,
+      user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at timestamptz NOT NULL
+    )`);
   await d.query(`
     CREATE TABLE IF NOT EXISTS auth_attempts (
       key text NOT NULL,

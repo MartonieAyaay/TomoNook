@@ -1,5 +1,14 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { logIn, requestReset, resetPassword, signUp, type Account, type AuthError } from '../../lib/auth.ts'
+import {
+  logIn,
+  requestReset,
+  resendVerification,
+  resetPassword,
+  signUp,
+  verifyEmail,
+  type Account,
+  type AuthError,
+} from '../../lib/auth.ts'
 import TermsDialog from './TermsDialog.tsx'
 import './AuthDialog.css'
 
@@ -8,24 +17,28 @@ import './AuthDialog.css'
   dimmed title page. Login comes first; "Sign up!" swaps to Sign Up and
   "Sign in!" swaps back. It can't be closed: TomoNook needs an account.
   "Forgot password?" asks for an email link; that link opens this window
-  again on "Choose a new password" (with `resetToken`).
+  again on "Choose a new password" (with `resetToken`). Signing up sends a
+  "confirm your email" link, which opens it to log in (with `verifyToken`).
 
   The rules here (lengths, characters) only help the user early. The
   server checks everything again (api/_lib/validation.ts).
 */
 
-type Mode = 'login' | 'signup' | 'forgot' | 'reset'
+type Mode = 'login' | 'signup' | 'forgot' | 'reset' | 'verify'
 
 export default function AuthDialog({
   resetToken,
+  verifyToken,
   onSignedIn,
 }: {
   /** From a "reset your password" email link. */
   resetToken?: string
+  /** From a "confirm your email" link. */
+  verifyToken?: string
   onSignedIn: (account: Account) => void
 }) {
   const ref = useRef<HTMLDialogElement>(null)
-  const [mode, setMode] = useState<Mode>(resetToken ? 'reset' : 'login')
+  const [mode, setMode] = useState<Mode>(resetToken ? 'reset' : verifyToken ? 'verify' : 'login')
   const [termsOpen, setTermsOpen] = useState(false)
   // Kept when switching, so a typed username isn't lost.
   const [username, setUsername] = useState('')
@@ -43,7 +56,9 @@ export default function AuthDialog({
       // Escape doesn't close it: there's nothing behind it to go back to.
       onCancel={(e) => e.preventDefault()}
     >
-      {mode === 'reset' && resetToken ? (
+      {mode === 'verify' && verifyToken ? (
+        <VerifyForm key="verify" token={verifyToken} onSignedIn={onSignedIn} onBack={() => setMode('login')} />
+      ) : mode === 'reset' && resetToken ? (
         <ResetForm key="reset" token={resetToken} onSignedIn={onSignedIn} onForgot={() => setMode('forgot')} />
       ) : mode === 'forgot' ? (
         <ForgotForm key="forgot" onBack={() => setMode('login')} />
@@ -61,7 +76,6 @@ export default function AuthDialog({
           key="signup"
           username={username}
           setUsername={setUsername}
-          onSignedIn={onSignedIn}
           onSwitch={() => setMode('login')}
           onShowTerms={() => setTermsOpen(true)}
         />
@@ -82,16 +96,31 @@ function LoginForm({ username, setUsername, onSignedIn, onSwitch, onForgot }: Fo
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AuthError | null>(null)
+  const [resent, setResent] = useState('')
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setBusy(true)
     setError(null)
+    setResent('')
     try {
       onSignedIn(await logIn(username, password))
     } catch (err) {
       setError(err as AuthError)
-      setPassword('')
+      // Kept when only the email is missing, for "Send the link again".
+      if (!(err as AuthError).unverified) setPassword('')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const resend = async () => {
+    setBusy(true)
+    try {
+      setResent(await resendVerification(username, password))
+      setError(null)
+    } catch (err) {
+      setError(err as AuthError)
     } finally {
       setBusy(false)
     }
@@ -103,6 +132,16 @@ function LoginForm({ username, setUsername, onSignedIn, onSwitch, onForgot }: Fo
         Login
       </h2>
       <FormError error={error} />
+      {error?.unverified && (
+        <button type="button" className="auth-switch auth-resend" onClick={resend} disabled={busy}>
+          Send the link again
+        </button>
+      )}
+      {resent && (
+        <p className="auth-done" role="status">
+          {resent}
+        </p>
+      )}
       <Field label="Username" error={error?.fields.username}>
         {(id, describedBy) => (
           <input
@@ -148,13 +187,19 @@ function LoginForm({ username, setUsername, onSignedIn, onSwitch, onForgot }: Fo
   )
 }
 
-function SignUpForm({ username, setUsername, onSignedIn, onSwitch, onShowTerms }: FormProps & { onShowTerms: () => void }) {
+function SignUpForm({
+  username,
+  setUsername,
+  onSwitch,
+  onShowTerms,
+}: Omit<FormProps, 'onSignedIn'> & { onShowTerms: () => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [retypePassword, setRetypePassword] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AuthError | null>(null)
+  const [sent, setSent] = useState('')
   const termsId = useId()
 
   const submit = async (e: FormEvent) => {
@@ -162,12 +207,29 @@ function SignUpForm({ username, setUsername, onSignedIn, onSwitch, onShowTerms }
     setBusy(true)
     setError(null)
     try {
-      onSignedIn(await signUp({ email, username, password, retypePassword, acceptTerms }))
+      setSent(await signUp({ email, username, password, retypePassword, acceptTerms }))
     } catch (err) {
       setError(err as AuthError)
     } finally {
       setBusy(false)
     }
+  }
+
+  // Signed up: the account works once the emailed link is opened.
+  if (sent) {
+    return (
+      <div className="auth-form">
+        <h2 id="auth-title" className="auth-title">
+          Check your inbox
+        </h2>
+        <p className="auth-done" role="status">
+          {sent}
+        </p>
+        <button type="button" className="auth-switch" onClick={onSwitch}>
+          Back to login
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -398,6 +460,39 @@ function ResetForm({ token, onSignedIn, onForgot }: { token: string; onSignedIn:
         Link not working? Get a new one
       </button>
     </form>
+  )
+}
+
+/** Opened from the "confirm your email" link: confirms it right away, and logs in. */
+function VerifyForm({ token, onSignedIn, onBack }: { token: string; onSignedIn: (account: Account) => void; onBack: () => void }) {
+  const [error, setError] = useState<AuthError | null>(null)
+  const started = useRef(false)
+
+  useEffect(() => {
+    // Once, even when React runs effects twice in development: the link works only once.
+    if (started.current) return
+    started.current = true
+    verifyEmail(token).then(onSignedIn, (err: AuthError) => setError(err))
+  }, [token, onSignedIn])
+
+  return (
+    <div className="auth-form">
+      <h2 id="auth-title" className="auth-title">
+        {error ? 'Hmm...' : 'Welcome!'}
+      </h2>
+      {error ? (
+        <>
+          <FormError error={error} />
+          <button type="button" className="auth-submit" onClick={onBack}>
+            Login
+          </button>
+        </>
+      ) : (
+        <p className="auth-intro" role="status">
+          Confirming your email...
+        </p>
+      )}
+    </div>
   )
 }
 

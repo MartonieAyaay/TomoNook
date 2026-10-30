@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import SplashScreen from './components/SplashScreen.tsx'
 import AuthDialog from './components/auth/AuthDialog.tsx'
-import { fetchAccount, logOut } from './lib/auth.ts'
+import { fetchAccount, logOut, type Account } from './lib/auth.ts'
 import { forgetIfSaved, syncOnSignIn } from './lib/sync.ts'
 import { useAccountStore } from './store/accountStore.ts'
 
@@ -27,9 +27,25 @@ export default function Boot() {
     if (token) history.replaceState(null, '', location.pathname)
     return token
   })
+  // A "confirm your email" link: ?verify=<token>, taken out the same way.
+  const [verifyToken, setVerifyToken] = useState(() => {
+    const token = new URLSearchParams(location.search).get('verify') ?? undefined
+    if (token) history.replaceState(null, '', location.pathname)
+    return token
+  })
+  // An email link logs in, maybe as someone else, so the app waits for it.
+  const emailLink = resetToken ?? verifyToken
   const [dataReady, setDataReady] = useState(false)
   const [appMounted, setAppMounted] = useState(false)
   const onAppMounted = useCallback(() => setAppMounted(true), [])
+  const onSignedIn = useCallback(
+    (a: Account) => {
+      setResetToken(undefined)
+      setVerifyToken(undefined)
+      setAccount(a)
+    },
+    [setAccount],
+  )
   const [syncError, setSyncError] = useState('')
   const [attempt, setAttempt] = useState(0)
 
@@ -42,7 +58,7 @@ export default function Boot() {
   }, [setAccount])
 
   useEffect(() => {
-    if (!account || resetToken) return
+    if (!account || emailLink) return
     let live = true
     setSyncError('')
     syncOnSignIn(account).then(
@@ -52,7 +68,7 @@ export default function Boot() {
     return () => {
       live = false
     }
-  }, [account, resetToken, attempt])
+  }, [account, emailLink, attempt])
 
   return (
     <>
@@ -63,14 +79,8 @@ export default function Boot() {
       )}
       {showSplash && (
         <SplashScreen ready={dataReady && appMounted} skipBar={skipBar} onDone={() => setShowSplash(false)}>
-          {account === null || (account && resetToken) ? (
-            <AuthDialog
-              resetToken={resetToken}
-              onSignedIn={(a) => {
-                setResetToken(undefined)
-                setAccount(a)
-              }}
-            />
+          {account === null || (account && emailLink) ? (
+            <AuthDialog resetToken={resetToken} verifyToken={verifyToken} onSignedIn={onSignedIn} />
           ) : (
             syncError && <SyncErrorDialog message={syncError} onRetry={() => setAttempt((n) => n + 1)} />
           )}

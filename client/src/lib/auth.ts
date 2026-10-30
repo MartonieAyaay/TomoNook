@@ -14,6 +14,8 @@ export interface AuthError {
   error: string
   /** Per-field messages, e.g. { username: "That username is taken." } */
   fields: Record<string, string>
+  /** Right password, but the email isn't confirmed yet. */
+  unverified?: boolean
 }
 
 async function call<T>(path: string, body?: unknown): Promise<T> {
@@ -29,7 +31,13 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
     throw { error: 'Couldn’t reach TomoNook. Check your internet and try again.', fields: {} } satisfies AuthError
   }
   const data = (await res.json().catch(() => ({}))) as Partial<AuthError> & T
-  if (!res.ok) throw { error: data.error ?? 'Something went wrong. Please try again.', fields: data.fields ?? {} } satisfies AuthError
+  if (!res.ok) {
+    throw {
+      error: data.error ?? 'Something went wrong. Please try again.',
+      fields: data.fields ?? {},
+      unverified: data.unverified,
+    } satisfies AuthError
+  }
   return data
 }
 
@@ -51,7 +59,14 @@ export const signUp = (form: {
   password: string
   retypePassword: string
   acceptTerms: boolean
-}) => call<{ user: Account }>('signup', form).then((d) => d.user)
+}) => call<{ message: string }>('signup', form).then((d) => d.message)
+
+/** Opened from the "confirm your email" link; signs in on success. */
+export const verifyEmail = (token: string) => call<{ user: Account }>('verify', { token }).then((d) => d.user)
+
+/** Sends the "confirm your email" link again. Needs the password, so only the account's owner can ask. */
+export const resendVerification = (username: string, password: string) =>
+  call<{ message: string }>('resend', { username, password }).then((d) => d.message)
 
 export const logOut = () => call('logout', {})
 

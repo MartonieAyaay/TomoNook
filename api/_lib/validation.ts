@@ -78,6 +78,9 @@ export const resetSchema = z
     when: ({ value }) => bothStrings(value, "password", "retypePassword"),
   });
 
+/** A "confirm your email" link. */
+export const verifySchema = z.object({ token: z.string().min(20).max(100) });
+
 /* Login only checks the shape: the real check is the password hash. */
 export const loginSchema = z.object({
   username: z.string().trim().min(1, "Enter your username.").max(USERNAME_MAX),
