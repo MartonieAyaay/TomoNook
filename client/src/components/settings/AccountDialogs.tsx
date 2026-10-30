@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { changePassword, deleteAccount, type AuthError } from '../../lib/auth.ts'
+import PasswordInput from '../PasswordInput.tsx'
 import '../ConfirmDialog.css'
 import './AccountDialogs.css'
 
@@ -81,6 +82,8 @@ function PasswordField({
   error,
   autoComplete,
   autoFocus,
+  shown,
+  onToggle,
 }: {
   label: string
   value: string
@@ -88,14 +91,17 @@ function PasswordField({
   error?: string
   autoComplete: 'current-password' | 'new-password'
   autoFocus?: boolean
+  shown: boolean
+  onToggle: () => void
 }) {
   const id = useId()
   return (
     <div className="account-field">
       <label htmlFor={id}>{label}</label>
-      <input
+      <PasswordInput
         id={id}
-        type="password"
+        shown={shown}
+        onToggle={onToggle}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
@@ -117,6 +123,7 @@ function PasswordField({
 /** "Change password": the current one, then the new one twice. */
 export function ChangePasswordDialog({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: (message: string) => void }) {
   const [currentPassword, setCurrentPassword] = useState('')
+  const [showPasswords, setShowPasswords] = useState(false)
   const [password, setPassword] = useState('')
   const [retypePassword, setRetypePassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -127,6 +134,7 @@ export function ChangePasswordDialog({ open, onClose, onDone }: { open: boolean;
     setPassword('')
     setRetypePassword('')
     setError(null)
+    setShowPasswords(false)
     onClose()
   }
 
@@ -155,6 +163,8 @@ export function ChangePasswordDialog({ open, onClose, onDone }: { open: boolean;
       submitLabel={busy ? 'Saving...' : 'Save password'}
     >
       <PasswordField
+        shown={showPasswords}
+        onToggle={() => setShowPasswords((v) => !v)}
         label="Current password"
         value={currentPassword}
         onChange={setCurrentPassword}
@@ -163,6 +173,8 @@ export function ChangePasswordDialog({ open, onClose, onDone }: { open: boolean;
         autoFocus
       />
       <PasswordField
+        shown={showPasswords}
+        onToggle={() => setShowPasswords((v) => !v)}
         label="New password (at least 8 characters)"
         value={password}
         onChange={setPassword}
@@ -170,6 +182,8 @@ export function ChangePasswordDialog({ open, onClose, onDone }: { open: boolean;
         autoComplete="new-password"
       />
       <PasswordField
+        shown={showPasswords}
+        onToggle={() => setShowPasswords((v) => !v)}
         label="Re-type new password"
         value={retypePassword}
         onChange={setRetypePassword}
@@ -183,12 +197,14 @@ export function ChangePasswordDialog({ open, onClose, onDone }: { open: boolean;
 /** "Delete account": says what goes, and asks for the password. */
 export function DeleteAccountDialog({ open, onClose, onDeleted }: { open: boolean; onClose: () => void; onDeleted: () => void }) {
   const [currentPassword, setCurrentPassword] = useState('')
+  const [showPasswords, setShowPasswords] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AuthError | null>(null)
 
   const close = () => {
     setCurrentPassword('')
     setError(null)
+    setShowPasswords(false)
     onClose()
   }
 
@@ -220,6 +236,8 @@ export function DeleteAccountDialog({ open, onClose, onDeleted }: { open: boolea
         This can’t be undone. Download a backup first if you want to keep a copy.
       </p>
       <PasswordField
+        shown={showPasswords}
+        onToggle={() => setShowPasswords((v) => !v)}
         label="Your password"
         value={currentPassword}
         onChange={setCurrentPassword}

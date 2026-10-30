@@ -9,6 +9,7 @@ import {
   type Account,
   type AuthError,
 } from '../../lib/auth.ts'
+import PasswordInput from '../PasswordInput.tsx'
 import TermsDialog, { type LegalDoc } from './TermsDialog.tsx'
 import './AuthDialog.css'
 
@@ -98,6 +99,7 @@ interface FormProps {
 
 function LoginForm({ username, setUsername, onSignedIn, onSwitch, onForgot }: FormProps & { onForgot: () => void }) {
   const [password, setPassword] = useState('')
+  const [showPasswords, setShowPasswords] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AuthError | null>(null)
   const [resent, setResent] = useState('')
@@ -165,10 +167,11 @@ function LoginForm({ username, setUsername, onSignedIn, onSwitch, onForgot }: Fo
       </Field>
       <Field label="Password" error={error?.fields.password}>
         {(id, describedBy) => (
-          <input
+          <PasswordInput
             id={id}
             className="auth-input"
-            type="password"
+            shown={showPasswords}
+            onToggle={() => setShowPasswords((v) => !v)}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
@@ -199,6 +202,7 @@ function SignUpForm({
 }: Omit<FormProps, 'onSignedIn'> & { onShowDoc: (doc: LegalDoc) => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPasswords, setShowPasswords] = useState(false)
   const [retypePassword, setRetypePassword] = useState('')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [ageConfirmed, setAgeConfirmed] = useState(false)
@@ -280,10 +284,11 @@ function SignUpForm({
       </Field>
       <Field label="Password" note="At least 8 characters" error={error?.fields.password}>
         {(id, describedBy) => (
-          <input
+          <PasswordInput
             id={id}
             className="auth-input"
-            type="password"
+            shown={showPasswords}
+            onToggle={() => setShowPasswords((v) => !v)}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
@@ -296,10 +301,11 @@ function SignUpForm({
       </Field>
       <Field label="Re-Type Password" error={error?.fields.retypePassword}>
         {(id, describedBy) => (
-          <input
+          <PasswordInput
             id={id}
             className="auth-input"
-            type="password"
+            shown={showPasswords}
+            onToggle={() => setShowPasswords((v) => !v)}
             value={retypePassword}
             onChange={(e) => setRetypePassword(e.target.value)}
             autoComplete="new-password"
@@ -425,6 +431,7 @@ function ForgotForm({ onBack }: { onBack: () => void }) {
 /** Opened from the emailed link: choose a new password, then you're signed in. */
 function ResetForm({ token, onSignedIn, onForgot }: { token: string; onSignedIn: (account: Account) => void; onForgot: () => void }) {
   const [password, setPassword] = useState('')
+  const [showPasswords, setShowPasswords] = useState(false)
   const [retypePassword, setRetypePassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<AuthError | null>(null)
@@ -450,10 +457,11 @@ function ResetForm({ token, onSignedIn, onForgot }: { token: string; onSignedIn:
       <FormError error={error} />
       <Field label="New password" note="At least 8 characters" error={error?.fields.password}>
         {(id, describedBy) => (
-          <input
+          <PasswordInput
             id={id}
             className="auth-input"
-            type="password"
+            shown={showPasswords}
+            onToggle={() => setShowPasswords((v) => !v)}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
@@ -467,10 +475,11 @@ function ResetForm({ token, onSignedIn, onForgot }: { token: string; onSignedIn:
       </Field>
       <Field label="Re-Type Password" error={error?.fields.retypePassword}>
         {(id, describedBy) => (
-          <input
+          <PasswordInput
             id={id}
             className="auth-input"
-            type="password"
+            shown={showPasswords}
+            onToggle={() => setShowPasswords((v) => !v)}
             value={retypePassword}
             onChange={(e) => setRetypePassword(e.target.value)}
             autoComplete="new-password"
