@@ -96,4 +96,13 @@ async function createTables(d: Db) {
       at  timestamptz NOT NULL DEFAULT now()
     )`);
   await d.query(`CREATE INDEX IF NOT EXISTS auth_attempts_key_at ON auth_attempts (key, at)`);
+  // Each account's app data, one value per key (see data.ts). Deleted with the account.
+  await d.query(`
+    CREATE TABLE IF NOT EXISTS user_data (
+      user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      key        text NOT NULL,
+      value      text NOT NULL,
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (user_id, key)
+    )`);
 }

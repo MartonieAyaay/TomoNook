@@ -3,7 +3,7 @@ import { load, save } from './storage.ts'
 
 /*
   The user's own alarm sound for the timers. It's kept in the browser as a
-  data URL (so it's in backups too), separate from the other settings so
+  data URL (so it's in backups and the account too), separate from the other settings so
   that changing a setting doesn't rewrite the whole clip each time.
 */
 
@@ -29,9 +29,7 @@ interface CustomChimeState {
 export const useCustomChimeStore = create<CustomChimeState>((set) => ({
   sound: load<CustomChime | null>('customChime', null),
   setSound: (sound) => {
-    try {
-      localStorage.setItem('tomonook:customChime', JSON.stringify(sound))
-    } catch {
+    if (!save('customChime', sound)) {
       throw new Error('There’s not enough room to save that sound. Try a shorter or smaller clip.')
     }
     set({ sound })

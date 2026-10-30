@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import GossipTomatoes from './components/gossip/GossipTomatoes.tsx'
 import { startFocusLog } from './store/focusStore.ts'
@@ -7,10 +7,7 @@ import { useSettingsStore } from './store/settingsStore.ts'
 import SettingsPage from './pages/SettingsPage.tsx'
 import Sidebar from './components/Sidebar.tsx'
 import Companion from './components/companion/Companion.tsx'
-import SplashScreen from './components/SplashScreen.tsx'
-import AuthDialog from './components/auth/AuthDialog.tsx'
-import { fetchAccount } from './lib/auth.ts'
-import { useAccountStore } from './store/accountStore.ts'
+import { unlockChime } from './lib/chime.ts'
 import StreakSplat from './components/splatter/StreakSplat.tsx'
 import TimerTicker from './components/TimerTicker.tsx'
 import AllDoneCelebration from './components/todo/AllDoneCelebration.tsx'
@@ -25,23 +22,22 @@ import { useCompanionStore } from './store/companionStore.ts'
 import { useProfileStore } from './store/profileStore.ts'
 import './App.css'
 
-export default function App() {
-  // In dev, add ?nosplash to the URL to skip the loading bar.
-  const [skipBar] = useState(() => import.meta.env.DEV && location.search.includes('nosplash'))
-  const [showSplash, setShowSplash] = useState(true)
-  // Signed in? Asked while the loading bar fills; signed out keeps the title page up with the login window.
-  const account = useAccountStore((s) => s.account)
-  const setAccount = useAccountStore((s) => s.setAccount)
-  // A "reset your password" email link: ?reset=<token>. Taken out of the
-  // address bar right away so it isn't left in history or shared by accident.
-  const [resetToken, setResetToken] = useState(() => {
-    const token = new URLSearchParams(location.search).get('reset') ?? undefined
-    if (token) history.replaceState(null, '', location.pathname)
-    return token
-  })
+/**
+  The app, once someone is signed in and their data is loaded (see Boot.tsx).
+  `started` turns true when the loading screen has gone.
+*/
+export default function App({ started, onMounted }: { started: boolean; onMounted: () => void }) {
+  const showSplash = !started
+  useEffect(() => onMounted(), [onMounted])
+
+  // Sound is only allowed after the first click or key press, so get it ready then.
   useEffect(() => {
-    void fetchAccount().then(setAccount)
-  }, [setAccount])
+    const types = ['pointerdown', 'keydown'] as const
+    for (const type of types) window.addEventListener(type, unlockChime, { once: true, capture: true })
+    return () => {
+      for (const type of types) window.removeEventListener(type, unlockChime, { capture: true })
+    }
+  }, [])
 
   useEffect(() => startCompanionReactions(), [])
   useEffect(() => startFocusLog(), [])
@@ -68,19 +64,6 @@ export default function App() {
 
   return (
     <div className="app">
-      {showSplash && (
-        <SplashScreen ready={!!account && !resetToken} skipBar={skipBar} onDone={() => setShowSplash(false)}>
-          {(account === null || (account && resetToken)) && (
-            <AuthDialog
-              resetToken={resetToken}
-              onSignedIn={(a) => {
-                setResetToken(undefined)
-                setAccount(a)
-              }}
-            />
-          )}
-        </SplashScreen>
-      )}
       {/* After the loading screen, so the splat is seen. */}
       {!showSplash && !settingUp && <StreakSplat />}
       <TimerTicker />

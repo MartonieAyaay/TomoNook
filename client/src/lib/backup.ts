@@ -1,8 +1,10 @@
 import { today } from '@tomonook/shared'
+import { replaceAll } from './sync.ts'
 
 /*
   Everything the app saves lives in this browser's storage under the
-  "tomonook:" prefix. A backup is all of it in one JSON file.
+  "tomonook:" prefix (and in the account, see sync.ts). A backup is all of
+  it in one JSON file.
 */
 
 const PREFIX = 'tomonook:'
@@ -54,19 +56,14 @@ export async function readBackup(file: File): Promise<BackupFile> {
   return b as BackupFile
 }
 
-function clearAll() {
-  for (const k of ourKeys()) localStorage.removeItem(k)
-}
-
-/** Replaces everything with the backup, then reloads the app. */
-export function restoreBackup(backup: BackupFile) {
-  clearAll()
-  for (const [k, v] of Object.entries(backup.data)) localStorage.setItem(PREFIX + k, v)
+/** Replaces everything with the backup (here and in the account), then reloads the app. */
+export async function restoreBackup(backup: BackupFile) {
+  await replaceAll(backup.data)
   location.assign('/')
 }
 
-/** Deletes everything and starts over at first-time setup. */
-export function resetEverything() {
-  clearAll()
+/** Deletes everything (here and in the account) and starts over at first-time setup. */
+export async function resetEverything() {
+  await replaceAll({})
   location.assign('/')
 }

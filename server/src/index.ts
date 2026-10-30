@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { healthRouter } from "./routes/health.ts";
-import { handleAuth } from "../../api/_lib/http.ts";
+import { handleAuth, handleData } from "../../api/_lib/http.ts";
 import { useDevDatabaseIfNeeded } from "./devDb.ts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -19,6 +19,8 @@ const PORT = Number(process.env.PORT ?? 3001);
 const app = express();
 app.disable("x-powered-by");
 // The client reaches the API through Vite's proxy (same origin), so no CORS is needed.
+// App data can hold pictures and a sound; everything else is small.
+app.use("/api/data", express.json({ limit: "4mb" }));
 app.use(express.json({ limit: "10kb" }));
 
 // User-uploaded images (custom foods, timer images).
@@ -27,6 +29,8 @@ app.use("/uploads", express.static(path.join(here, "../uploads")));
 app.use("/api/health", healthRouter);
 // Same handler as the Vercel function in api/auth/[action].ts.
 app.all("/api/auth/:action", (req, res) => handleAuth(req.params.action, req, res));
+// Same handler as api/data.ts.
+app.all("/api/data", (req, res) => handleData(req, res));
 
 // Bad or oversized JSON: a short message, never a stack trace.
 app.use((err: { status?: number }, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
