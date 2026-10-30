@@ -11,6 +11,7 @@ import {
   logoutOthers,
   me,
   resendVerification,
+  tidyUp,
   resetPassword,
   signup,
   verifyEmail,
@@ -337,5 +338,24 @@ describe("leaked passwords", () => {
       throw new Error("offline");
     });
     expect((await signup(db, "1.1.1.1", form)).status).toBe(202);
+  });
+});
+
+describe("housekeeping", () => {
+  it("removes expired sessions and links, old attempts, and sign-ups never confirmed", async () => {
+    const { session } = await signedUp("1.1.1.1");
+    await signup(db, "1.1.1.1", { ...form, email: "late@x.com", username: "late" });
+    await forgotPassword(db, "1.1.1.1", { email: form.email });
+    await db.query("UPDATE sessions SET expires_at = now() - interval '1 minute'");
+    await db.query("UPDATE password_resets SET expires_at = now() - interval '1 minute'");
+    await db.query(`UPDATE users SET created_at = now() - interval '${VERIFY_HOURS + 1} hours' WHERE username = 'late'`);
+    await db.query("UPDATE auth_attempts SET at = now() - interval '2 days'");
+    await tidyUp(db, true);
+    for (const table of ["sessions", "password_resets", "email_verifications", "auth_attempts"]) {
+      expect((await db.query(`SELECT 1 FROM ${table}`)).rows, table).toHaveLength(0);
+    }
+    const { rows } = await db.query<{ username: string }>("SELECT username FROM users");
+    expect(rows.map((r) => r.username)).toEqual(["tomato_fan"]);
+    expect(session).toBeTruthy();
   });
 });

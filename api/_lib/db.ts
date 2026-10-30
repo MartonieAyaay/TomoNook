@@ -110,6 +110,12 @@ async function createTables(d: Db) {
       at  timestamptz NOT NULL DEFAULT now()
     )`);
   await d.query(`CREATE INDEX IF NOT EXISTS auth_attempts_key_at ON auth_attempts (key, at)`);
+  // For deleting a user's rows, and for the hourly clean-up of expired ones (auth.ts tidyUp).
+  await d.query(`CREATE INDEX IF NOT EXISTS auth_attempts_at ON auth_attempts (at)`);
+  await d.query(`CREATE INDEX IF NOT EXISTS sessions_user_id ON sessions (user_id)`);
+  await d.query(`CREATE INDEX IF NOT EXISTS sessions_expires_at ON sessions (expires_at)`);
+  await d.query(`CREATE INDEX IF NOT EXISTS password_resets_user_id ON password_resets (user_id)`);
+  await d.query(`CREATE INDEX IF NOT EXISTS email_verifications_user_id ON email_verifications (user_id)`);
   // Each account's app data, one value per key (see data.ts). Deleted with the account.
   await d.query(`
     CREATE TABLE IF NOT EXISTS user_data (
